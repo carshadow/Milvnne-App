@@ -1,0 +1,767 @@
+import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+
+const AdminDashboard = () => {
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const token = localStorage.getItem("token");
+
+    const [newProduct, setNewProduct] = useState({
+        name: "",
+        price: "",
+        category: "",
+        description: "",
+        coverImage: null,
+        hoverImage: null,
+        images: [],
+        sizes: { S: 0, M: 0, L: 0, XL: 0 },
+        stock: 0,
+        hasSizes: true
+    });
+
+    const [editingProduct, setEditingProduct] = useState(null);
+    const [showEditModal, setShowEditModal] = useState(false);
+
+    const [categories, setCategories] = useState([]);
+    const [newCategory, setNewCategory] = useState("");
+    const [newCategoryImage, setNewCategoryImage] = useState(null);
+
+
+    const fetchProducts = async () => {
+        try {
+            const res = await fetch("http://localhost:8080/api/products", {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!res.ok) throw new Error(`HTTP Error! Status: ${res.status}`);
+            const data = await res.json();
+            setProducts(data);
+        } catch (error) {
+            console.error("Error fetching products:", error);
+            setError(error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchProducts();
+        fetchCategories();
+    }, []);
+
+    const fetchCategories = async () => {
+        try {
+            const res = await fetch("http://localhost:8080/api/categories");
+            const data = await res.json();
+            setCategories(data.sort((a, b) => a.order - b.order));
+        } catch (err) {
+            console.error("Error fetching categories:", err);
+        }
+    };
+
+    const createCategory = async () => {
+        if (!newCategory || !newCategoryImage) return;
+        const formData = new FormData();
+        formData.append("name", newCategory);
+        formData.append("image", newCategoryImage);
+        try {
+            const res = await fetch("http://localhost:8080/api/categories", {
+                method: "POST",
+                body: formData,
+            });
+            if (res.ok) {
+                setNewCategory("");
+                setNewCategoryImage(null);
+                fetchCategories();
+            }
+        } catch (err) {
+            console.error("Error creating category:", err);
+        }
+    };
+
+    const updateCategoryImage = async (id, file) => {
+        const formData = new FormData();
+        formData.append("image", file);
+        try {
+            await fetch(`http://localhost:8080/api/categories/${id}/image`, {
+                method: "PUT",
+                body: formData,
+            });
+            fetchCategories();
+        } catch (err) {
+            console.error("Error updating image:", err);
+        }
+    };
+
+    const renameCategory = async (id, newName) => {
+        try {
+            await fetch(`http://localhost:8080/api/categories/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: newName }),
+            });
+            fetchCategories();
+        } catch (err) {
+            console.error("Rename failed", err);
+        }
+    };
+
+    const deleteCategory = async (id) => {
+        if (!window.confirm("¿Eliminar esta categoría?")) return;
+        try {
+            await fetch(`http://localhost:8080/api/categories/${id}`, {
+                method: "DELETE",
+            });
+            fetchCategories();
+        } catch (err) {
+            console.error("Delete failed", err);
+        }
+    };
+
+    const moveCategory = async (index, direction) => {
+        const newOrder = [...categories];
+        const targetIndex = index + direction;
+        if (targetIndex < 0 || targetIndex >= newOrder.length) return;
+        [newOrder[index], newOrder[targetIndex]] = [
+            newOrder[targetIndex],
+            newOrder[index],
+        ];
+
+        for (let i = 0; i < newOrder.length; i++) {
+            newOrder[i].order = i;
+            await fetch(`http://localhost:8080/api/categories/${newOrder[i]._id}/reorder`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ order: i }),
+            });
+        }
+
+        setCategories([...newOrder]);
+    };
+
+    const handleCreateProduct = async () => {
+        const formData = new FormData();
+
+        formData.append("name", newProduct.name);
+        formData.append("price", newProduct.price);
+        formData.append("category", newProduct.category);
+        formData.append("description", newProduct.description);
+        formData.append("hasSizes", newProduct.hasSizes ? "true" : "false"); // 👈 importante
+
+        // 👕 Si tiene tallas, enviar tallas
+        if (newProduct.hasSizes) {
+            formData.append("sizes", JSON.stringify(newProduct.sizes));
+        } else {
+            // 📦 Si no tiene tallas, enviar stock
+            formData.append("stock", newProduct.stock);
+        }
+
+        // Imágenes
+        formData.append("coverImage", newProduct.coverImage);
+        formData.append("hoverImage", newProduct.hoverImage);
+        newProduct.images.forEach((img, i) => {
+            formData.append("images", img);
+        });
+
+        try {
+            const res = await fetch("http://localhost:8080/api/products", {
+                method: "POST",
+                credentials: "include",
+                body: formData,
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                alert("✅ Producto creado exitosamente");
+                // Limpieza opcional:
+                setNewProduct({
+                    name: "",
+                    price: "",
+                    category: "",
+                    description: "",
+                    hasSizes: true,
+                    sizes: { S: 0, M: 0, L: 0, XL: 0 },
+                    stock: 0,
+                    coverImage: null,
+                    hoverImage: null,
+                    images: []
+                });
+            } else {
+                alert(`❌ Error: ${data.message}`);
+            }
+        } catch (err) {
+            console.error("❌ Error creando el producto:", err);
+            alert("Ocurrió un error al crear el producto.");
+        }
+    };
+
+
+    const handleEditProduct = async () => {
+        if (!editingProduct) return;
+
+        try {
+            const discount = parseFloat(editingProduct.discount);
+            const userPrice = parseFloat(editingProduct.price);
+            const originalPrice = parseFloat(editingProduct.originalPrice);
+
+            const validDiscount = isNaN(discount) ? 0 : discount;
+            const validOriginal = isNaN(originalPrice) ? userPrice : originalPrice;
+
+            // ✅ Si hay descuento, recalcula; si no, guarda el precio como está
+            let finalPrice = userPrice;
+            let finalOriginal = validOriginal;
+
+            if (validDiscount > 0) {
+                finalPrice = (validOriginal * (1 - validDiscount / 100)).toFixed(2);
+            } else {
+                finalOriginal = userPrice; // 👈 actualiza original para reflejar el nuevo precio base
+            }
+
+            const res = await fetch(`http://localhost:8080/api/products/${editingProduct._id}`, {
+                method: "PUT",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: editingProduct.name,
+                    price: finalPrice,
+                    description: editingProduct.description,
+                    sizes: editingProduct.sizes,
+                    discount: validDiscount,
+                    originalPrice: finalOriginal,
+                }),
+            });
+
+            if (res.ok) {
+                fetchProducts();
+                alert("✅ Producto actualizado exitosamente!");
+                setEditingProduct(null);
+                setShowEditModal(false);
+            } else {
+                alert("❌ Error al actualizar el producto");
+            }
+        } catch (error) {
+            console.error("❌ Error updating product:", error);
+            alert("❌ Error al actualizar producto");
+        }
+    };
+
+
+
+    const handleDelete = async (id) => {
+        if (!window.confirm("Are you sure you want to delete this product?")) return;
+
+        try {
+            const res = await fetch(`http://localhost:8080/api/products/${id}`, {
+                method: "DELETE",
+                credentials: "include",
+            });
+
+            if (res.ok) {
+                alert("✅ Product deleted successfully!");
+                fetchProducts();
+            } else {
+                const errorData = await res.json();
+                alert(`❌ Error: ${errorData.message || "Failed to delete product"}`);
+            }
+        } catch (error) {
+            console.error("❌ Error deleting product:", error);
+            alert("❌ Failed to delete product");
+        }
+    };
+
+    const getAvailabilityStatus = (product) => {
+        if (product.hasSizes) {
+            const totalSizes = Object.values(product.sizes || {}).reduce((acc, val) => acc + Number(val || 0), 0);
+            return totalSizes > 0 ? "Available" : "Not Available";
+        } else {
+            return product.stock > 0 ? `Stock: ${product.stock}` : "Out of Stock";
+        }
+    };
+
+    return (
+        <div className="p-6  mx-auto pt-24 min-h-screen w-full  bg-gradient-to-b from-zinc-950 via-zinc-900 to-black text-white">
+
+            {/* Add New Product Form */}
+            <motion.div
+                className="mb-12 p-8 rounded-2xl shadow-2xl bg-zinc-900 border border-zinc-700 text-white"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+            >
+                <h2 className="text-3xl font-bold mb-6 text-center text-fuchsia-500 uppercase tracking-wider">
+                    Añadir Productos Nuevos
+                </h2>
+
+                <div className="flex flex-wrap gap-6">
+                    {/* Nombre */}
+                    <div className="flex flex-col w-full md:w-[48%]">
+                        <label className="text-sm mb-1 text-gray-300 font-medium">Nombre del Producto</label>
+                        <input
+                            className="bg-zinc-800 border border-zinc-600 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
+                            type="text"
+                            placeholder="Ej: Camisa Oversize"
+                            value={newProduct.name}
+                            onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                        />
+                    </div>
+
+                    {/* Precio */}
+                    <div className="flex flex-col w-full md:w-[48%]">
+                        <label className="text-sm mb-1 text-gray-300 font-medium">Precio ($)</label>
+                        <input
+                            className="bg-zinc-800 border border-zinc-600 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
+                            type="number"
+                            placeholder="Ej: 29.99"
+                            value={newProduct.price}
+                            onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+                        />
+                    </div>
+
+                    {/* Categoría */}
+                    <div className="flex flex-col w-full md:w-[48%]">
+                        <label className="text-sm mb-1 text-gray-300 font-medium">Categoría</label>
+                        <select
+                            className="bg-zinc-800 border border-zinc-600 p-3 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
+                            value={newProduct.category}
+                            onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                        >
+                            {categories.map((cat) => (
+                                <option key={cat._id} value={cat.name}>
+                                    {cat.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Descripción */}
+                    <div className="flex flex-col w-full">
+                        <label className="text-sm mb-1 text-gray-300 font-medium">Descripción</label>
+                        <textarea
+                            className="bg-zinc-800 border border-zinc-600 p-3 rounded-lg min-h-[100px] focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
+                            placeholder="Escribe una breve descripción del producto..."
+                            value={newProduct.description}
+                            onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                        />
+                    </div>
+
+                    {/* Tallas */}
+
+                    <div className="flex items-center gap-2 mt-4">
+                        <input
+                            type="checkbox"
+                            checked={newProduct.hasSizes}
+                            onChange={(e) =>
+                                setNewProduct({ ...newProduct, hasSizes: e.target.checked })
+                            }
+                            className="w-4 h-4"
+                        />
+                        <label className="text-gray-300 text-sm">Este producto tiene tallas</label>
+                    </div>
+
+                    {newProduct.hasSizes ? (
+                        <div className="w-full flex flex-wrap gap-4 mt-2">
+                            {["S", "M", "L", "XL"].map((size) => (
+                                <div key={size} className="flex flex-col w-[48%] md:w-[23%]">
+                                    <label className="text-sm text-gray-300 mb-1">{size}</label>
+                                    <input
+                                        type="number"
+                                        className="bg-zinc-800 border border-zinc-600 p-2 rounded-lg"
+                                        value={newProduct.sizes[size] || 0}
+                                        onChange={(e) =>
+                                            setNewProduct({
+                                                ...newProduct,
+                                                sizes: { ...newProduct.sizes, [size]: e.target.value || 0 }
+                                            })
+                                        }
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col w-full md:w-[48%] mt-4">
+                            <label className="text-sm mb-1 text-gray-300 font-medium">Stock</label>
+                            <input
+                                type="number"
+                                placeholder="Ej: 50"
+                                className="bg-zinc-800 border border-zinc-600 p-3 rounded-lg"
+                                value={newProduct.stock}
+                                onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })}
+                            />
+                        </div>
+                    )}
+
+
+                    {/* Imágenes */}
+                    <div className="flex flex-col w-full md:w-[48%] mt-4">
+                        <label className="text-sm mb-1 text-gray-300 font-medium">Cover Image</label>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
+                            onChange={(e) =>
+                                setNewProduct({ ...newProduct, coverImage: e.target.files[0] })
+                            }
+                        />
+                    </div>
+
+                    <div className="flex flex-col w-full md:w-[48%] mt-4">
+                        <label className="text-sm mb-1 text-gray-300 font-medium">Hover Image</label>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
+                            onChange={(e) =>
+                                setNewProduct({ ...newProduct, hoverImage: e.target.files[0] })
+                            }
+                        />
+                    </div>
+
+                    {/* Imágenes adicionales */}
+                    <div className="flex flex-col w-full mt-4">
+                        <label className="text-sm mb-1 text-gray-300 font-medium">
+                            Imágenes Adicionales (Máx. 4)
+                        </label>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
+                            onChange={(e) => {
+                                const files = Array.from(e.target.files);
+                                const totalImages = newProduct.images.length + files.length;
+                                if (totalImages > 4) {
+                                    alert("Máximo 4 imágenes adicionales");
+                                    return;
+                                }
+                                setNewProduct({ ...newProduct, images: [...newProduct.images, ...files] });
+                            }}
+                        />
+
+                        {/* Vista previa */}
+                        {newProduct.images.length > 0 && (
+                            <div className="flex flex-wrap gap-4 mt-3">
+                                {newProduct.images.map((file, index) => (
+                                    <div key={index} className="relative group">
+                                        <img
+                                            src={URL.createObjectURL(file)}
+                                            alt={`Preview ${index + 1}`}
+                                            className="w-20 h-20 object-cover rounded border border-zinc-700"
+                                        />
+                                        <button
+                                            onClick={() =>
+                                                setNewProduct({
+                                                    ...newProduct,
+                                                    images: newProduct.images.filter((_, i) => i !== index),
+                                                })
+                                            }
+                                            className="absolute top-0 right-0 bg-red-600 text-white text-xs rounded-full px-1"
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Botón */}
+                <div className="flex justify-center mt-8">
+                    <button
+                        className="bg-fuchsia-600 text-white px-8 py-3 rounded-full hover:bg-fuchsia-700 transition duration-300 shadow-md"
+                        onClick={handleCreateProduct}
+                    >
+                        Crear Producto
+                    </button>
+                </div>
+            </motion.div>
+
+
+
+
+            {/* PRODUCT TABLE */}
+            <div className="p-6 max-w-7xl mx-auto pt-20 text-white">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
+                >
+                    {loading ? (
+                        <p className="text-center text-gray-400">Cargando productos...</p>
+                    ) : error ? (
+                        <p className="text-red-500 text-center">Error: {error}</p>
+                    ) : (
+                        <div className="overflow-x-auto rounded-xl shadow-xl border border-zinc-700 bg-zinc-900">
+                            <table className="min-w-full text-sm text-left">
+                                <thead className="bg-zinc-800 text-fuchsia-400 uppercase tracking-wide text-xs">
+                                    <tr>
+                                        <th className="px-6 py-4">Imagen</th>
+                                        <th className="px-6 py-4">Nombre</th>
+                                        <th className="px-6 py-4">Precio</th>
+                                        <th className="px-6 py-4">Inventario</th>
+                                        <th className="px-6 py-4">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {products.map((product) => (
+                                        <tr key={product._id} className="border-t border-zinc-700 hover:bg-zinc-800 transition-all">
+                                            <td className="px-6 py-4">
+                                                <img
+                                                    src={`http://localhost:8080${product.coverImage}`}
+                                                    alt={product.name}
+                                                    className="w-16 h-16 object-cover rounded shadow"
+                                                />
+                                            </td>
+                                            <td className="px-6 py-4 font-medium">{product.name}</td>
+                                            <td className="px-6 py-4 text-fuchsia-400 font-semibold">${product.price}</td>
+                                            <td className="px-6 py-4">{getAvailabilityStatus(product)}</td>
+                                            <td className="px-6 py-4 flex flex-wrap gap-2">
+                                                <button
+                                                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
+                                                    onClick={() => {
+                                                        setEditingProduct(product);
+                                                        setShowEditModal(true);
+                                                    }}
+                                                >
+                                                    Editar
+                                                </button>
+                                                <button
+                                                    className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition"
+                                                    onClick={() => handleDelete(product._id)}
+                                                >
+                                                    Eliminar
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </motion.div>
+
+                {/* MODAL DE EDICIÓN */}
+                {showEditModal && editingProduct && (
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center">
+                        <div className="bg-zinc-900 border border-zinc-700 text-white p-6 rounded-2xl shadow-2xl w-full max-w-xl space-y-4">
+                            <h2 className="text-2xl font-bold text-fuchsia-400 text-center">Editar Producto</h2>
+
+                            <div>
+                                <label className="text-sm">Nombre</label>
+                                <input
+                                    className="w-full bg-zinc-800 border border-zinc-600 p-2 rounded mt-1"
+                                    type="text"
+                                    value={editingProduct.name}
+                                    onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-sm">Precio</label>
+                                <input
+                                    className="w-full bg-zinc-800 border border-zinc-600 p-2 rounded mt-1"
+                                    type="number"
+                                    value={editingProduct.price}
+                                    onChange={(e) => setEditingProduct({ ...editingProduct, price: e.target.value })}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-sm">Descripción</label>
+                                <textarea
+                                    className="w-full bg-zinc-800 border border-zinc-600 p-2 rounded mt-1"
+                                    rows="3"
+                                    value={editingProduct.description}
+                                    onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-sm">Tallas</label>
+                                <div className="grid grid-cols-4 gap-2 mt-2">
+                                    {["S", "M", "L", "XL"].map((size) => (
+                                        <div key={size} className="flex flex-col">
+                                            <span className="text-xs text-gray-400 mb-1">{size}</span>
+                                            <input
+                                                type="number"
+                                                className="bg-zinc-800 border border-zinc-600 p-2 rounded"
+                                                value={editingProduct.sizes[size] || 0}
+                                                onChange={(e) =>
+                                                    setEditingProduct({
+                                                        ...editingProduct,
+                                                        sizes: { ...editingProduct.sizes, [size]: e.target.value },
+                                                    })
+                                                }
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-sm">Precio Original ($)</label>
+                                <input
+                                    className="w-full bg-zinc-800 border border-zinc-600 p-2 rounded mt-1"
+                                    type="number"
+                                    value={editingProduct.originalPrice || ""}
+                                    onChange={(e) => {
+                                        const original = parseFloat(e.target.value);
+                                        const discount = parseFloat(editingProduct.discount || 0);
+                                        const discounted = original * (1 - discount / 100);
+                                        setEditingProduct((prev) => ({
+                                            ...prev,
+                                            originalPrice: original,
+                                            price: discounted.toFixed(2),
+                                        }));
+                                    }}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-sm">Descuento (%)</label>
+                                <input
+                                    className="w-full bg-zinc-800 border border-zinc-600 p-2 rounded mt-1"
+                                    type="number"
+                                    placeholder="Ej: 20"
+                                    value={editingProduct.discount || ""}
+                                    onChange={(e) => {
+                                        const discount = parseFloat(e.target.value);
+                                        const original = parseFloat(editingProduct.originalPrice || 0);
+                                        const discounted = original * (1 - (discount || 0) / 100);
+                                        setEditingProduct((prev) => ({
+                                            ...prev,
+                                            discount: discount || 0,
+                                            price: discounted.toFixed(2),
+                                        }));
+                                    }}
+                                />
+                            </div>
+
+
+
+                            <div className="flex justify-between pt-4">
+                                <button
+                                    className="bg-green-600 px-4 py-2 rounded-md hover:bg-green-700 transition"
+                                    onClick={handleEditProduct}
+                                >
+                                    Guardar
+                                </button>
+                                <button
+                                    className="bg-gray-600 px-4 py-2 rounded-md hover:bg-gray-700 transition"
+                                    onClick={() => setShowEditModal(false)}
+                                >
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+                className="mt-16 text-white max-w-7xl mx-auto"
+            >
+                <h2 className="text-3xl font-bold text-fuchsia-400 mb-6">Gestionar Categorías</h2>
+
+                {/* Lista de Categorías */}
+                <div className="grid gap-6">
+                    {categories.map((cat, index) => (
+                        <div
+                            key={cat._id}
+                            className="bg-zinc-800 border border-zinc-700 rounded-xl p-6 shadow-lg flex flex-col md:flex-row md:items-center gap-6"
+                        >
+                            {/* Input Nombre */}
+                            <input
+                                type="text"
+                                value={cat.name}
+                                onChange={(e) => renameCategory(cat._id, e.target.value)}
+                                className="bg-zinc-700 border border-zinc-600 p-2 rounded w-full md:w-1/4 focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
+                                placeholder="Nombre categoría"
+                            />
+
+                            {/* Input Imagen */}
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => updateCategoryImage(cat._id, e.target.files[0])}
+                                className="text-sm w-full md:w-1/3 bg-zinc-900 border border-zinc-600 rounded p-2"
+                            />
+
+                            {/* Imagen preview */}
+                            {cat.imageUrl && (
+                                <img
+                                    src={`http://localhost:8080${cat.imageUrl}`}
+                                    alt={cat.name}
+                                    className="w-20 h-20 object-cover rounded-lg border border-zinc-700 shadow-md"
+                                />
+                            )}
+
+                            {/* Botones */}
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => moveCategory(index, -1)}
+                                    className="bg-zinc-700 text-white px-3 py-1 rounded hover:bg-zinc-600"
+                                    title="Subir"
+                                >
+                                    ⬆
+                                </button>
+                                <button
+                                    onClick={() => moveCategory(index, 1)}
+                                    className="bg-zinc-700 text-white px-3 py-1 rounded hover:bg-zinc-600"
+                                    title="Bajar"
+                                >
+                                    ⬇
+                                </button>
+                                <button
+                                    onClick={() => deleteCategory(cat._id)}
+                                    className="bg-red-600 px-3 py-1 rounded text-white hover:bg-red-700"
+                                    title="Eliminar"
+                                >
+                                    🗑
+                                </button>
+                            </div>
+
+
+                        </div>
+                    ))}
+                </div>
+
+                {/* Añadir Nueva Categoría */}
+                <div className="mt-10 bg-zinc-800 border border-zinc-700 p-6 rounded-xl shadow-lg flex flex-col md:flex-row items-center gap-4">
+                    <input
+                        type="text"
+                        placeholder="Nombre nueva categoría"
+                        value={newCategory}
+                        onChange={(e) => setNewCategory(e.target.value)}
+                        className="w-full md:w-1/3 bg-zinc-700 border border-zinc-600 p-2 rounded text-white focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
+                    />
+
+                    <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setNewCategoryImage(e.target.files[0])}
+                        className="w-full md:w-1/3 bg-zinc-900 border border-zinc-600 p-2 rounded text-sm text-white"
+                    />
+
+                    <button
+                        onClick={createCategory}
+                        className="w-full md:w-auto px-6 py-2 bg-fuchsia-500 hover:bg-fuchsia-600 text-white font-semibold rounded transition"
+                    >
+                        Agregar
+                    </button>
+                </div>
+            </motion.div>
+
+
+        </div>
+
+    );
+};
+
+
+export default AdminDashboard;
+
+
+

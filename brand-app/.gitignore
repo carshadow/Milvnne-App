@@ -1,0 +1,36 @@
+# General
+.DS_Store
+*.log
+
+# Node modules
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Builds
+build/
+dist/
+client/build/
+client/dist/
+server/build/
+server/dist/
+
+# Env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+client/.env
+server/.env
+
+# Coverage
+coverage/
+
+# Package managers
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# VSCode
+.vscode/
