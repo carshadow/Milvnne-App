@@ -3,12 +3,16 @@ import ProductCard from './ProductCard';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FaSearch } from 'react-icons/fa';
+import { debounce } from 'lodash';
+import { useCallback } from 'react';
 
 const Products = () => {
     const [products, setProducts] = useState([]);
     const [categoryOrder, setCategoryOrder] = useState([]);
     const [categoryImages, setCategoryImages] = useState({});
     const [searchQuery, setSearchQuery] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+
 
 
     // Fetch products
@@ -39,9 +43,21 @@ const Products = () => {
 
     // Ordena basado en el orden guardado
     const filteredProducts = products.filter((product) =>
-        product.name.toLowerCase().includes(searchQuery.toLowerCase())
+        product.name.toLowerCase().includes(debouncedSearch.toLowerCase())
+    );
+    const debounceSearch = useCallback(
+        debounce((value) => {
+            setDebouncedSearch(value);
+        }, 500),
+        []
     );
 
+    // Actualiza el valor del input al escribir
+    const handleSearchChange = (e) => {
+        const value = e.target.value;
+        setSearchQuery(value);      // se ve en UI
+        debounceSearch(value);      // se usa para buscar
+    };
     // Ordena basado en el orden guardado
     const groupedProducts = categoryOrder
         .map((category) => ({
@@ -122,7 +138,7 @@ const Products = () => {
                             type="text"
                             placeholder="Buscar productos..."
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={handleSearchChange}
                             className="w-full pl-12 pr-6 py-3 rounded-full bg-neutral-900 text-white placeholder-gray-400 border border-fuchsia-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-400 transition"
                         />
                     </div>
