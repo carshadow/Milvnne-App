@@ -5,26 +5,30 @@ import { motion } from 'framer-motion';
 import { FaSearch } from 'react-icons/fa';
 import { debounce } from 'lodash';
 import { useCallback } from 'react';
-
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 const Products = () => {
     const [products, setProducts] = useState([]);
     const [categoryOrder, setCategoryOrder] = useState([]);
     const [categoryImages, setCategoryImages] = useState({});
     const [searchQuery, setSearchQuery] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
-
-
+    const [loading, setLoading] = useState(true);
 
     // Fetch products
     useEffect(() => {
+        setLoading(true); // Asegura que comienza como true
         fetch('http://localhost:8080/api/products')
             .then(res => res.json())
             .then(data => setProducts(data))
-            .catch(err => console.error('Error fetching products:', err));
+
+            .catch(err => console.error('Error fetching products:', err))
+            .finally(() => setLoading(false));
     }, []);
 
     // Fetch categories (order + image)
     useEffect(() => {
+        setLoading(true); // Asegura que comienza como true
         fetch('http://localhost:8080/api/categories')
             .then(res => res.json())
             .then(data => {
@@ -36,7 +40,8 @@ const Products = () => {
                 setCategoryOrder(order);
                 setCategoryImages(imageMap);
             })
-            .catch(err => console.error('Error fetching categories:', err));
+            .catch(err => console.error('Error fetching categories:', err))
+            .finally(() => setLoading(false));
     }, []);
 
     const categoriesInProducts = [...new Set(products.map(p => p.category))];
@@ -155,7 +160,18 @@ const Products = () => {
                 {groupedProducts.map((group, index) => (
                     <React.Fragment key={group.type}>
                         {/* Imagen de fondo */}
-                        {categoryImages[group.type] && (
+                        {loading ? (
+                            // 💀 Loader mientras se cargan las categorías
+                            <div className="w-full h-[60vh] sm:h-[70vh] md:h-[80vh] xl:h-[90vh] my-16 rounded-xl overflow-hidden">
+                                <Skeleton
+                                    height="100%"
+                                    width="100%"
+                                    baseColor="#27272a"  // zinc-800
+                                    highlightColor="#3f3f46" // zinc-700
+                                    className="rounded-xl"
+                                />
+                            </div>
+                        ) : categoryImages[group.type] && (
                             <motion.div
                                 initial={{ opacity: 0 }}
                                 whileInView={{ opacity: 1 }}
@@ -172,17 +188,9 @@ const Products = () => {
                                         {group.type}
                                         <span className="block text-fuchsia-400">Collection</span>
                                     </h2>
-                                    {/* <p className="mt-3 text-base sm:text-lg md:text-xl text-neutral-300 max-w-2xl drop-shadow">
-                                        Inspiración única para cada estilo.
-                                    </p> */}
-                                    {/* <button className="mt-6 px-6 py-3 bg-white text-black font-semibold rounded-full uppercase hover:bg-fuchsia-400 hover:text-white transition">
-                                        Explorar
-                                    </button> */}
                                 </div>
                             </motion.div>
-
                         )}
-
 
                         {/* Productos de esa categoría */}
                         <div className="mb-24">
@@ -198,45 +206,57 @@ const Products = () => {
 
                             {/* Carrusel */}
                             <div className="flex overflow-x-auto gap-8 py-6 scroll-smooth scrollbar-thin scrollbar-thumb-fuchsia-500 scrollbar-track-transparent">
-                                {group.products.map((product, i) => (
-                                    <motion.div
-                                        key={product._id}
-                                        initial={{ opacity: 0, y: 50 }}
-                                        whileInView={{ opacity: 1, y: 0 }}
-                                        transition={{ duration: 0.5, delay: i * 0.1 }}
-                                        viewport={{ once: true }}
-                                        className="flex-shrink-0 w-[280px] h-[460px] bg-neutral-800 rounded-xl overflow-hidden relative group shadow-lg hover:shadow-2xl transition duration-300"
-                                    >
-                                        <Link to={`/product/${product._id}`} onClick={() => window.scrollTo(0, 0)}>
-                                            <img
-                                                src={`http://localhost:8080${product.coverImage}`}
-                                                alt={product.name}
-                                                className="w-full h-full object-cover transition-opacity duration-500 group-hover:opacity-0"
-                                            />
-                                            <img
-                                                className="absolute top-0 left-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10"
-                                                src={`http://localhost:8080${product.hoverImage}`}
-                                            />
-                                            <div className="absolute bottom-4 left-4 right-4 z-20 bg-black/70 text-white p-4 rounded-lg shadow-md">
-                                                <h4 className="font-bold text-lg truncate">{product.name}</h4>
+                                {loading
+                                    ? Array(4).fill().map((_, i) => (
+                                        <div
+                                            key={i}
+                                            className="flex-shrink-0 w-[280px] h-[460px] bg-neutral-800 rounded-xl overflow-hidden relative group shadow-lg p-4"
+                                        >
+                                            <Skeleton height={300} className="rounded" />
+                                            <Skeleton height={20} className="mt-4" />
+                                            <Skeleton width={100} height={16} />
+                                        </div>
+                                    ))
+                                    : group.products.map((product, i) => (
+                                        <motion.div
+                                            key={product._id}
+                                            initial={{ opacity: 0, y: 50 }}
+                                            whileInView={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.5, delay: i * 0.1 }}
+                                            viewport={{ once: true }}
+                                            className="flex-shrink-0 w-[280px] h-[460px] bg-neutral-800 rounded-xl overflow-hidden relative group shadow-lg hover:shadow-2xl transition duration-300"
+                                        >
+                                            <Link to={`/product/${product._id}`} onClick={() => window.scrollTo(0, 0)}>
+                                                <img
+                                                    src={`http://localhost:8080${product.coverImage}`}
+                                                    alt={product.name}
+                                                    className="w-full h-full object-cover transition-opacity duration-500 group-hover:opacity-0"
+                                                />
+                                                <img
+                                                    className="absolute top-0 left-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10"
+                                                    src={`http://localhost:8080${product.hoverImage}`}
+                                                />
+                                                <div className="absolute bottom-4 left-4 right-4 z-20 bg-black/70 text-white p-4 rounded-lg shadow-md">
+                                                    <h4 className="font-bold text-lg truncate">{product.name}</h4>
 
-                                                {product.discount > 0 ? (
-                                                    <div className="mt-1">
-                                                        <span className="text-xs bg-red-500 text-white font-semibold px-2 py-1 rounded-full mr-2">
-                                                            -{product.discount}% OFF
-                                                        </span>
-                                                        <div className="flex items-baseline gap-2">
-                                                            <span className="text-sm line-through text-gray-400">${Number(product.originalPrice).toFixed(2)}</span>
-                                                            <span className="text-pink-400 font-bold text-lg">${Number(product.price).toFixed(2)}</span>
+                                                    {product.discount > 0 ? (
+                                                        <div className="mt-1">
+                                                            <span className="text-xs bg-red-500 text-white font-semibold px-2 py-1 rounded-full mr-2">
+                                                                -{product.discount}% OFF
+                                                            </span>
+                                                            <div className="flex items-baseline gap-2">
+                                                                <span className="text-sm line-through text-gray-400">${Number(product.originalPrice).toFixed(2)}</span>
+                                                                <span className="text-pink-400 font-bold text-lg">${Number(product.price).toFixed(2)}</span>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                ) : (
-                                                    <p className="text-sm text-pink-300">${Number(product.price).toFixed(2)}</p>
-                                                )}
-                                            </div>
-                                        </Link>
-                                    </motion.div>
-                                ))}
+                                                    ) : (
+                                                        <p className="text-sm text-pink-300">${Number(product.price).toFixed(2)}</p>
+                                                    )}
+                                                </div>
+                                            </Link>
+                                        </motion.div>
+                                    ))}
+
                             </div>
                         </div>
                     </React.Fragment>
