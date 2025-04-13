@@ -200,22 +200,24 @@ const AdminDashboard = () => {
         if (!editingProduct) return;
 
         try {
-            const discount = parseFloat(editingProduct.discount);
+            const discount = editingProduct.discount !== "" && !isNaN(editingProduct.discount)
+                ? parseFloat(editingProduct.discount)
+                : 0;
+            const originalPrice = editingProduct.originalPrice !== "" ? parseFloat(editingProduct.originalPrice) : parseFloat(editingProduct.price);
             const userPrice = parseFloat(editingProduct.price);
-            const originalPrice = parseFloat(editingProduct.originalPrice);
 
             const validDiscount = isNaN(discount) ? 0 : discount;
             const validOriginal = isNaN(originalPrice) ? userPrice : originalPrice;
 
-            // ✅ Si hay descuento, recalcula; si no, guarda el precio como está
             let finalPrice = userPrice;
             let finalOriginal = validOriginal;
 
             if (validDiscount > 0) {
                 finalPrice = (validOriginal * (1 - validDiscount / 100)).toFixed(2);
             } else {
-                finalOriginal = userPrice; // 👈 actualiza original para reflejar el nuevo precio base
+                finalOriginal = userPrice;
             }
+
 
             const res = await fetch(`http://localhost:8080/api/products/${editingProduct._id}`, {
                 method: "PUT",
