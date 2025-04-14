@@ -3,6 +3,7 @@ import Stripe from 'stripe';
 import dotenv from 'dotenv';
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
+import mongoose from "mongoose";
 
 dotenv.config();
 const router = express.Router();
@@ -14,8 +15,9 @@ router.post('/', express.raw({ type: 'application/json' }), async (req, res) => 
 
     try {
         event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+        console.log('✅ Webhook recibido correctamente');
     } catch (err) {
-        console.error('Webhook signature verification failed:', err.message);
+        console.error('❌ Webhook signature verification failed:', err.message);
         return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
@@ -23,63 +25,71 @@ router.post('/', express.raw({ type: 'application/json' }), async (req, res) => 
         const session = event.data.object;
         const metadata = session.metadata;
 
-        const userId = metadata.userId;
-        const isValidUser = userId && userId !== "guest";
-        const address = metadata.address || "No address";
-        const rawItems = JSON.parse(metadata.items); // items = [{ product, quantity, size }]
-        const totalAmount = session.amount_total / 100;
+        // 👇 Verifica si los metadatos vienen correctamente
+        console.log("🧠 Metadata recibida:", metadata);
 
         try {
-            // 🔎 Limpiar datos para la orden
+            const userId = metadata.userId;
+            const isValidUser = userId && userId !== "guest" && mongoose.Types.ObjectId.isValid(userId);
+            const address = metadata.address || "No address";
+            const rawItems = JSON.parse(metadata.items || "[]");
+
+            // 👇 Mostrar los datos crudos de los productos
+            console.log("📦 Productos recibidos:", rawItems);
+            console.log("👤 userId:", userId);
+            console.log("🏠 address:", address);
+
+            const totalAmount = session.amount_total / 100;
+
+            // Formatear productos
             const cleanItems = rawItems.map(item => ({
                 product: item.product,
                 quantity: item.quantity,
-                size: item.size
+                size: item.size,
             }));
 
-            // 🧾 Guardar la orden
-            const order = new Order({
-                user: isValidUser ? userId : undefined,
+            console.log("🧽 Productos limpios para guardar:", cleanItems);
+
+            // 🧾 Guardar orden
+            const newOrder = new Order({
+                user: isValidUser ? new mongoose.Types.ObjectId(userId) : null,
                 products: cleanItems,
                 total: totalAmount,
                 address,
                 status: "Paid"
             });
 
-            await order.save();
-            console.log('✅ Orden creada exitosamente desde webhook');
+            await newOrder.save();
+            console.log("✅ Orden guardada correctamente en MongoDB con ID:", newOrder._id);
 
-            // 📉 Actualizar stock (tallas o stock general)
+            // 📦 Actualizar stock
             for (const item of cleanItems) {
-                const { product, quantity, size } = item;
-
-                const dbProduct = await Product.findById(product);
+                const dbProduct = await Product.findById(item.product);
                 if (!dbProduct) {
-                    console.warn(`⚠️ Producto no encontrado: ${product}`);
+                    console.warn(`⚠️ Producto no encontrado en MongoDB: ${item.product}`);
                     continue;
                 }
 
-                if (dbProduct.hasSizes && size) {
-                    if (dbProduct.sizes[size] !== undefined) {
-                        dbProduct.sizes[size] = Math.max(dbProduct.sizes[size] - quantity, 0);
-                        console.log(`🧵 Stock actualizado con tallas: ${dbProduct.name} - ${size} = ${dbProduct.sizes[size]}`);
-                    } else {
-                        console.warn(`⚠️ Talla '${size}' no encontrada para el producto ${dbProduct.name}`);
+                if (dbProduct.hasSizes && item.size) {
+                    if (dbProduct.sizes[item.size] !== undefined) {
+                        dbProduct.sizes[item.size] = Math.max(dbProduct.sizes[item.size] - item.quantity, 0);
+                        console.log(`🧵 Talla actualizada: ${dbProduct.name} - ${item.size} = ${dbProduct.sizes[item.size]}`);
                     }
                 } else {
-                    dbProduct.stock = Math.max((dbProduct.stock || 0) - quantity, 0);
-                    console.log(`📦 Stock general actualizado: ${dbProduct.name} = ${dbProduct.stock}`);
+                    dbProduct.stock = Math.max((dbProduct.stock || 0) - item.quantity, 0);
+                    console.log(`📉 Stock general actualizado: ${dbProduct.name} = ${dbProduct.stock}`);
                 }
 
                 await dbProduct.save();
             }
 
         } catch (err) {
-            console.error('❌ Error guardando la orden o actualizando el stock:', err);
+            console.error("❌ Error interno al procesar la orden:");
+            console.trace(err);
         }
     }
 
-    res.json({ received: true });
+    res.status(200).json({ received: true });
 });
 
 export default router;
