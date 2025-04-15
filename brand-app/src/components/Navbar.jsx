@@ -170,7 +170,7 @@ const Navbar = () => {
 
             {/* Mobile Menu */}
             <motion.div
-                className={`fixed top-0 left-0 h-full w-full z-50 bg-black/80 backdrop-blur-md transition-transform duration-500 ${isMenuOpen ? "translate-x-0" : "translate-x-full"
+                className={`fixed top-0 left-0 h-full w-full z-50 bg-gradient-to-br from-black via-zinc-900 to-zinc-800 backdrop-blur-md border-l border-zinc-700 shadow-lg transition-transform duration-500 ${isMenuOpen ? "translate-x-0" : "translate-x-full"
                     }`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: isMenuOpen ? 1 : 0 }}
@@ -179,36 +179,32 @@ const Navbar = () => {
                 {/* Botón cerrar */}
                 <div className="absolute top-4 right-4">
                     <button onClick={toggleMenu} className="text-white hover:text-fuchsia-400 transition-all">
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            className="w-8 h-8"
-                        >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-8 h-8">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
                 </div>
 
                 {/* Menú de navegación */}
-                <ul className="flex flex-col justify-center items-center h-full gap-6 text-lg font-semibold text-white tracking-wide">
+                <ul className="flex flex-col justify-center items-center h-full gap-6 text-lg font-semibold tracking-wide text-gray-200">
                     <li>
                         <Link to="/" onClick={() => { setIsMenuOpen(false); window.scrollTo(0, 0); }} className="hover:text-fuchsia-400 transition-all flex items-center gap-2">
-                            <FaShoppingBag className="text-xl" /> Shop
+                            <FaShoppingBag className="text-xl text-fuchsia-400" />
+                            <span>Shop</span>
                         </Link>
                     </li>
 
                     <li>
                         <Link to="/products" onClick={() => { setIsMenuOpen(false); window.scrollTo(0, 0); }} className="hover:text-fuchsia-400 transition-all flex items-center gap-2">
-                            <FaHome className="text-xl" /> About Us
+                            <FaHome className="text-xl text-fuchsia-400" />
+                            <span>About Us</span>
                         </Link>
                     </li>
 
                     <li>
                         <Link to="/cart" onClick={() => { setIsMenuOpen(false); window.scrollTo(0, 0); }} className="hover:text-fuchsia-400 transition-all flex items-center gap-2 relative">
-                            <FaShoppingCart className="text-xl" />
-                            Cart
+                            <FaShoppingCart className="text-xl text-fuchsia-400" />
+                            <span>Cart</span>
                             {getCartItemCount() > 0 && (
                                 <span className="absolute -top-3 -right-4 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
                                     {getCartItemCount()}
@@ -221,12 +217,14 @@ const Navbar = () => {
                         <>
                             <li>
                                 <Link to="/login" onClick={() => { setIsMenuOpen(false); window.scrollTo(0, 0); }} className="hover:text-fuchsia-400 transition-all flex items-center gap-2">
-                                    <FaSignInAlt className="text-xl" /> Login
+                                    <FaSignInAlt className="text-xl text-fuchsia-400" />
+                                    <span>Login</span>
                                 </Link>
                             </li>
                             <li>
                                 <Link to="/register" onClick={() => { setIsMenuOpen(false); window.scrollTo(0, 0); }} className="hover:text-fuchsia-400 transition-all flex items-center gap-2">
-                                    <FaRegAddressCard className="text-xl" /> Register
+                                    <FaRegAddressCard className="text-xl text-fuchsia-400" />
+                                    <span>Register</span>
                                 </Link>
                             </li>
                         </>
@@ -234,13 +232,15 @@ const Navbar = () => {
                         <>
                             <li>
                                 <Link to="/profile" onClick={() => { setIsMenuOpen(false); window.scrollTo(0, 0); }} className="hover:text-fuchsia-400 transition-all flex items-center gap-2">
-                                    <FaUser className="text-xl" /> Profile
+                                    <FaUser className="text-xl text-fuchsia-400" />
+                                    <span>Profile</span>
                                 </Link>
                             </li>
                             {user.isAdmin && (
                                 <li>
                                     <Link to="/admin" onClick={() => { setIsMenuOpen(false); window.scrollTo(0, 0); }} className="hover:text-fuchsia-400 transition-all flex items-center gap-2">
-                                        <FaBoxOpen className="text-xl" /> Admin
+                                        <FaBoxOpen className="text-xl text-fuchsia-400" />
+                                        <span>Admin</span>
                                     </Link>
                                 </li>
                             )}
@@ -252,13 +252,15 @@ const Navbar = () => {
                                     }}
                                     className="hover:text-fuchsia-400 transition-all flex items-center gap-2"
                                 >
-                                    <FaSignOutAlt className="text-xl" /> Logout
+                                    <FaSignOutAlt className="text-xl text-fuchsia-400" />
+                                    <span>Logout</span>
                                 </button>
                             </li>
                         </>
                     )}
                 </ul>
             </motion.div>
+
 
         </nav>
     );
