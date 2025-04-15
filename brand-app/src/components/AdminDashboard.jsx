@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { FaTimes } from 'react-icons/fa';
 
 const AdminDashboard = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const token = localStorage.getItem("token");
+    const [selectedOrder, setSelectedOrder] = useState(null);
+    const [showOrderModal, setShowOrderModal] = useState(false);
 
     const [newProduct, setNewProduct] = useState({
         name: "",
@@ -825,53 +828,115 @@ const AdminDashboard = () => {
                     </button>
                 </div>
             </motion.div>
+
+            {/* Tracking order table  */}
+
             <div className="mt-12">
-                <h2 className="text-2xl font-bold text-fuchsia-500 mb-4">Órdenes Recientes</h2>
-                <div className="overflow-x-auto">
-                    <table className="min-w-full text-sm text-left bg-zinc-800 text-white rounded-lg overflow-hidden shadow-lg">
-                        <thead className="bg-zinc-700">
+                <h2 className="text-3xl font-bold text-fuchsia-500 mb-6 tracking-wide uppercase">
+                    Órdenes Recientes
+                </h2>
+
+                <div className="overflow-x-auto rounded-xl shadow-xl border border-zinc-700">
+                    <table className="min-w-full bg-zinc-900 text-sm text-left text-white rounded-xl">
+                        <thead className="bg-zinc-800 text-fuchsia-400 uppercase text-xs tracking-wider">
                             <tr>
-                                <th className="px-6 py-3">Cliente</th>
-                                <th className="px-6 py-3">Total</th>
-                                <th className="px-6 py-3">Estado</th>
-                                <th className="px-6 py-3">Acción</th>
-                                <th className="px-6 py-3">Eliminar</th>
+                                <th className="px-6 py-4">Cliente</th>
+                                <th className="px-6 py-4">Total</th>
+                                <th className="px-6 py-4">Estado</th>
+                                <th className="px-6 py-4">Acción</th>
+                                <th className="px-6 py-4">Eliminar</th>
                             </tr>
                         </thead>
 
-                        <tbody>
+                        <tbody className="divide-y divide-zinc-700">
                             {allOrders.map((order) => (
-                                <tr key={order._id} className="border-b border-zinc-600">
-                                    <td className="px-6 py-4">{order.user?.name || "Invitado"}</td>
-                                    <td className="px-6 py-4">${order.total.toFixed(2)}</td>
-                                    <td className="px-6 py-4 text-fuchsia-400">{order.status}</td>
+                                <tr key={order._id} className="hover:bg-zinc-800/60 transition duration-200"
+                                    onClick={() => {
+                                        setSelectedOrder(order);
+                                        setShowOrderModal(true);
+                                    }}>
+                                    <td className="px-6 py-4 whitespace-nowrap font-medium">
+                                        {order.user?.name || (
+                                            <span className="italic text-gray-400">Invitado</span>
+                                        )}
+                                    </td>
+
+                                    <td className="px-6 py-4 font-semibold text-fuchsia-300">
+                                        ${order.total.toFixed(2)}
+                                    </td>
+
+                                    <td className="px-6 py-4">
+                                        <span
+                                            className={`px-3 py-1 text-xs font-bold rounded-full 
+                  ${order.status === "Paid" ? "bg-blue-600/20 text-blue-400" : ""}
+                  ${order.status === "En camino" ? "bg-yellow-600/20 text-yellow-400" : ""}
+                  ${order.status === "Entregada" ? "bg-green-600/20 text-green-400" : ""}`}
+                                        >
+                                            {order.status}
+                                        </span>
+                                    </td>
+
                                     <td className="px-6 py-4">
                                         <select
                                             value={order.status}
                                             onChange={(e) => updateOrderStatus(order._id, e.target.value)}
-                                            className="bg-zinc-700 p-1 rounded"
+                                            className="bg-zinc-700 border border-zinc-600 text-white px-3 py-1 text-sm rounded focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
                                         >
                                             <option value="Paid">Pagado</option>
                                             <option value="En camino">En camino</option>
                                             <option value="Entregada">Entregada</option>
                                         </select>
                                     </td>
+
                                     <td className="px-6 py-4">
                                         {order.status === "Entregada" && (
                                             <button
                                                 onClick={() => deleteOrder(order._id)}
-                                                className="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 rounded"
+                                                className="bg-red-600 hover:bg-red-700 text-white text-xs px-4 py-1 rounded-full shadow-sm transition"
                                             >
                                                 Borrar
                                             </button>
                                         )}
                                     </td>
                                 </tr>
+
                             ))}
+                            {showOrderModal && selectedOrder && (
+                                <div className="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center">
+                                    <div className="bg-zinc-900 text-white rounded-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto relative">
+                                        <button
+                                            onClick={() => setShowOrderModal(false)}
+                                            className="absolute top-3 right-3 text-gray-400 hover:text-white"
+                                        >
+                                            <FaTimes />
+                                        </button>
+                                        <h2 className="text-xl font-bold mb-4 text-fuchsia-400">Detalles de la Orden</h2>
+
+                                        <div className="space-y-4">
+                                            {selectedOrder.products.map((item, idx) => (
+                                                <div key={idx} className="bg-zinc-800 p-4 rounded-lg flex gap-4 shadow">
+                                                    <img
+                                                        src={`http://localhost:8080${item.product?.coverImage || "/uploads/default.png"}`}
+                                                        alt={item.product?.name}
+                                                        className="w-14 h-14 object-cover rounded border border-fuchsia-500"
+                                                    />
+                                                    <div>
+                                                        <p className="font-semibold">{item.product?.name || 'Producto eliminado'}</p>
+                                                        <p className="text-sm text-gray-400">Cantidad: {item.quantity}</p>
+                                                        {item.size && <p className="text-sm text-gray-400">Talla: {item.size}</p>}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                         </tbody>
                     </table>
                 </div>
             </div>
+
 
 
 
