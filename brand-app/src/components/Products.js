@@ -110,14 +110,14 @@ const Products = () => {
                         <span className="text-fuchsia-500">MILVNNE STUDIOS</span>
                     </motion.h1>
 
-                    <motion.p
+                    {/* <motion.p
                         className="mt-6 text-lg sm:text-xl text-gray-300 max-w-xl"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 1, delay: 0.5 }}
                     >
                         Moda deportiva. Urbana. Sin límites. Encuentra tu próxima pieza favorita hoy.
-                    </motion.p>
+                    </motion.p> */}
 
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
