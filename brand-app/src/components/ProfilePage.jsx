@@ -10,6 +10,8 @@ const ProfilePage = () => {
     const [suggestedProducts, setSuggestedProducts] = useState([]);
     const [showAllOrders, setShowAllOrders] = useState(false);
     const navigate = useNavigate();
+    const [selectedOrder, setSelectedOrder] = useState(null);
+    const [showOrderModal, setShowOrderModal] = useState(false);
 
     useEffect(() => {
         if (user && user._id) {
@@ -117,7 +119,7 @@ const ProfilePage = () => {
                     <div className="bg-gradient-to-br from-zinc-800/60 via-black/70 to-black/90 backdrop-blur-xl p-10 rounded-3xl shadow-2xl text-white">
                         <h3 className="text-2xl font-bold mb-8 flex items-center gap-3 text-white tracking-tight">
                             <FaReceipt className="text-fuchsia-400 text-xl" />
-                            Historial de Órdenes
+                            Tus órdenes
                         </h3>
 
                         {orders.length === 0 ? (
@@ -128,7 +130,11 @@ const ProfilePage = () => {
                                     {recentOrders.map((order) => (
                                         <motion.div
                                             key={order._id}
-                                            className="relative rounded-2xl bg-zinc-900 border border-white/10 hover:border-fuchsia-400/40 p-5 shadow-xl hover:shadow-fuchsia-500/10 transition-all group"
+                                            onClick={() => {
+                                                setSelectedOrder(order);
+                                                setShowOrderModal(true);
+                                            }}
+                                            className="cursor-pointer relative rounded-2xl bg-zinc-900 border border-white/10 hover:border-fuchsia-400/40 p-5 shadow-xl hover:shadow-fuchsia-500/10 transition-all group"
                                             whileHover={{ scale: 1.015 }}
                                         >
                                             <div className="flex items-center gap-4">
@@ -137,7 +143,6 @@ const ProfilePage = () => {
                                                     alt="Producto"
                                                     className="w-16 h-16 object-cover rounded-xl border border-fuchsia-500 shadow-md"
                                                 />
-
                                                 <div className="flex-1">
                                                     <h4 className="text-sm font-semibold text-fuchsia-400">
                                                         #{order._id.slice(-6).toUpperCase()}
@@ -146,28 +151,57 @@ const ProfilePage = () => {
                                                     <p className="text-sm text-gray-400">Total: ${order.total.toFixed(2)}</p>
                                                     <p className="text-xs text-gray-500 mt-1">Fecha: {new Date(order.createdAt).toLocaleDateString()}</p>
                                                 </div>
-
-                                                {/* <div className="hidden md:block text-right">
-                                                    <span className="text-xs text-gray-400 uppercase tracking-wide">Ver Detalles</span>
-                                                </div> */}
                                             </div>
                                         </motion.div>
                                     ))}
-                                </div>
+                                    {orders.length > 3 && (
+                                        <div className="mt-6 text-center">
+                                            <button
+                                                onClick={() => setShowAllOrders(true)}
+                                                className="text-sm text-fuchsia-400 hover:text-white hover:underline transition"
+                                            >
+                                                Ver historial completo
+                                            </button>
+                                        </div>
+                                    )}
+                                    {showOrderModal && selectedOrder && (
+                                        <div className="fixed inset-0 z-50 bg-black bg-opacity-60 flex items-center justify-center">
+                                            <div className="bg-zinc-900 text-white rounded-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto relative">
+                                                <button
+                                                    onClick={() => setShowOrderModal(false)}
+                                                    className="absolute top-3 right-3 text-gray-400 hover:text-white"
+                                                >
+                                                    <FaTimes />
+                                                </button>
+                                                <h2 className="text-xl font-bold mb-6">Detalles de Orden</h2>
+                                                <div className="space-y-4">
+                                                    {selectedOrder.products.map((item, idx) => (
+                                                        <div
+                                                            key={idx}
+                                                            className="bg-zinc-800 p-4 rounded-xl flex items-center gap-4 shadow"
+                                                        >
+                                                            <img
+                                                                src={`http://localhost:8080${item.product?.coverImage || "/uploads/default.png"}`}
+                                                                alt={item.product?.name}
+                                                                className="w-12 h-12 object-cover rounded border border-fuchsia-500"
+                                                            />
+                                                            <div className="flex-1">
+                                                                <p className="text-sm font-semibold text-white">{item.product?.name}</p>
+                                                                {item.size && <p className="text-xs text-gray-400">Talla: {item.size}</p>}
+                                                                <p className="text-xs text-gray-500">Cantidad: {item.quantity}</p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
 
-                                {olderOrders.length > 0 && (
-                                    <div className="mt-6 text-center">
-                                        <button
-                                            onClick={() => setShowAllOrders(true)}
-                                            className="text-sm text-fuchsia-400 hover:text-white hover:underline transition"
-                                        >
-                                            Ver historial completo
-                                        </button>
-                                    </div>
-                                )}
+                                </div>
                             </>
                         )}
                     </div>
+
 
                 </motion.div>
 
@@ -232,8 +266,6 @@ const ProfilePage = () => {
                 </motion.div>
 
             </div>
-
-            {/* 🪟 Modal para ver todas las órdenes */}
             {showAllOrders && (
                 <div className="fixed inset-0 z-50 bg-black bg-opacity-60 flex items-center justify-center">
                     <div className="bg-zinc-900 text-white rounded-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto relative">
@@ -244,11 +276,16 @@ const ProfilePage = () => {
                             <FaTimes />
                         </button>
                         <h2 className="text-xl font-bold mb-6">Historial de Órdenes</h2>
+
                         <div className="space-y-4">
                             {olderOrders.map((order) => (
                                 <div
                                     key={order._id}
-                                    className="bg-zinc-800 p-4 rounded-xl flex items-center gap-4 shadow"
+                                    onClick={() => {
+                                        setSelectedOrder(order);
+                                        setShowOrderModal(true);
+                                    }}
+                                    className="cursor-pointer bg-zinc-800 p-4 rounded-xl flex items-center gap-4 shadow"
                                 >
                                     <img
                                         src={`http://localhost:8080${order.products[0]?.product?.coverImage || "/uploads/default.png"}`}
@@ -267,6 +304,22 @@ const ProfilePage = () => {
                     </div>
                 </div>
             )}
+
+            {/* 🪟 Modal para ver todas las órdenes */}
+            {/* {showAllOrders && (
+                <div className="fixed inset-0 z-50 bg-black bg-opacity-60 flex items-center justify-center">
+                    <div className="bg-zinc-900 text-white rounded-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto relative">
+                        <button
+                            onClick={() => setShowAllOrders(false)}
+                            className="absolute top-3 right-3 text-gray-400 hover:text-white"
+                        >
+                            <FaTimes />
+                        </button>
+                        <h2 className="text-xl font-bold mb-6">Historial de Órdenes</h2>
+
+                    </div>
+                </div>
+            )} */}
         </div>
     );
 };

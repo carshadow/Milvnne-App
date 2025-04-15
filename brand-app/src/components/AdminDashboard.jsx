@@ -280,6 +280,76 @@ const AdminDashboard = () => {
         }
     };
 
+    const [allOrders, setAllOrders] = useState([]);
+
+    useEffect(() => {
+        fetchAllOrders();
+    }, []);
+
+    const fetchAllOrders = async () => {
+        const res = await fetch("http://localhost:8080/api/orders", {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        setAllOrders(data);
+    };
+
+    const updateOrderStatus = async (orderId, status) => {
+        const res = await fetch(`http://localhost:8080/api/orders/${orderId}/status`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ status })
+        });
+
+        if (res.ok) fetchAllOrders();
+    };
+
+    const [orders, setOrders] = useState([]);
+
+    useEffect(() => {
+        fetchOrders();
+    }, []);
+
+    const fetchOrders = async () => {
+        try {
+            const res = await fetch("http://localhost:8080/api/orders", {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            setOrders(data);
+        } catch (error) {
+            console.error("Error al obtener órdenes:", error);
+        }
+    };
+
+    const deleteOrder = async (orderId) => {
+        if (!window.confirm("¿Estás seguro de que quieres eliminar esta orden?")) return;
+
+        try {
+            const res = await fetch(`http://localhost:8080/api/orders/${orderId}`, {
+                method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (res.ok) {
+                alert("✅ Orden eliminada correctamente");
+                setAllOrders(prev => prev.filter(order => order._id !== orderId)); // actualiza UI
+            } else {
+                alert("❌ Error al eliminar la orden");
+            }
+        } catch (error) {
+            console.error("❌ Error al eliminar orden:", error);
+            alert("❌ Falló la eliminación de la orden");
+        }
+    };
+
+
+
     return (
         <div className="p-6  mx-auto pt-24 min-h-screen w-full  bg-gradient-to-b from-zinc-950 via-zinc-900 to-black text-white">
 
@@ -755,6 +825,54 @@ const AdminDashboard = () => {
                     </button>
                 </div>
             </motion.div>
+            <div className="mt-12">
+                <h2 className="text-2xl font-bold text-fuchsia-500 mb-4">Órdenes Recientes</h2>
+                <div className="overflow-x-auto">
+                    <table className="min-w-full text-sm text-left bg-zinc-800 text-white rounded-lg overflow-hidden shadow-lg">
+                        <thead className="bg-zinc-700">
+                            <tr>
+                                <th className="px-6 py-3">Cliente</th>
+                                <th className="px-6 py-3">Total</th>
+                                <th className="px-6 py-3">Estado</th>
+                                <th className="px-6 py-3">Acción</th>
+                                <th className="px-6 py-3">Eliminar</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {allOrders.map((order) => (
+                                <tr key={order._id} className="border-b border-zinc-600">
+                                    <td className="px-6 py-4">{order.user?.name || "Invitado"}</td>
+                                    <td className="px-6 py-4">${order.total.toFixed(2)}</td>
+                                    <td className="px-6 py-4 text-fuchsia-400">{order.status}</td>
+                                    <td className="px-6 py-4">
+                                        <select
+                                            value={order.status}
+                                            onChange={(e) => updateOrderStatus(order._id, e.target.value)}
+                                            className="bg-zinc-700 p-1 rounded"
+                                        >
+                                            <option value="Paid">Pagado</option>
+                                            <option value="En camino">En camino</option>
+                                            <option value="Entregada">Entregada</option>
+                                        </select>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {order.status === "Entregada" && (
+                                            <button
+                                                onClick={() => deleteOrder(order._id)}
+                                                className="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 rounded"
+                                            >
+                                                Borrar
+                                            </button>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
 
 
         </div>
