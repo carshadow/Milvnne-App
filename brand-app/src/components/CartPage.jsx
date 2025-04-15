@@ -1,9 +1,10 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { CartContext } from '../context/CartContext';
 import { AuthContext } from '../context/authContext'; // ✅ Importado
 import { Link, useNavigate } from 'react-router-dom';
 import { loadStripe } from "@stripe/stripe-js";
 import { motion } from 'framer-motion';
+import { FaShoppingBag } from 'react-icons/fa';
 
 const stripePromise = loadStripe("pk_test_51QSkyUB3NdXOFdwIiRiSTs7BfhfFE1PoNYyz4UaFKmjPiVNd9kkwHxIs75odcmFNC8IbUICv3mJUoF9byI8Kul94005kmqRFii");
 
@@ -11,11 +12,20 @@ const CartPage = () => {
     const { cart, removeFromCart, updateQuantity } = useContext(CartContext);
     const { user } = useContext(AuthContext); // ✅ Usado aquí
     const [suggestedProducts, setSuggestedProducts] = useState([]);
+    const [orders, setOrders] = useState([]);
     const navigate = useNavigate();
+
 
     const handleRemove = (cartItemId) => {
         removeFromCart(cartItemId);
     };
+
+    useEffect(() => {
+        if (user && user._id) {
+            fetchOrders();
+            fetchSuggestedProducts();
+        }
+    }, [user]);
 
     // const handleCheckout = async () => {
     //     const stripe = await stripePromise;
@@ -46,6 +56,31 @@ const CartPage = () => {
     //         alert("❌ Error processing payment");
     //     }
     // };
+
+    const fetchOrders = async () => {
+        try {
+            const res = await fetch(`http://localhost:8080/api/orders/user/${user._id}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            const data = await res.json();
+            setOrders(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error('Error fetching orders:', error);
+            setOrders([]);
+        }
+    };
+
+    const fetchSuggestedProducts = async () => {
+        try {
+            const res = await fetch('http://localhost:8080/api/products');
+            const data = await res.json();
+            setSuggestedProducts(data.slice(0, 5));
+        } catch (error) {
+            console.error('Error fetching suggested products:', error);
+        }
+    };
 
     const handleCheckout = async () => {
         const stripe = await stripePromise;
@@ -174,31 +209,64 @@ const CartPage = () => {
             )}
 
             {/* Productos sugeridos (opcional si lo estás usando) */}
-            <div className="mt-20 max-w-6xl mx-auto">
-                <h3 className="text-3xl font-bold text-fuchsia-400 mb-6">
-                    Quizás también te guste
+            <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="rounded-3xl p-10 backdrop-blur-md text-white mt-10"
+            >
+                <h3 className="text-2xl font-bold mb-8 tracking-tight flex items-center gap-3 text-fuchsia-400 text-xl">
+                    <FaShoppingBag className="text-fuchsia-400 text-xl" />
+                    Recomendado para ti
                 </h3>
-                <div className="flex gap-6 overflow-x-auto pb-2">
-                    {suggestedProducts.map((product) => (
-                        <motion.div
-                            key={product._id}
-                            className="min-w-[220px] bg-zinc-800 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl cursor-pointer transition-all"
-                            whileHover={{ scale: 1.05 }}
-                            onClick={() => navigate(`/product/${product._id}`)}
-                        >
-                            <img
-                                src={`http://localhost:8080${product.coverImage}`}
-                                alt={product.name}
-                                className="w-full h-40 object-cover"
-                            />
-                            <div className="p-4">
-                                <h4 className="text-white font-semibold text-lg">{product.name}</h4>
-                                <p className="text-fuchsia-400 font-bold">${product.price}</p>
-                            </div>
-                        </motion.div>
-                    ))}
+
+                <div className="overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-fuchsia-500/30">
+                    <div className="flex gap-6 w-max">
+                        {suggestedProducts.map((product) => (
+                            <motion.div
+                                key={product._id}
+                                whileHover={{ scale: 1.07, rotate: 0.5 }}
+                                transition={{ type: "spring", stiffness: 200 }}
+                                onClick={() => navigate(`/product/${product._id}`)}
+                                className="relative group bg-neutral-900 rounded-2xl w-[220px] flex-shrink-0 cursor-pointer overflow-hidden shadow-lg hover:shadow-fuchsia-500/30 transition-all"
+                            >
+                                {/* Imagen */}
+                                <img
+                                    src={`http://localhost:8080${product.coverImage}`}
+                                    alt={product.name}
+                                    className="w-full h-56 object-cover group-hover:brightness-110 transition duration-500"
+                                />
+
+                                {/* Overlay negro */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-80 z-10"></div>
+
+                                {/* Badge de descuento */}
+                                {product.discount > 0 && (
+                                    <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full z-30">
+                                        -{product.discount}% OFF
+                                    </div>
+                                )}
+
+                                {/* Info */}
+                                <div className="absolute bottom-4 left-4 z-20 space-y-1">
+                                    <h4 className="text-white font-bold text-sm leading-tight">
+                                        {product.name}
+                                    </h4>
+                                    {product.discount > 0 ? (
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs line-through text-gray-400">${Number(product.originalPrice).toFixed(2)}</span>
+                                            <span className="text-fuchsia-400 font-bold text-sm">${Number(product.price).toFixed(2)}</span>
+                                        </div>
+                                    ) : (
+                                        <p className="text-fuchsia-400 font-bold text-sm">${Number(product.price).toFixed(2)}</p>
+                                    )}
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
                 </div>
-            </div>
+
+            </motion.div>
         </div>
     );
 };
