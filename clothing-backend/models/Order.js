@@ -9,6 +9,10 @@ const orderSchema = new mongoose.Schema({
         enum: ["Paid", "Pending", "En camino", "Entregada"],
         default: "Pending"
     },
+    archived: {
+        type: Boolean,
+        default: false
+    },
     address: { type: String, required: true }
 }, { timestamps: true });
 
