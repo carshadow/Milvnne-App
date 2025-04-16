@@ -284,6 +284,9 @@ const AdminDashboard = () => {
     };
 
     const [allOrders, setAllOrders] = useState([]);
+    const [archivedOrders, setArchivedOrders] = useState([]);
+    const [showArchivedModal, setShowArchivedModal] = useState(false);
+
 
     useEffect(() => {
         fetchAllOrders();
@@ -294,7 +297,8 @@ const AdminDashboard = () => {
             headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();
-        setAllOrders(data);
+        const activeOrders = data.filter(order => !order.archived);
+        setAllOrders(activeOrders);
     };
 
     const updateOrderStatus = async (orderId, status) => {
@@ -328,26 +332,68 @@ const AdminDashboard = () => {
         }
     };
 
-    const deleteOrder = async (orderId) => {
-        if (!window.confirm("¿Estás seguro de que quieres eliminar esta orden?")) return;
+    // const deleteOrder = async (orderId) => {
+    //     if (!window.confirm("¿Estás seguro de que quieres eliminar esta orden?")) return;
 
+    //     try {
+    //         const res = await fetch(`http://localhost:8080/api/orders/${orderId}`, {
+    //             method: "DELETE",
+    //             headers: {
+    //                 Authorization: `Bearer ${token}`,
+    //             },
+    //         });
+
+    //         if (res.ok) {
+    //             alert("✅ Orden eliminada correctamente");
+    //             setAllOrders(prev => prev.filter(order => order._id !== orderId)); // actualiza UI
+    //         } else {
+    //             alert("❌ Error al eliminar la orden");
+    //         }
+    //     } catch (error) {
+    //         console.error("❌ Error al eliminar orden:", error);
+    //         alert("❌ Falló la eliminación de la orden");
+    //     }
+    // };
+
+    const archiveOrder = async (orderId) => {
         try {
-            const res = await fetch(`http://localhost:8080/api/orders/${orderId}`, {
-                method: "DELETE",
+            const res = await fetch(`http://localhost:8080/api/orders/${orderId}/archive`, {
+                method: "PUT",
                 headers: {
-                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
                 },
+                body: JSON.stringify({ archived: true })
             });
 
             if (res.ok) {
-                alert("✅ Orden eliminada correctamente");
-                setAllOrders(prev => prev.filter(order => order._id !== orderId)); // actualiza UI
+                alert("✅ Orden archivada");
+                fetchAllOrders(); // refresca la tabla sin esa orden
             } else {
-                alert("❌ Error al eliminar la orden");
+                alert("❌ Error al archivar la orden");
             }
         } catch (error) {
-            console.error("❌ Error al eliminar orden:", error);
-            alert("❌ Falló la eliminación de la orden");
+            console.error("❌ Error al archivar:", error);
+            alert("❌ Fallo al archivar la orden");
+        }
+    };
+
+    const fetchArchivedOrders = async () => {
+        try {
+            const res = await fetch("http://localhost:8080/api/orders/archived", {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+
+            if (Array.isArray(data)) {
+                setArchivedOrders(data);
+            } else {
+                console.error("⚠️ La respuesta no es un array:", data);
+                setArchivedOrders([]);
+            }
+        } catch (error) {
+            console.error("❌ Error al obtener órdenes archivadas:", error);
+            setArchivedOrders([]);
         }
     };
 
@@ -830,12 +876,25 @@ const AdminDashboard = () => {
             </motion.div>
 
             {/* Tracking order table  */}
-
             <div className="mt-12">
-                <h2 className="text-3xl font-bold text-fuchsia-500 mb-6 tracking-wide uppercase">
-                    Órdenes Recientes
-                </h2>
+                {/* ✅ Título y botón separados del table */}
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-3xl font-bold text-fuchsia-500 tracking-wide uppercase">
+                        Órdenes Recientes
+                    </h2>
 
+                    <button
+                        onClick={() => {
+                            fetchArchivedOrders();
+                            setShowArchivedModal(true);
+                        }}
+                        className="bg-fuchsia-600 hover:bg-fuchsia-700 text-white text-sm px-4 py-2 rounded-full shadow"
+                    >
+                        Ver órdenes archivadas
+                    </button>
+                </div>
+
+                {/* ✅ Tabla de órdenes */}
                 <div className="overflow-x-auto rounded-xl shadow-xl border border-zinc-700">
                     <table className="min-w-full bg-zinc-900 text-sm text-left text-white rounded-xl">
                         <thead className="bg-zinc-800 text-fuchsia-400 uppercase text-xs tracking-wider">
@@ -850,11 +909,14 @@ const AdminDashboard = () => {
 
                         <tbody className="divide-y divide-zinc-700">
                             {allOrders.map((order) => (
-                                <tr key={order._id} className="hover:bg-zinc-800/60 transition duration-200"
+                                <tr
+                                    key={order._id}
+                                    className="hover:bg-zinc-800/60 transition duration-200"
                                     onClick={() => {
                                         setSelectedOrder(order);
                                         setShowOrderModal(true);
-                                    }}>
+                                    }}
+                                >
                                     <td className="px-6 py-4 whitespace-nowrap font-medium">
                                         {order.user?.name || (
                                             <span className="italic text-gray-400">Invitado</span>
@@ -868,9 +930,9 @@ const AdminDashboard = () => {
                                     <td className="px-6 py-4">
                                         <span
                                             className={`px-3 py-1 text-xs font-bold rounded-full 
-                  ${order.status === "Paid" ? "bg-blue-600/20 text-blue-400" : ""}
-                  ${order.status === "En camino" ? "bg-yellow-600/20 text-yellow-400" : ""}
-                  ${order.status === "Entregada" ? "bg-green-600/20 text-green-400" : ""}`}
+                ${order.status === "Paid" ? "bg-blue-600/20 text-blue-400" : ""}
+                ${order.status === "En camino" ? "bg-yellow-600/20 text-yellow-400" : ""}
+                ${order.status === "Entregada" ? "bg-green-600/20 text-green-400" : ""}`}
                                         >
                                             {order.status}
                                         </span>
@@ -891,51 +953,101 @@ const AdminDashboard = () => {
                                     <td className="px-6 py-4">
                                         {order.status === "Entregada" && (
                                             <button
-                                                onClick={() => deleteOrder(order._id)}
-                                                className="bg-red-600 hover:bg-red-700 text-white text-xs px-4 py-1 rounded-full shadow-sm transition"
+                                                onClick={() => archiveOrder(order._id)}
+                                                className="bg-yellow-600 hover:bg-yellow-700 text-white text-xs px-4 py-1 rounded-full shadow-sm transition"
                                             >
-                                                Borrar
+                                                Archivar
                                             </button>
                                         )}
                                     </td>
                                 </tr>
-
                             ))}
-                            {showOrderModal && selectedOrder && (
-                                <div className="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center">
-                                    <div className="bg-zinc-900 text-white rounded-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto relative">
-                                        <button
-                                            onClick={() => setShowOrderModal(false)}
-                                            className="absolute top-3 right-3 text-gray-400 hover:text-white"
-                                        >
-                                            <FaTimes />
-                                        </button>
-                                        <h2 className="text-xl font-bold mb-4 text-fuchsia-400">Detalles de la Orden</h2>
-
-                                        <div className="space-y-4">
-                                            {selectedOrder.products.map((item, idx) => (
-                                                <div key={idx} className="bg-zinc-800 p-4 rounded-lg flex gap-4 shadow">
-                                                    <img
-                                                        src={`http://localhost:8080${item.product?.coverImage || "/uploads/default.png"}`}
-                                                        alt={item.product?.name}
-                                                        className="w-14 h-14 object-cover rounded border border-fuchsia-500"
-                                                    />
-                                                    <div>
-                                                        <p className="font-semibold">{item.product?.name || 'Producto eliminado'}</p>
-                                                        <p className="text-sm text-gray-400">Cantidad: {item.quantity}</p>
-                                                        {item.size && <p className="text-sm text-gray-400">Talla: {item.size}</p>}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
                         </tbody>
                     </table>
                 </div>
+
+                {/* ✅ Modal de Detalles */}
+                {showOrderModal && selectedOrder && (
+                    <div className="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center">
+                        <div className="bg-zinc-900 text-white rounded-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto relative">
+                            <button
+                                onClick={() => setShowOrderModal(false)}
+                                className="absolute top-3 right-3 text-gray-400 hover:text-white"
+                            >
+                                <FaTimes />
+                            </button>
+                            <h2 className="text-xl font-bold mb-4 text-fuchsia-400">Detalles de la Orden</h2>
+                            <div className="space-y-4">
+                                {selectedOrder.products.map((item, idx) => (
+                                    <div key={idx} className="bg-zinc-800 p-4 rounded-lg flex gap-4 shadow">
+                                        <img
+                                            src={`http://localhost:8080${item.product?.coverImage || "/uploads/default.png"}`}
+                                            alt={item.product?.name}
+                                            className="w-14 h-14 object-cover rounded border border-fuchsia-500"
+                                        />
+                                        <div>
+                                            <p className="font-semibold">{item.product?.name || 'Producto eliminado'}</p>
+                                            <p className="text-sm text-gray-400">Cantidad: {item.quantity}</p>
+                                            {item.size && <p className="text-sm text-gray-400">Talla: {item.size}</p>}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ✅ Modal de órdenes archivadas */}
+                {showArchivedModal && (
+                    <div className="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center">
+                        <div className="bg-zinc-900 text-white rounded-xl p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto relative">
+                            <button
+                                onClick={() => setShowArchivedModal(false)}
+                                className="absolute top-3 right-3 text-gray-400 hover:text-white"
+                            >
+                                <FaTimes />
+                            </button>
+                            <h2 className="text-xl font-bold mb-6 text-fuchsia-400">Órdenes Archivadas</h2>
+
+                            {archivedOrders.length === 0 ? (
+                                <p className="text-gray-400 italic">No hay órdenes archivadas aún.</p>
+                            ) : (
+                                <div className="space-y-4">
+                                    {archivedOrders.map((order) => (
+                                        <div
+                                            key={order._id}
+                                            className="bg-zinc-800 p-4 rounded-lg shadow border border-zinc-700"
+                                        >
+                                            <p className="text-sm font-semibold text-white">
+                                                Cliente: {order.user?.name || "Invitado"}
+                                            </p>
+                                            <p className="text-sm text-gray-400">Total: ${order.total.toFixed(2)}</p>
+                                            <p className="text-sm text-gray-500">Estado: {order.status}</p>
+                                            <div className="mt-2 space-y-2">
+                                                {order.products.map((item, idx) => (
+                                                    <div key={idx} className="flex items-center gap-4">
+                                                        <img
+                                                            src={`http://localhost:8080${item.product?.coverImage || "/uploads/default.png"}`}
+                                                            alt={item.product?.name}
+                                                            className="w-10 h-10 object-cover rounded border border-fuchsia-500"
+                                                        />
+                                                        <div>
+                                                            <p className="text-sm">{item.product?.name}</p>
+                                                            {item.size && <p className="text-xs text-gray-400">Talla: {item.size}</p>}
+                                                            <p className="text-xs text-gray-500">Cantidad: {item.quantity}</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
+
 
 
 

@@ -74,4 +74,36 @@ router.delete('/:id', async (req, res) => {
 });
 
 
+// Archivar orden (sin eliminarla de la base de datos)
+router.put('/:id/archive', async (req, res) => {
+    try {
+        const order = await Order.findByIdAndUpdate(
+            req.params.id,
+            { archived: true },
+            { new: true }
+        );
+        if (!order) {
+            return res.status(404).json({ message: "Orden no encontrada" });
+        }
+        res.status(200).json({ message: "Orden archivada correctamente", order });
+    } catch (error) {
+        console.error("Error al archivar la orden:", error);
+        res.status(500).json({ message: "Error del servidor al archivar la orden" });
+    }
+});
+
+// Obtener solo órdenes archivadas
+router.get("/archived", async (req, res) => {
+    try {
+        const orders = await Order.find({ archived: true })
+            .populate("products.product")
+            .populate("user")
+            .sort({ createdAt: -1 });
+
+        res.json(orders);
+    } catch (err) {
+        res.status(500).json({ message: "Error al obtener órdenes archivadas", error: err.message });
+    }
+});
+
 export default router;
