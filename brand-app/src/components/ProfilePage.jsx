@@ -12,6 +12,7 @@ const ProfilePage = () => {
     const navigate = useNavigate();
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [showOrderModal, setShowOrderModal] = useState(false);
+    const [loadingOrders, setLoadingOrders] = useState(true);
 
     useEffect(() => {
         if (user && user._id) {
@@ -21,6 +22,7 @@ const ProfilePage = () => {
     }, [user]);
 
     const fetchOrders = async () => {
+        setLoadingOrders(true);
         try {
             const res = await fetch(`http://localhost:8080/api/orders/user/${user._id}`, {
                 headers: {
@@ -32,6 +34,8 @@ const ProfilePage = () => {
         } catch (error) {
             console.error('Error fetching orders:', error);
             setOrders([]);
+        } finally {
+            setLoadingOrders(false);
         }
     };
 
@@ -52,6 +56,19 @@ const ProfilePage = () => {
         logout();        // Llama la función del contexto que hace el logout real
         navigate('/');   // Te manda a la página principal
     };
+
+    const OrderSkeleton = () => (
+        <div className="animate-pulse rounded-2xl bg-zinc-900 border border-white/10 p-5 shadow-xl">
+            <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-zinc-700 rounded-xl" />
+                <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-zinc-700 rounded w-3/4" />
+                    <div className="h-3 bg-zinc-700 rounded w-1/2" />
+                    <div className="h-3 bg-zinc-800 rounded w-1/3" />
+                </div>
+            </div>
+        </div>
+    );
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-black to-slate-300 py-20 px-6">
@@ -122,7 +139,13 @@ const ProfilePage = () => {
                             Tus órdenes
                         </h3>
 
-                        {orders.length === 0 ? (
+                        {loadingOrders ? (
+                            <div className="space-y-6">
+                                <OrderSkeleton />
+                                <OrderSkeleton />
+                                <OrderSkeleton />
+                            </div>
+                        ) : orders.length === 0 ? (
                             <p className="text-gray-400 text-sm italic">Aún no tienes órdenes registradas.</p>
                         ) : (
                             <>
