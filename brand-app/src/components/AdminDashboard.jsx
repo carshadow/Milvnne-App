@@ -843,98 +843,121 @@ const AdminDashboard = () => {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
-                className="mt-16 text-white max-w-7xl mx-auto"
+                className="mt-16 text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
             >
-                <h2 className="text-3xl font-bold text-fuchsia-400 mb-6">Gestionar Categorías</h2>
+                <h2 className="text-4xl font-extrabold text-fuchsia-400 mb-10 text-center tracking-tight">
+                    Gestionar Categorías
+                </h2>
 
-                {/* Lista de Categorías */}
-                <div className="grid gap-6">
-                    {categories.map((cat, index) => (
-                        <div
-                            key={cat._id}
-                            className="bg-zinc-800 border border-zinc-700 rounded-xl p-6 shadow-lg flex flex-col md:flex-row md:items-center gap-6"
-                        >
-                            {/* Input Nombre */}
-                            <input
-                                type="text"
-                                value={cat.name}
-                                onChange={(e) => renameCategory(cat._id, e.target.value)}
-                                className="bg-zinc-700 border border-zinc-600 p-2 rounded w-full md:w-1/4 focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
-                                placeholder="Nombre categoría"
-                            />
+                {/* Tabla de categorías */}
+                <div className="overflow-x-auto rounded-xl shadow-lg border border-zinc-700">
+                    <table className="min-w-full bg-zinc-800 border-separate border-spacing-y-2">
+                        <thead>
+                            <tr className="text-left text-sm text-gray-300 uppercase bg-zinc-900">
+                                <th className="p-4">Imagen</th>
+                                <th className="p-4">Nombre</th>
+                                <th className="p-4">Cambiar Imagen</th>
+                                <th className="p-4 text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {categories.map((cat, index) => (
+                                <tr key={cat._id} className="bg-zinc-700/50 backdrop-blur-xl hover:bg-zinc-700 transition rounded-lg">
+                                    {/* Imagen preview */}
+                                    <td className="p-4">
+                                        {cat.imageUrl ? (
+                                            <img
+                                                src={cat.imageUrl}
+                                                alt={cat.name}
+                                                className="w-16 h-16 object-cover rounded-lg border border-zinc-600 shadow-md"
+                                            />
+                                        ) : (
+                                            <span className="text-gray-400">Sin imagen</span>
+                                        )}
+                                    </td>
 
-                            {/* Input Imagen */}
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => updateCategoryImage(cat._id, e.target.files[0])}
-                                className="text-sm w-full md:w-1/3 bg-zinc-900 border border-zinc-600 rounded p-2"
-                            />
+                                    {/* Nombre editable */}
+                                    <td className="p-4">
+                                        <input
+                                            type="text"
+                                            value={cat.name}
+                                            onChange={(e) => renameCategory(cat._id, e.target.value)}
+                                            className="bg-zinc-800 border border-zinc-600 p-2 rounded w-full text-sm focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
+                                        />
+                                    </td>
 
-                            {/* Imagen preview */}
-                            {cat.imageUrl && (
-                                <img
-                                    src={cat.imageUrl}
-                                    alt={cat.name}
-                                    className="w-20 h-20 object-cover rounded-lg border border-zinc-700 shadow-md"
-                                />
-                            )}
+                                    {/* Input para cambiar imagen */}
+                                    <td className="p-4">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => updateCategoryImage(cat._id, e.target.files[0])}
+                                            className="w-full text-sm text-gray-300 file:bg-fuchsia-600 file:border-none file:px-3 file:py-1 file:rounded file:text-white file:cursor-pointer"
+                                        />
+                                    </td>
 
-                            {/* Botones */}
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => moveCategory(index, -1)}
-                                    className="bg-zinc-700 text-white px-3 py-1 rounded hover:bg-zinc-600"
-                                    title="Subir"
-                                >
-                                    ⬆
-                                </button>
-                                <button
-                                    onClick={() => moveCategory(index, 1)}
-                                    className="bg-zinc-700 text-white px-3 py-1 rounded hover:bg-zinc-600"
-                                    title="Bajar"
-                                >
-                                    ⬇
-                                </button>
-                                <button
-                                    onClick={() => deleteCategory(cat._id)}
-                                    className="bg-red-600 px-3 py-1 rounded text-white hover:bg-red-700"
-                                    title="Eliminar"
-                                >
-                                    🗑
-                                </button>
-                            </div>
-
-
-                        </div>
-                    ))}
+                                    {/* Acciones */}
+                                    <td className="p-4 text-center">
+                                        <div className="flex justify-center gap-2">
+                                            <button
+                                                onClick={() => moveCategory(index, -1)}
+                                                className="bg-zinc-700 hover:bg-zinc-600 text-white px-2 py-1 rounded transition"
+                                                title="Subir"
+                                            >
+                                                ⬆
+                                            </button>
+                                            <button
+                                                onClick={() => moveCategory(index, 1)}
+                                                className="bg-zinc-700 hover:bg-zinc-600 text-white px-2 py-1 rounded transition"
+                                                title="Bajar"
+                                            >
+                                                ⬇
+                                            </button>
+                                            <button
+                                                onClick={() => deleteCategory(cat._id)}
+                                                className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded transition"
+                                                title="Eliminar"
+                                            >
+                                                🗑
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
 
-                {/* Añadir Nueva Categoría */}
-                <div className="mt-10 bg-zinc-800 border border-zinc-700 p-6 rounded-xl shadow-lg flex flex-col md:flex-row items-center gap-4">
-                    <input
-                        type="text"
-                        placeholder="Nombre nueva categoría"
-                        value={newCategory}
-                        onChange={(e) => setNewCategory(e.target.value)}
-                        className="w-full md:w-1/3 bg-zinc-700 border border-zinc-600 p-2 rounded text-white focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
-                    />
+                {/* Añadir nueva categoría */}
+                <div className="mt-14 bg-zinc-800 border border-zinc-700 p-6 rounded-2xl shadow-xl space-y-6">
+                    <h3 className="text-2xl font-bold text-fuchsia-300 text-center">Agregar Nueva Categoría</h3>
 
-                    <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => setNewCategoryImage(e.target.files[0])}
-                        className="w-full md:w-1/3 bg-zinc-900 border border-zinc-600 p-2 rounded text-sm text-white"
-                    />
+                    <div className="flex flex-col lg:flex-row gap-6">
+                        <input
+                            type="text"
+                            placeholder="Nombre nueva categoría"
+                            value={newCategory}
+                            onChange={(e) => setNewCategory(e.target.value)}
+                            className="w-full lg:w-1/3 bg-zinc-700 border border-zinc-600 p-3 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
+                        />
 
-                    <button
-                        onClick={createCategory}
-                        className="w-full md:w-auto px-6 py-2 bg-fuchsia-500 hover:bg-fuchsia-600 text-white font-semibold rounded transition"
-                    >
-                        Agregar
-                    </button>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setNewCategoryImage(e.target.files[0])}
+                            className="w-full lg:w-1/3 text-sm file:bg-fuchsia-600 file:border-none file:px-4 file:py-2 file:rounded-lg file:text-white file:cursor-pointer"
+                        />
+
+                        <button
+                            onClick={createCategory}
+                            className="px-6 py-3 bg-fuchsia-500 hover:bg-fuchsia-600 text-white font-semibold rounded-lg transition w-full lg:w-auto"
+                        >
+                            Agregar
+                        </button>
+                    </div>
                 </div>
             </motion.div>
+
 
             {/* Tracking order table  */}
             <div className="mt-12">
