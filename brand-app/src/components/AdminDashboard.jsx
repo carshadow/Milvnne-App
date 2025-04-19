@@ -1030,7 +1030,7 @@ const AdminDashboard = () => {
                                                 {order.products.map((item, idx) => (
                                                     <div key={idx} className="flex items-center gap-4">
                                                         <img
-                                                            src={`http://localhost:8080${item.product?.coverImage || "/uploads/default.png"}`}
+                                                            src={item.product?.coverImage || "/default.png"}
                                                             alt={item.product?.name}
                                                             className="w-10 h-10 object-cover rounded border border-fuchsia-500"
                                                         />
