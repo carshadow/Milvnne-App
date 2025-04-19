@@ -21,9 +21,9 @@ const CartPage = () => {
     };
 
     useEffect(() => {
+        fetchSuggestedProducts(); // Siempre traer sugerencias
         if (user && user._id) {
-            fetchOrders();
-            fetchSuggestedProducts();
+            fetchOrders(); // Solo traer órdenes si hay usuario
         }
     }, [user]);
 
