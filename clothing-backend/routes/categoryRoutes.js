@@ -1,24 +1,28 @@
 import express from 'express';
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
 import Category from '../models/Category.js';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
 
 const router = express.Router();
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
-// 📦 Configuración de Multer
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, path.join(__dirname, '../uploads'));
-    },
-    filename: function (req, file, cb) {
-        cb(null, `${Date.now()}-${file.originalname}`);
-    }
+// 🧠 Configurar Cloudinary
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
+// 📦 Configurar almacenamiento con Cloudinary
+const storage = new CloudinaryStorage({
+    cloudinary,
+    params: {
+        folder: 'categories', // puedes cambiar el nombre de la carpeta en Cloudinary
+        allowed_formats: ['jpg', 'jpeg', 'png'],
+        transformation: [{ width: 500, height: 500, crop: 'limit' }],
+    },
+});
+
 const upload = multer({ storage });
 
 // ✅ Obtener todas las categorías
@@ -40,10 +44,12 @@ router.post('/', upload.single('image'), async (req, res) => {
         const exists = await Category.findOne({ name });
         if (exists) return res.status(400).json({ message: 'Category already exists' });
 
-        const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
         const count = await Category.countDocuments();
 
-        const newCategory = new Category({ name, imageUrl, order: count });
+        const imageUrl = req.file ? req.file.path : null;
+        const imagePublicId = req.file ? req.file.filename : null;
+
+        const newCategory = new Category({ name, imageUrl, imagePublicId, order: count });
         await newCategory.save();
 
         res.status(201).json(newCategory);
@@ -59,9 +65,9 @@ router.delete('/:id', async (req, res) => {
         const category = await Category.findByIdAndDelete(req.params.id);
         if (!category) return res.status(404).json({ message: 'Category not found' });
 
-        if (category.imageUrl) {
-            const filePath = path.join(__dirname, '..', category.imageUrl);
-            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        // 🗑️ Borrar imagen de Cloudinary
+        if (category.imagePublicId) {
+            await cloudinary.uploader.destroy(category.imagePublicId);
         }
 
         res.json({ message: 'Category deleted' });
@@ -87,12 +93,15 @@ router.put('/:id/image', upload.single('image'), async (req, res) => {
         const category = await Category.findById(req.params.id);
         if (!category) return res.status(404).json({ message: 'Category not found' });
 
-        if (category.imageUrl) {
-            const oldPath = path.join(__dirname, '..', category.imageUrl);
-            if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+        // 🗑️ Eliminar imagen anterior de Cloudinary
+        if (category.imagePublicId) {
+            await cloudinary.uploader.destroy(category.imagePublicId);
         }
 
-        category.imageUrl = `/uploads/${req.file.filename}`;
+        // 🆕 Subir nueva imagen
+        category.imageUrl = req.file.path;
+        category.imagePublicId = req.file.filename;
+
         await category.save();
         res.json(category);
     } catch (err) {

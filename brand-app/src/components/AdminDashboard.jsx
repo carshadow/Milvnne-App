@@ -171,6 +171,9 @@ const AdminDashboard = () => {
                 method: "POST",
                 credentials: "include",
                 body: formData,
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
             });
             const data = await res.json();
 
@@ -627,7 +630,7 @@ const AdminDashboard = () => {
                                         <tr key={product._id} className="border-t border-zinc-700 hover:bg-zinc-800 transition-all">
                                             <td className="px-6 py-4">
                                                 <img
-                                                    src={`http://localhost:8080${product.coverImage}`}
+                                                    src={product.coverImage}
                                                     alt={product.name}
                                                     className="w-16 h-16 object-cover rounded shadow"
                                                 />
@@ -813,7 +816,7 @@ const AdminDashboard = () => {
                             {/* Imagen preview */}
                             {cat.imageUrl && (
                                 <img
-                                    src={`http://localhost:8080${cat.imageUrl}`}
+                                    src={cat.imageUrl}
                                     alt={cat.name}
                                     className="w-20 h-20 object-cover rounded-lg border border-zinc-700 shadow-md"
                                 />
@@ -981,7 +984,7 @@ const AdminDashboard = () => {
                                 {selectedOrder.products.map((item, idx) => (
                                     <div key={idx} className="bg-zinc-800 p-4 rounded-lg flex gap-4 shadow">
                                         <img
-                                            src={`http://localhost:8080${item.product?.coverImage || "/uploads/default.png"}`}
+                                            src={item.product?.coverImage || "/default.png"}
                                             alt={item.product?.name}
                                             className="w-14 h-14 object-cover rounded border border-fuchsia-500"
                                         />
