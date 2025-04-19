@@ -33,15 +33,15 @@ router.post("/create-checkout-session", async (req, res) => {
             };
         });
 
-        const customerEmail = cartItems[0]?.email || "milvnne@no-reply.com"; // fallback por si no viene
+        const customerEmail = cartItems[0]?.email;
 
-        const session = await stripe.checkout.sessions.create({
+        const sessionData = {
             payment_method_types: ["card"],
-            customer_email: customerEmail, // 👈 importante para Nodemailer
             line_items: lineItems,
             mode: "payment",
             success_url: "http://localhost:3000/success",
             cancel_url: "http://localhost:3000/cart",
+            customer_creation: 'always', // Esto le permite a Stripe guardar el email que el usuario ponga
             custom_fields: [
                 {
                     key: "address",
@@ -55,7 +55,6 @@ router.post("/create-checkout-session", async (req, res) => {
             ],
             metadata: {
                 userId: cartItems[0]?.userId || "guest",
-                email: customerEmail, // también puedes guardar como backup
                 items: JSON.stringify(
                     cartItems.map((item) => ({
                         product: item.product,
@@ -64,9 +63,16 @@ router.post("/create-checkout-session", async (req, res) => {
                         coverImage: item.image
                     }))
                 ),
-            },
-        });
+            }
+        };
 
+
+        // ✅ Solo añadir el email si el usuario está loggeado
+        if (customerEmail) {
+            sessionData.customer_email = customerEmail;
+        }
+
+        const session = await stripe.checkout.sessions.create(sessionData);
 
         res.json({ id: session.id });
     } catch (error) {
