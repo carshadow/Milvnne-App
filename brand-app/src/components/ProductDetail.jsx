@@ -61,7 +61,7 @@ const ProductDetail = () => {
                 <div className="w-full md:w-1/2 space-y-6">
                     <div className="bg-zinc-800 rounded-xl overflow-hidden shadow-lg">
                         <img
-                            src={`http://localhost:8080${selectedImage}`}
+                            src={selectedImage}
                             alt="Producto"
                             className="w-full object-cover rounded-xl"
                         />
@@ -70,7 +70,7 @@ const ProductDetail = () => {
                         {[product.coverImage, product.hoverImage, ...product.images].map((img, index) => (
                             <img
                                 key={index}
-                                src={`http://localhost:8080${img}`}
+                                src={img}
                                 alt={`Miniatura ${index + 1}`}
                                 className={`w-16 h-16 object-cover rounded-lg border-2 cursor-pointer 
                                     ${selectedImage === img ? "border-fuchsia-500" : "border-transparent"} 

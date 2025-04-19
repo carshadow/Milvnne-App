@@ -162,7 +162,8 @@ const ProfilePage = () => {
                                         >
                                             <div className="flex items-center gap-4">
                                                 <img
-                                                    src={`http://localhost:8080${order.products[0]?.product?.coverImage || "/uploads/default.png"}`}
+                                                    src={order.products[0]?.product?.coverImage || "https://res.cloudinary.com/dkx4n6r0v/image/upload/v1710000000/milvnne-products/default.png"}
+
                                                     alt="Producto"
                                                     className="w-16 h-16 object-cover rounded-xl border border-fuchsia-500 shadow-md"
                                                 />
@@ -204,7 +205,8 @@ const ProfilePage = () => {
                                                             className="bg-zinc-800 p-4 rounded-xl flex items-center gap-4 shadow"
                                                         >
                                                             <img
-                                                                src={`http://localhost:8080${item.product?.coverImage || "/uploads/default.png"}`}
+                                                                src={item.product?.coverImage || "https://res.cloudinary.com/dkx4n6r0v/image/upload/v1710000000/milvnne-products/default.png"}
+
                                                                 alt={item.product?.name}
                                                                 className="w-12 h-12 object-cover rounded border border-fuchsia-500"
                                                             />
@@ -252,7 +254,7 @@ const ProfilePage = () => {
                                 >
                                     {/* Imagen */}
                                     <img
-                                        src={`http://localhost:8080${product.coverImage}`}
+                                        src={product.coverImage}
                                         alt={product.name}
                                         className="w-full h-56 object-cover group-hover:brightness-110 transition duration-500"
                                     />

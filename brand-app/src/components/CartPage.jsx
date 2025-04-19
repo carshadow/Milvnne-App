@@ -148,7 +148,7 @@ const CartPage = () => {
                             >
                                 <div className="flex items-center space-x-6">
                                     <img
-                                        src={`http://localhost:8080${item.product.coverImage}`}
+                                        src={item.product.coverImage}
                                         alt={item.product.name}
                                         className="w-28 h-28 object-cover rounded-lg border-2 border-fuchsia-500"
                                     />
@@ -232,7 +232,7 @@ const CartPage = () => {
                             >
                                 {/* Imagen */}
                                 <img
-                                    src={`http://localhost:8080${product.coverImage}`}
+                                    src={product.coverImage}
                                     alt={product.name}
                                     className="w-full h-56 object-cover group-hover:brightness-110 transition duration-500"
                                 />

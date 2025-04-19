@@ -28,14 +28,14 @@ const Products = () => {
 
     // Fetch categories (order + image)
     useEffect(() => {
-        setLoading(true); // Asegura que comienza como true
+        setLoading(true);
         fetch('http://localhost:8080/api/categories')
             .then(res => res.json())
             .then(data => {
                 const order = data.map(c => c.name);
                 const imageMap = {};
                 data.forEach(c => {
-                    imageMap[c.name] = `http://localhost:8080${c.imageUrl}`; // ✅ usa el campo correcto con ruta
+                    imageMap[c.name] = c.imageUrl; // ✅ Cloudinary URL directo
                 });
                 setCategoryOrder(order);
                 setCategoryImages(imageMap);
@@ -80,6 +80,16 @@ const Products = () => {
         }));
 
     groupedProducts.push(...remainingGroups);
+
+    // const transformCloudinaryImage = (url) => {
+    //     if (!url) return '';
+    //     return url.includes('/upload/')
+    //         ? url.replace(
+    //             '/upload/',
+    //             '/upload/f_auto,q_auto:best,w_1920,h_1080,c_fill,g_auto,dpr_auto/'
+    //         )
+    //         : url;
+    // };
     return (
         <div className="min-h-screen bg-gradient-to-b from-black to-slate-400 text-white font-sans">
             {/* HERO SECTION */}
@@ -166,8 +176,8 @@ const Products = () => {
                                 <Skeleton
                                     height="100%"
                                     width="100%"
-                                    baseColor="#27272a"  // zinc-800
-                                    highlightColor="#3f3f46" // zinc-700
+                                    baseColor="#27272a"
+                                    highlightColor="#3f3f46"
                                     className="rounded-xl"
                                 />
                             </div>
@@ -190,6 +200,8 @@ const Products = () => {
                                     </h2>
                                 </div>
                             </motion.div>
+
+
                         )}
 
                         {/* Productos de esa categoría */}
@@ -228,13 +240,13 @@ const Products = () => {
                                         >
                                             <Link to={`/product/${product._id}`} onClick={() => window.scrollTo(0, 0)}>
                                                 <img
-                                                    src={`http://localhost:8080${product.coverImage}`}
+                                                    src={product.coverImage}
                                                     alt={product.name}
                                                     className="w-full h-full object-cover transition-opacity duration-500 group-hover:opacity-0"
                                                 />
                                                 <img
                                                     className="absolute top-0 left-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10"
-                                                    src={`http://localhost:8080${product.hoverImage}`}
+                                                    src={product.hoverImage}
                                                 />
                                                 <div className="absolute bottom-4 left-4 right-4 z-20 bg-black/70 text-white p-4 rounded-lg shadow-md">
                                                     <h4 className="font-bold text-lg truncate">{product.name}</h4>
