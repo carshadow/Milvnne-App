@@ -33,12 +33,15 @@ router.post("/create-checkout-session", async (req, res) => {
             };
         });
 
-        const session = await stripe.checkout.sessions.create({
+        const customerEmail = cartItems[0]?.email;
+
+        const sessionData = {
             payment_method_types: ["card"],
             line_items: lineItems,
             mode: "payment",
             success_url: "http://localhost:3000/success",
             cancel_url: "http://localhost:3000/cart",
+            customer_creation: 'always', // Esto le permite a Stripe guardar el email que el usuario ponga
             custom_fields: [
                 {
                     key: "address",
@@ -57,10 +60,19 @@ router.post("/create-checkout-session", async (req, res) => {
                         product: item.product,
                         quantity: item.quantity,
                         size: item.size,
+                        coverImage: item.image
                     }))
                 ),
-            },
-        });
+            }
+        };
+
+
+        // ✅ Solo añadir el email si el usuario está loggeado
+        if (customerEmail) {
+            sessionData.customer_email = customerEmail;
+        }
+
+        const session = await stripe.checkout.sessions.create(sessionData);
 
         res.json({ id: session.id });
     } catch (error) {
