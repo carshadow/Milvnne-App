@@ -201,7 +201,6 @@ const AdminDashboard = () => {
         }
     };
 
-
     const handleEditProduct = async () => {
         if (!editingProduct) return;
 
@@ -209,7 +208,9 @@ const AdminDashboard = () => {
             const discount = editingProduct.discount !== "" && !isNaN(editingProduct.discount)
                 ? parseFloat(editingProduct.discount)
                 : 0;
-            const originalPrice = editingProduct.originalPrice !== "" ? parseFloat(editingProduct.originalPrice) : parseFloat(editingProduct.price);
+            const originalPrice = editingProduct.originalPrice !== ""
+                ? parseFloat(editingProduct.originalPrice)
+                : parseFloat(editingProduct.price);
             const userPrice = parseFloat(editingProduct.price);
 
             const validDiscount = isNaN(discount) ? 0 : discount;
@@ -224,19 +225,35 @@ const AdminDashboard = () => {
                 finalOriginal = userPrice;
             }
 
+            const formData = new FormData();
+            formData.append("name", editingProduct.name);
+            formData.append("price", finalPrice);
+            formData.append("description", editingProduct.description);
+            formData.append("discount", validDiscount);
+            formData.append("originalPrice", finalOriginal);
+
+            // Tallas
+            Object.entries(editingProduct.sizes).forEach(([size, value]) => {
+                formData.append(`sizes[${size}]`, value);
+            });
+
+            // Archivos (si se modificaron)
+            if (editingProduct.newCoverImage) {
+                formData.append("coverImage", editingProduct.newCoverImage);
+            }
+            if (editingProduct.newHoverImage) {
+                formData.append("hoverImage", editingProduct.newHoverImage);
+            }
+            if (editingProduct.newImages && editingProduct.newImages.length > 0) {
+                editingProduct.newImages.forEach((file, i) => {
+                    formData.append("images", file); // importante que sea "images" sin [i] si estás usando multer.array
+                });
+            }
 
             const res = await fetch(`http://localhost:8080/api/products/${editingProduct._id}`, {
                 method: "PUT",
                 credentials: "include",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    name: editingProduct.name,
-                    price: finalPrice,
-                    description: editingProduct.description,
-                    sizes: editingProduct.sizes,
-                    discount: validDiscount,
-                    originalPrice: finalOriginal,
-                }),
+                body: formData
             });
 
             if (res.ok) {
@@ -252,6 +269,7 @@ const AdminDashboard = () => {
             alert("❌ Error al actualizar producto");
         }
     };
+
 
 
 
@@ -665,43 +683,122 @@ const AdminDashboard = () => {
 
                 {/* MODAL DE EDICIÓN */}
                 {showEditModal && editingProduct && (
-                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center">
-                        <div className="bg-zinc-900 border border-zinc-700 text-white p-6 rounded-2xl shadow-2xl w-full max-w-xl space-y-4">
-                            <h2 className="text-2xl font-bold text-fuchsia-400 text-center">Editar Producto</h2>
+                    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center px-4 sm:px-6">
+                        <div className="w-full max-w-3xl bg-zinc-900 border border-zinc-700 text-white p-8 sm:p-10 rounded-3xl shadow-2xl overflow-y-auto max-h-[95vh] space-y-6">
+                            <h2 className="text-3xl font-bold text-fuchsia-400 text-center mb-4">Editar Producto</h2>
 
-                            <div>
-                                <label className="text-sm">Nombre</label>
+                            {/* Imagen principal */}
+                            <div className="space-y-1">
+                                <label className="text-sm text-gray-300">Imagen Principal (Cover)</label>
                                 <input
-                                    className="w-full bg-zinc-800 border border-zinc-600 p-2 rounded mt-1"
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => setEditingProduct({ ...editingProduct, newCoverImage: e.target.files[0] })}
+                                    className="block w-full text-sm text-gray-300 file:bg-fuchsia-600 file:border-none file:px-4 file:py-2 file:rounded file:text-white file:cursor-pointer"
+                                />
+                            </div>
+
+                            {/* Hover image */}
+                            <div className="space-y-1">
+                                <label className="text-sm text-gray-300">Imagen Hover</label>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => setEditingProduct({ ...editingProduct, newHoverImage: e.target.files[0] })}
+                                    className="block w-full text-sm text-gray-300 file:bg-fuchsia-600 file:border-none file:px-4 file:py-2 file:rounded file:text-white file:cursor-pointer"
+                                />
+                            </div>
+
+                            {/* Adicionales */}
+                            <div className="space-y-1">
+                                <label className="text-sm text-gray-300">Imágenes Adicionales</label>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    onChange={(e) => setEditingProduct({ ...editingProduct, newImages: [...e.target.files] })}
+                                    className="block w-full text-sm text-gray-300 file:bg-fuchsia-600 file:border-none file:px-4 file:py-2 file:rounded file:text-white file:cursor-pointer"
+                                />
+                            </div>
+
+                            {/* Nombre */}
+                            <div>
+                                <label className="text-sm text-gray-300">Nombre</label>
+                                <input
+                                    className="w-full bg-zinc-800 border border-zinc-600 p-3 rounded mt-1"
                                     type="text"
                                     value={editingProduct.name}
                                     onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
                                 />
                             </div>
 
+                            {/* Precio y Descuento */}
+                            <div className="grid sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-sm text-gray-300">Precio</label>
+                                    <input
+                                        className="w-full bg-zinc-800 border border-zinc-600 p-3 rounded mt-1"
+                                        type="number"
+                                        value={editingProduct.price}
+                                        onChange={(e) => setEditingProduct({ ...editingProduct, price: e.target.value })}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="text-sm text-gray-300">Precio Original</label>
+                                    <input
+                                        className="w-full bg-zinc-800 border border-zinc-600 p-3 rounded mt-1"
+                                        type="number"
+                                        value={editingProduct.originalPrice || ""}
+                                        onChange={(e) => {
+                                            const original = parseFloat(e.target.value);
+                                            const discount = parseFloat(editingProduct.discount || 0);
+                                            const discounted = original * (1 - discount / 100);
+                                            setEditingProduct((prev) => ({
+                                                ...prev,
+                                                originalPrice: original,
+                                                price: discounted.toFixed(2),
+                                            }));
+                                        }}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Descuento */}
                             <div>
-                                <label className="text-sm">Precio</label>
+                                <label className="text-sm text-gray-300">Descuento (%)</label>
                                 <input
-                                    className="w-full bg-zinc-800 border border-zinc-600 p-2 rounded mt-1"
+                                    className="w-full bg-zinc-800 border border-zinc-600 p-3 rounded mt-1"
                                     type="number"
-                                    value={editingProduct.price}
-                                    onChange={(e) => setEditingProduct({ ...editingProduct, price: e.target.value })}
+                                    value={editingProduct.discount || ""}
+                                    onChange={(e) => {
+                                        const discount = parseFloat(e.target.value);
+                                        const original = parseFloat(editingProduct.originalPrice || 0);
+                                        const discounted = original * (1 - (discount || 0) / 100);
+                                        setEditingProduct((prev) => ({
+                                            ...prev,
+                                            discount: discount || 0,
+                                            price: discounted.toFixed(2),
+                                        }));
+                                    }}
                                 />
                             </div>
 
+                            {/* Descripción */}
                             <div>
-                                <label className="text-sm">Descripción</label>
+                                <label className="text-sm text-gray-300">Descripción</label>
                                 <textarea
-                                    className="w-full bg-zinc-800 border border-zinc-600 p-2 rounded mt-1"
-                                    rows="3"
+                                    className="w-full bg-zinc-800 border border-zinc-600 p-3 rounded mt-1 resize-none"
+                                    rows="4"
                                     value={editingProduct.description}
                                     onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
                                 />
                             </div>
 
+                            {/* Tallas */}
                             <div>
-                                <label className="text-sm">Tallas</label>
-                                <div className="grid grid-cols-4 gap-2 mt-2">
+                                <label className="text-sm text-gray-300">Tallas</label>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-2">
                                     {["S", "M", "L", "XL"].map((size) => (
                                         <div key={size} className="flex flex-col">
                                             <span className="text-xs text-gray-400 mb-1">{size}</span>
@@ -721,56 +818,16 @@ const AdminDashboard = () => {
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="text-sm">Precio Original ($)</label>
-                                <input
-                                    className="w-full bg-zinc-800 border border-zinc-600 p-2 rounded mt-1"
-                                    type="number"
-                                    value={editingProduct.originalPrice || ""}
-                                    onChange={(e) => {
-                                        const original = parseFloat(e.target.value);
-                                        const discount = parseFloat(editingProduct.discount || 0);
-                                        const discounted = original * (1 - discount / 100);
-                                        setEditingProduct((prev) => ({
-                                            ...prev,
-                                            originalPrice: original,
-                                            price: discounted.toFixed(2),
-                                        }));
-                                    }}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="text-sm">Descuento (%)</label>
-                                <input
-                                    className="w-full bg-zinc-800 border border-zinc-600 p-2 rounded mt-1"
-                                    type="number"
-                                    placeholder="Ej: 20"
-                                    value={editingProduct.discount || ""}
-                                    onChange={(e) => {
-                                        const discount = parseFloat(e.target.value);
-                                        const original = parseFloat(editingProduct.originalPrice || 0);
-                                        const discounted = original * (1 - (discount || 0) / 100);
-                                        setEditingProduct((prev) => ({
-                                            ...prev,
-                                            discount: discount || 0,
-                                            price: discounted.toFixed(2),
-                                        }));
-                                    }}
-                                />
-                            </div>
-
-
-
-                            <div className="flex justify-between pt-4">
+                            {/* Botones */}
+                            <div className="flex flex-col sm:flex-row justify-between gap-4 pt-6">
                                 <button
-                                    className="bg-green-600 px-4 py-2 rounded-md hover:bg-green-700 transition"
+                                    className="bg-green-600 w-full sm:w-auto px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition"
                                     onClick={handleEditProduct}
                                 >
                                     Guardar
                                 </button>
                                 <button
-                                    className="bg-gray-600 px-4 py-2 rounded-md hover:bg-gray-700 transition"
+                                    className="bg-gray-600 w-full sm:w-auto px-6 py-3 rounded-lg font-semibold hover:bg-gray-700 transition"
                                     onClick={() => setShowEditModal(false)}
                                 >
                                     Cancelar
@@ -778,6 +835,7 @@ const AdminDashboard = () => {
                             </div>
                         </div>
                     </div>
+
                 )}
             </div>
 
