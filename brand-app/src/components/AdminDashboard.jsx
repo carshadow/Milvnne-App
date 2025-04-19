@@ -331,6 +331,10 @@ const AdminDashboard = () => {
             },
             body: JSON.stringify({ status })
         });
+        if (res.ok) {
+            alert("📩 Estado actualizado y email enviado al cliente");
+            fetchAllOrders();
+        }
 
         if (res.ok) fetchAllOrders();
     };

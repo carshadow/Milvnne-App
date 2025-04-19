@@ -33,8 +33,11 @@ router.post("/create-checkout-session", async (req, res) => {
             };
         });
 
+        const customerEmail = cartItems[0]?.email || "milvnne@no-reply.com"; // fallback por si no viene
+
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ["card"],
+            customer_email: customerEmail, // 👈 importante para Nodemailer
             line_items: lineItems,
             mode: "payment",
             success_url: "http://localhost:3000/success",
@@ -52,15 +55,18 @@ router.post("/create-checkout-session", async (req, res) => {
             ],
             metadata: {
                 userId: cartItems[0]?.userId || "guest",
+                email: customerEmail, // también puedes guardar como backup
                 items: JSON.stringify(
                     cartItems.map((item) => ({
                         product: item.product,
                         quantity: item.quantity,
                         size: item.size,
+                        coverImage: item.image
                     }))
                 ),
             },
         });
+
 
         res.json({ id: session.id });
     } catch (error) {

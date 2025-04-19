@@ -93,7 +93,9 @@ const CartPage = () => {
                 userId: user?._id || "guest",
                 name: item.product.name,
                 price: item.product.price,
-                image: item.product.coverImage
+                image: item.product.coverImage,
+                email: user?.email || "carlos.sanchez.castillo2003@gmail.com"
+
             }));
 
             const response = await fetch("http://localhost:8080/api/stripe/create-checkout-session", {
