@@ -632,46 +632,69 @@ const AdminDashboard = () => {
                     ) : error ? (
                         <p className="text-red-500 text-center">Error: {error}</p>
                     ) : (
-                        <div className="overflow-x-auto rounded-xl shadow-xl border border-zinc-700 bg-zinc-900">
-                            <table className="min-w-full text-sm text-left">
-                                <thead className="bg-zinc-800 text-fuchsia-400 uppercase tracking-wide text-xs">
+                        <div className="overflow-x-auto bg-zinc-900 border border-zinc-800 rounded-3xl shadow-2xl">
+                            <table className="min-w-full divide-y divide-zinc-800 text-sm">
+                                <thead className="bg-zinc-800 text-fuchsia-400 uppercase text-[11px] tracking-widest">
                                     <tr>
-                                        <th className="px-6 py-4">Imagen</th>
-                                        <th className="px-6 py-4">Nombre</th>
-                                        <th className="px-6 py-4">Precio</th>
-                                        <th className="px-6 py-4">Inventario</th>
-                                        <th className="px-6 py-4">Acciones</th>
+                                        <th className="px-6 py-4 text-left">Imagen</th>
+                                        <th className="px-6 py-4 text-left">Nombre</th>
+                                        <th className="px-6 py-4 text-left">Precio</th>
+                                        <th className="px-6 py-4 text-left">Inventario</th>
+                                        <th className="px-6 py-4 text-center">Acciones</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+
+                                <tbody className="divide-y divide-zinc-800">
                                     {products.map((product) => (
-                                        <tr key={product._id} className="border-t border-zinc-700 hover:bg-zinc-800 transition-all">
-                                            <td className="px-6 py-4">
-                                                <img
-                                                    src={product.coverImage}
-                                                    alt={product.name}
-                                                    className="w-16 h-16 object-cover rounded shadow"
-                                                />
+                                        <tr key={product._id} className="group hover:bg-zinc-800 transition">
+                                            {/* Imagen */}
+                                            <td className="px-6 py-5">
+                                                <div className="w-16 h-16 rounded-xl overflow-hidden border border-zinc-700 shadow-md">
+                                                    <img
+                                                        src={product.coverImage}
+                                                        alt={product.name}
+                                                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                    />
+                                                </div>
                                             </td>
-                                            <td className="px-6 py-4 font-medium">{product.name}</td>
-                                            <td className="px-6 py-4 text-fuchsia-400 font-semibold">${product.price}</td>
-                                            <td className="px-6 py-4">{getAvailabilityStatus(product)}</td>
-                                            <td className="px-6 py-4 flex flex-wrap gap-2">
-                                                <button
-                                                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
-                                                    onClick={() => {
-                                                        setEditingProduct(product);
-                                                        setShowEditModal(true);
-                                                    }}
+
+                                            {/* Nombre */}
+                                            <td className="px-6 py-5 font-semibold text-white">{product.name}</td>
+
+                                            {/* Precio */}
+                                            <td className="px-6 py-5 text-fuchsia-400 font-bold">${product.price}</td>
+
+                                            {/* Inventario */}
+                                            <td className="px-6 py-5 text-gray-300">
+                                                <span
+                                                    className={`inline-block px-2 py-1 text-xs rounded-full font-medium ${getAvailabilityStatus(product) === 'Not Available'
+                                                        ? 'bg-red-500/20 text-red-400'
+                                                        : 'bg-green-500/20 text-green-400'
+                                                        }`}
                                                 >
-                                                    Editar
-                                                </button>
-                                                <button
-                                                    className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition"
-                                                    onClick={() => handleDelete(product._id)}
-                                                >
-                                                    Eliminar
-                                                </button>
+                                                    {getAvailabilityStatus(product)}
+                                                </span>
+                                            </td>
+
+                                            {/* Acciones */}
+                                            <td className="px-6 py-5 text-center">
+                                                <div className="flex items-center justify-center gap-3">
+                                                    <button
+                                                        onClick={() => {
+                                                            setEditingProduct(product);
+                                                            setShowEditModal(true);
+                                                        }}
+                                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-medium shadow transition"
+                                                    >
+                                                        Editar
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(product._id)}
+                                                        className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-xs font-medium shadow transition"
+                                                    >
+                                                        Eliminar
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -680,6 +703,8 @@ const AdminDashboard = () => {
                         </div>
                     )}
                 </motion.div>
+
+
 
                 {/* MODAL DE EDICIÓN */}
                 {showEditModal && editingProduct && (
