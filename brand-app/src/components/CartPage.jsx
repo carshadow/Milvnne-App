@@ -119,7 +119,7 @@ const CartPage = () => {
     const total = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
 
     return (
-        <div className="pt-28 px-6 pb-24 min-h-screen bg-[#111827] text-white">
+        <div className="min-h-screen bg-gradient-to-b from-black to-slate-300 py-20 px-6 text-white">
             <h1 className="text-4xl font-extrabold text-fuchsia-400 text-center mb-12 uppercase tracking-wide">
                 Tu Carrito
             </h1>
@@ -213,60 +213,62 @@ const CartPage = () => {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.3 }}
-                className="rounded-3xl p-10 backdrop-blur-md text-white mt-10"
+                className="mt-20 px-4 sm:px-8 py-12 bg-zinc-900/80 backdrop-blur-lg rounded-3xl shadow-2xl text-white max-w-7xl mx-auto"
             >
-                <h3 className="text-2xl font-bold mb-8 tracking-tight flex items-center gap-3 text-fuchsia-400 text-xl">
-                    <FaShoppingBag className="text-fuchsia-400 text-xl" />
+                <h3 className="text-3xl sm:text-4xl font-extrabold mb-10 tracking-tight text-center text-fuchsia-400 flex items-center justify-center gap-3">
+                    <FaShoppingBag className="text-fuchsia-400 text-2xl" />
                     Recomendado para ti
                 </h3>
 
-                <div className="overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-fuchsia-500/30">
-                    <div className="flex gap-6 w-max">
+                <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-fuchsia-500/40 pb-4">
+                    <div className="flex gap-8 px-2 sm:px-4 w-max">
                         {suggestedProducts.map((product) => (
                             <motion.div
                                 key={product._id}
-                                whileHover={{ scale: 1.07, rotate: 0.5 }}
-                                transition={{ type: "spring", stiffness: 200 }}
+                                whileHover={{ scale: 1.05 }}
+                                transition={{ type: "spring", stiffness: 300 }}
                                 onClick={() => navigate(`/product/${product._id}`)}
-                                className="relative group bg-neutral-900 rounded-2xl w-[220px] flex-shrink-0 cursor-pointer overflow-hidden shadow-lg hover:shadow-fuchsia-500/30 transition-all"
+                                className="relative group bg-zinc-800 border border-zinc-700 rounded-2xl w-[240px] flex-shrink-0 cursor-pointer overflow-hidden shadow-xl hover:shadow-fuchsia-600/30 transition-all duration-300"
                             >
                                 {/* Imagen */}
                                 <img
                                     src={product.coverImage}
                                     alt={product.name}
-                                    className="w-full h-56 object-cover group-hover:brightness-110 transition duration-500"
+                                    className="w-full h-60 object-cover group-hover:brightness-110 transition duration-500"
                                 />
 
-                                {/* Overlay negro */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-80 z-10"></div>
+                                {/* Overlay */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10" />
 
-                                {/* Badge de descuento */}
+                                {/* Badge descuento */}
                                 {product.discount > 0 && (
-                                    <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full z-30">
+                                    <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full z-30 shadow-md">
                                         -{product.discount}% OFF
                                     </div>
                                 )}
 
                                 {/* Info */}
-                                <div className="absolute bottom-4 left-4 z-20 space-y-1">
-                                    <h4 className="text-white font-bold text-sm leading-tight">
+                                <div className="absolute bottom-4 left-4 right-4 z-20 space-y-1">
+                                    <h4 className="text-white font-semibold text-sm leading-tight truncate">
                                         {product.name}
                                     </h4>
-                                    {product.discount > 0 ? (
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xs line-through text-gray-400">${Number(product.originalPrice).toFixed(2)}</span>
+                                    <div className="flex items-center gap-2">
+                                        {product.discount > 0 ? (
+                                            <>
+                                                <span className="text-xs line-through text-gray-400">${Number(product.originalPrice).toFixed(2)}</span>
+                                                <span className="text-fuchsia-400 font-bold text-sm">${Number(product.price).toFixed(2)}</span>
+                                            </>
+                                        ) : (
                                             <span className="text-fuchsia-400 font-bold text-sm">${Number(product.price).toFixed(2)}</span>
-                                        </div>
-                                    ) : (
-                                        <p className="text-fuchsia-400 font-bold text-sm">${Number(product.price).toFixed(2)}</p>
-                                    )}
+                                        )}
+                                    </div>
                                 </div>
                             </motion.div>
                         ))}
                     </div>
                 </div>
-
             </motion.div>
+
         </div>
     );
 };
