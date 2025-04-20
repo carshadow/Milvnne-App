@@ -313,7 +313,7 @@ const ProfilePage = () => {
                                     className="cursor-pointer bg-zinc-800 p-4 rounded-xl flex items-center gap-4 shadow"
                                 >
                                     <img
-                                        src={`http://localhost:8080${order.products[0]?.product?.coverImage || "/uploads/default.png"}`}
+                                        src={order.products[0]?.product?.coverImage || "https://res.cloudinary.com/dkx4n6r0v/image/upload/v1710000000/milvnne-products/default.png"}
                                         alt="Producto"
                                         className="w-12 h-12 object-cover rounded border border-fuchsia-500"
                                     />

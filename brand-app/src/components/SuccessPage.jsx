@@ -2,31 +2,42 @@ import React, { useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import { FaCheckCircle } from "react-icons/fa";
 import { CartContext } from "../context/CartContext";
+
 const SuccessPage = () => {
     const { clearCart } = useContext(CartContext);
 
     useEffect(() => {
         if (localStorage.getItem("checkoutInProgress")) {
-            clearCart();  // Vacía el carrito al cargar esta página
-            localStorage.removeItem("checkoutInProgress"); // Borra la marca de checkout
+            clearCart();
+            localStorage.removeItem("checkoutInProgress");
         }
     }, [clearCart]);
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white px-6">
-            <div className="bg-gray-900 p-8 rounded-lg shadow-lg text-center max-w-md w-full">
-                <FaCheckCircle className="text-green-500 text-6xl mb-4 mx-auto" />
-                <h1 className="text-3xl font-semibold mb-4">¡Pago Completado! 🎉</h1>
-                <p className="text-gray-300 mb-6">
-                    Gracias por tu compra. Tu pedido ha sido procesado con éxito.
-                    Te enviaremos un correo con los detalles de tu compra.
+        <div className="min-h-screen bg-gradient-to-b from-black to-zinc-900 text-white flex items-center justify-center px-6 py-16">
+            <div className="bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl p-10 max-w-xl w-full text-center">
+                <FaCheckCircle className="text-green-400 text-7xl mb-4 mx-auto animate-pulse" />
+
+                <h1 className="text-4xl font-bold text-fuchsia-400 mb-3 uppercase tracking-wide">
+                    ¡Gracias por tu compra!
+                </h1>
+
+                <p className="text-zinc-300 text-base leading-relaxed mb-6">
+                    Tu orden fue procesada exitosamente. Te enviaremos un correo con los detalles.
                 </p>
+
+                <div className="bg-fuchsia-950/30 text-fuchsia-200 p-4 rounded-xl border border-fuchsia-600 mb-6">
+                    <p className="text-sm font-medium">
+                        🕒 Los pedidos se envían todos los <strong className="text-white">Jueves</strong>.
+                        Prepárate para recibir tu merch pronto. 💖
+                    </p>
+                </div>
 
                 <Link
                     to="/"
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all"
+                    className="inline-block mt-4 bg-fuchsia-600 hover:bg-fuchsia-700 transition-all text-white font-bold py-3 px-8 rounded-full shadow-lg text-sm uppercase tracking-wider"
                 >
-                    ⬅️ Continue Shopping
+                    ⬅️ Seguir comprando
                 </Link>
             </div>
         </div>
@@ -34,6 +45,3 @@ const SuccessPage = () => {
 };
 
 export default SuccessPage;
-
-
-
