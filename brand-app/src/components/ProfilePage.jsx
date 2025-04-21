@@ -3,6 +3,7 @@ import { AuthContext } from '../context/authContext';
 import { FaUserCircle, FaEnvelope, FaBoxOpen, FaShoppingBag, FaTimes, FaReceipt } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const ProfilePage = () => {
     const { user, logout } = useContext(AuthContext);
@@ -128,6 +129,12 @@ const ProfilePage = () => {
                         <div className="mt-6 text-gray-500 italic text-sm border-t border-white/10 pt-4">
                             “El estilo comienza con autenticidad.”
                         </div>
+                        <Link
+                            to="/edit-profile"
+                            className="text-fuchsia-400 hover:underline mt-2 inline-block"
+                        >
+                            Editar Perfil
+                        </Link>
                     </div>
 
 

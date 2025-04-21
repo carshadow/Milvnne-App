@@ -55,9 +55,38 @@ export const AuthProvider = ({ children }) => {
         await fetch("http://localhost:8080/api/auth/logout", { method: "POST", credentials: "include" });
         setUser(null);
     };
+    const updateUser = async (updatedData) => {
+        try {
+            const res = await fetch("http://localhost:8080/api/users/update-profile", {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
+                body: JSON.stringify(updatedData),
+            });
+
+            if (!res.ok) throw new Error("Error al actualizar el perfil");
+
+            const data = await res.json();
+
+            setUser((prev) => ({
+                ...prev,
+                name: data.updatedUser.name,
+                email: data.updatedUser.email,
+            }));
+
+            return data;
+        } catch (err) {
+            console.error("Error actualizando perfil:", err);
+            return { message: "Error al actualizar perfil" };
+        }
+    };
+
+
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, loading }}>
+        <AuthContext.Provider value={{ user, login, logout, loading, updateUser }}>
             {children}
         </AuthContext.Provider>
     );

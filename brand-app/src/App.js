@@ -14,8 +14,11 @@ import ProtectedRoute from './components/ProtectedRoute';
 import RegisterPage from './components/RegisterPage';
 import LoginPage from './components/LoginPage';
 import ProfilePage from './components/ProfilePage';
-import SuccessPage from "./components/SuccessPage";
-import { AuthProvider } from './context/authContext'; // Import the AuthProvider
+import SuccessPage from './components/SuccessPage';
+import { AuthProvider } from './context/authContext';
+import EditUserProfile from './components/EditUserProfile';
+import AdminRoute from './components/AdminRoute';
+
 
 
 const stripePromise = loadStripe('your-publishable-key-here'); // Replace with your Stripe publishable key
@@ -33,6 +36,7 @@ const App = () => {
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/cart" element={<CartPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+
             {/* <Route
               path="/checkout"
               element={
@@ -42,11 +46,20 @@ const App = () => {
               }
             /> */}
             <Route
-              path="/admin"
+              path="/edit-profile"
               element={
                 <ProtectedRoute>
-                  <AdminDashboard />
+                  <EditUserProfile />
                 </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin"
+              element={
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
               }
             />
             <Route path="/success" element={<SuccessPage />} />
