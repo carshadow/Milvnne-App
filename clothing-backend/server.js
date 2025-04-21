@@ -49,6 +49,7 @@ import orderRoutes from "./routes/orderRoutes.js";
 import cartRoutes from './routes/cartRoutes.js';
 import StripeRoutes from "./routes/StripeRoutes.js";
 import categoryRoutes from './routes/categoryRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 
 // 📌 Usar rutas
 app.use("/api/auth", authRoutes);
@@ -57,6 +58,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/Stripe", StripeRoutes);
 app.use("/api/categories", categoryRoutes);
+app.use("/api/users", userRoutes);
 
 // ⚠️ Ruta 404 si no se encuentra ninguna
 app.use((req, res) => {
