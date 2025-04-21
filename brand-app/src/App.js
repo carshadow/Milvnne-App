@@ -18,6 +18,8 @@ import SuccessPage from './components/SuccessPage';
 import { AuthProvider } from './context/authContext';
 import EditUserProfile from './components/EditUserProfile';
 import AdminRoute from './components/AdminRoute';
+import ForgotPassword from './components/ForgotPassword';
+import ResetPassword from './components/ResetPassword';
 
 
 
@@ -65,6 +67,8 @@ const App = () => {
             <Route path="/success" element={<SuccessPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
           </Routes>
 
         </CartProvider>
