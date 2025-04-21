@@ -236,80 +236,90 @@ const ProfilePage = () => {
 
 
                 </motion.div>
-
                 {/* 🎯 Recomendaciones */}
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.3 }}
-                    className="bg-gradient-to-br from-zinc-800/60 via-zinc-900/70 to-black/80 rounded-3xl shadow-2xl p-10 backdrop-blur-md text-white"
+                    className="bg-gradient-to-br from-zinc-900 via-black to-zinc-950 rounded-3xl shadow-2xl p-10 backdrop-blur-md text-white"
                 >
-                    <h3 className="text-2xl font-bold mb-8 tracking-tight flex items-center gap-3 text-white">
-                        <FaShoppingBag className="text-fuchsia-400 text-xl" />
+                    <h3 className="text-3xl font-extrabold mb-8 tracking-tight flex items-center gap-3 text-white">
+                        <FaShoppingBag className="text-fuchsia-400 text-l" />
                         Recomendado para ti
                     </h3>
 
-                    <div className="overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-fuchsia-500/30">
-                        <div className="flex gap-6 w-max">
+                    <div className="overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-fuchsia-500/30">
+                        <div className="flex gap-8 w-max">
                             {suggestedProducts.map((product) => (
                                 <motion.div
                                     key={product._id}
-                                    whileHover={{ scale: 1.07, rotate: 0.5 }}
-                                    transition={{ type: "spring", stiffness: 200 }}
+                                    whileHover={{ scale: 1.06 }}
+                                    transition={{ type: "spring", stiffness: 180 }}
                                     onClick={() => navigate(`/product/${product._id}`)}
-                                    className="relative group bg-neutral-900 rounded-2xl w-[220px] flex-shrink-0 cursor-pointer overflow-hidden shadow-lg hover:shadow-fuchsia-500/30 transition-all"
+                                    className="relative group bg-zinc-900 rounded-3xl w-[230px] flex-shrink-0 cursor-pointer overflow-hidden shadow-lg hover:shadow-fuchsia-500/30 transition-all border border-white/10"
                                 >
                                     {/* Imagen */}
                                     <img
                                         src={product.coverImage}
                                         alt={product.name}
-                                        className="w-full h-56 object-cover group-hover:brightness-110 transition duration-500"
+                                        className="w-full h-60 object-cover group-hover:brightness-110 transition duration-500"
                                     />
-
-                                    {/* Overlay negro */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-80 z-10"></div>
 
                                     {/* Badge de descuento */}
                                     {product.discount > 0 && (
-                                        <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full z-30">
+                                        <div className="absolute top-3 left-3 bg-red-600 text-white text-[11px] font-bold px-3 py-1 rounded-full z-20 shadow-lg">
                                             -{product.discount}% OFF
                                         </div>
                                     )}
 
-                                    {/* Info */}
-                                    <div className="absolute bottom-4 left-4 z-20 space-y-1">
-                                        <h4 className="text-white font-bold text-sm leading-tight">
+                                    {/* Detalle inferior */}
+                                    <div className="absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/80 via-black/20 to-transparent px-4 py-4">
+                                        <h4 className="text-white font-semibold text-[15px] truncate">
                                             {product.name}
                                         </h4>
                                         {product.discount > 0 ? (
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xs line-through text-gray-400">${Number(product.originalPrice).toFixed(2)}</span>
-                                                <span className="text-fuchsia-400 font-bold text-sm">${Number(product.price).toFixed(2)}</span>
+                                            <div className="flex items-center gap-2 text-sm mt-1">
+                                                <span className="line-through text-gray-400 text-xs">
+                                                    ${Number(product.originalPrice).toFixed(2)}
+                                                </span>
+                                                <span className="text-fuchsia-400 font-bold">
+                                                    ${Number(product.price).toFixed(2)}
+                                                </span>
                                             </div>
                                         ) : (
-                                            <p className="text-fuchsia-400 font-bold text-sm">${Number(product.price).toFixed(2)}</p>
+                                            <p className="text-fuchsia-400 font-semibold text-sm mt-1">
+                                                ${Number(product.price).toFixed(2)}
+                                            </p>
                                         )}
                                     </div>
                                 </motion.div>
                             ))}
                         </div>
                     </div>
-
                 </motion.div>
+
 
             </div>
             {showAllOrders && (
-                <div className="fixed inset-0 z-50 bg-black bg-opacity-60 flex items-center justify-center">
-                    <div className="bg-zinc-900 text-white rounded-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto relative">
+                <div className="fixed inset-0 z-50 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center px-4">
+                    <div className="bg-gradient-to-br from-zinc-900 via-black to-zinc-950 text-white rounded-2xl w-full max-w-3xl max-h-[85vh] overflow-y-auto shadow-2xl p-8 relative border border-white/10">
+
+                        {/* Cerrar */}
                         <button
                             onClick={() => setShowAllOrders(false)}
-                            className="absolute top-3 right-3 text-gray-400 hover:text-white"
+                            className="absolute top-4 right-4 text-gray-400 hover:text-fuchsia-400 transition text-xl"
+                            aria-label="Cerrar historial"
                         >
                             <FaTimes />
                         </button>
-                        <h2 className="text-xl font-bold mb-6">Historial de Órdenes</h2>
 
-                        <div className="space-y-4">
+                        {/* Título */}
+                        <h2 className="text-2xl font-bold mb-6 text-fuchsia-400 tracking-tight">
+                            Historial de Órdenes
+                        </h2>
+
+                        {/* Lista de Órdenes */}
+                        <div className="space-y-5 divide-y divide-white/10">
                             {olderOrders.map((order) => (
                                 <div
                                     key={order._id}
@@ -317,18 +327,22 @@ const ProfilePage = () => {
                                         setSelectedOrder(order);
                                         setShowOrderModal(true);
                                     }}
-                                    className="cursor-pointer bg-zinc-800 p-4 rounded-xl flex items-center gap-4 shadow"
+                                    className="pt-5 flex items-center gap-4 cursor-pointer hover:bg-white/5 px-3 py-2 rounded-xl transition"
                                 >
                                     <img
                                         src={order.products[0]?.product?.coverImage || "https://res.cloudinary.com/dkx4n6r0v/image/upload/v1710000000/milvnne-products/default.png"}
                                         alt="Producto"
-                                        className="w-12 h-12 object-cover rounded border border-fuchsia-500"
+                                        className="w-16 h-16 object-cover rounded-xl border border-fuchsia-500 shadow"
                                     />
                                     <div className="flex-1">
-                                        <p className="text-sm font-mono text-white">ID: {order._id}</p>
-                                        <p className="text-sm text-fuchsia-400">Estado: {order.status}</p>
-                                        <p className="text-sm text-gray-300">Total: ${order.total.toFixed(2)}</p>
-                                        <p className="text-xs text-gray-500">Fecha: {new Date(order.createdAt).toLocaleDateString()}</p>
+                                        <p className="text-sm font-semibold text-white">
+                                            Orden #{order._id.slice(-6).toUpperCase()}
+                                        </p>
+                                        <p className="text-xs text-fuchsia-400 mt-1">Estado: {order.status}</p>
+                                        <p className="text-xs text-gray-300">Total: ${order.total.toFixed(2)}</p>
+                                        <p className="text-[11px] text-gray-500 mt-1">
+                                            Fecha: {new Date(order.createdAt).toLocaleDateString()}
+                                        </p>
                                     </div>
                                 </div>
                             ))}
