@@ -92,6 +92,14 @@ const LoginPage = () => {
                             {errorMessage}
                         </p>
                     )}
+                    <div className="text-center mt-4">
+                        <Link
+                            to="/forgot-password"
+                            className="text-sm text-fuchsia-400 hover:underline"
+                        >
+                            ¿Olvidaste tu contraseña?
+                        </Link>
+                    </div>
                 </form>
 
                 {/* Extra Actions */}
