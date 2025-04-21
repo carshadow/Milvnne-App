@@ -11,16 +11,24 @@ const LoginPage = () => {
     const { login } = useContext(AuthContext);
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
 
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
+        setErrorMessage(""); // limpiar error anterior
+
         try {
-            await login(email, password);
-            window.location.href = "/";
+            const success = await login(email, password);
+
+            if (success) {
+                window.location.href = "/";
+            } else {
+                setErrorMessage("Correo electrónico o contraseña incorrectos.");
+            }
         } catch (error) {
-            alert("Error: " + error.message);
+            setErrorMessage("Error al intentar iniciar sesión.");
         } finally {
             setLoading(false);
         }
@@ -79,6 +87,11 @@ const LoginPage = () => {
                     >
                         {loading ? "Entrando..." : "Login"}
                     </button>
+                    {errorMessage && (
+                        <p className="text-center text-red-400 font-medium mt-2">
+                            {errorMessage}
+                        </p>
+                    )}
                 </form>
 
                 {/* Extra Actions */}
