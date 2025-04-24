@@ -301,6 +301,7 @@ const ProfilePage = () => {
 
             </div>
             {showAllOrders && (
+
                 <div className="fixed inset-0 z-50 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center px-4">
                     <div className="bg-gradient-to-br from-zinc-900 via-black to-zinc-950 text-white rounded-2xl w-full max-w-3xl max-h-[85vh] overflow-y-auto shadow-2xl p-8 relative border border-white/10">
 
@@ -329,11 +330,17 @@ const ProfilePage = () => {
                                     }}
                                     className="pt-5 flex items-center gap-4 cursor-pointer hover:bg-white/5 px-3 py-2 rounded-xl transition"
                                 >
-                                    <img
-                                        src={order.products[0]?.product?.coverImage || "https://res.cloudinary.com/dkx4n6r0v/image/upload/v1710000000/milvnne-products/default.png"}
-                                        alt="Producto"
-                                        className="w-16 h-16 object-cover rounded-xl border border-fuchsia-500 shadow"
-                                    />
+                                    {order.products[0]?.product ? (
+                                        <img
+                                            src={order.products[0].product.coverImage}
+                                            alt={order.products[0].product.name}
+                                            className="w-16 h-16 object-cover rounded-xl border border-fuchsia-500 shadow"
+                                        />
+                                    ) : (
+                                        <div className="w-16 h-16 flex items-center justify-center bg-zinc-800 text-xs text-gray-400 italic border border-zinc-600 rounded-xl shadow">
+                                            Eliminado
+                                        </div>
+                                    )}
                                     <div className="flex-1">
                                         <p className="text-sm font-semibold text-white">
                                             Orden #{order._id.slice(-6).toUpperCase()}
@@ -345,7 +352,9 @@ const ProfilePage = () => {
                                         </p>
                                     </div>
                                 </div>
+
                             ))}
+
                         </div>
                     </div>
                 </div>
