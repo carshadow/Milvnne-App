@@ -6,18 +6,18 @@ import { CloudinaryStorage } from 'multer-storage-cloudinary';
 
 const router = express.Router();
 
-// 🧠 Configurar Cloudinary
+// Cloudinary config
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// 📦 Configurar almacenamiento con Cloudinary
+// Storage config
 const storage = new CloudinaryStorage({
     cloudinary,
     params: {
-        folder: 'categories', // puedes cambiar el nombre de la carpeta en Cloudinary
+        folder: 'categories',
         allowed_formats: ['jpg', 'jpeg', 'png'],
         transformation: [{ width: 500, height: 500, crop: 'limit' }],
     },
@@ -25,7 +25,7 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage });
 
-// ✅ Obtener todas las categorías
+// Obtener todas las categorías
 router.get('/', async (req, res) => {
     try {
         const categories = await Category.find().sort({ order: 1 });
@@ -35,7 +35,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-// ✅ Crear nueva categoría
+// Crear categoría
 router.post('/', upload.single('image'), async (req, res) => {
     try {
         const { name } = req.body;
@@ -46,28 +46,32 @@ router.post('/', upload.single('image'), async (req, res) => {
 
         const count = await Category.countDocuments();
 
-        const imageUrl = req.file ? req.file.path : null;
-        const imagePublicId = req.file ? req.file.filename : null;
+        const newCategory = new Category({
+            name,
+            imageUrl: req.file?.path || null,
+            imagePublicId: req.file?.filename || null,
+            order: count,
+        });
 
-        const newCategory = new Category({ name, imageUrl, imagePublicId, order: count });
         await newCategory.save();
-
         res.status(201).json(newCategory);
     } catch (err) {
-        console.error('Error creating category:', err);
+        console.error(err);
         res.status(500).json({ message: 'Internal server error' });
     }
 });
 
-// ✅ Eliminar categoría
+// Eliminar categoría
 router.delete('/:id', async (req, res) => {
     try {
         const category = await Category.findByIdAndDelete(req.params.id);
         if (!category) return res.status(404).json({ message: 'Category not found' });
 
-        // 🗑️ Borrar imagen de Cloudinary
         if (category.imagePublicId) {
             await cloudinary.uploader.destroy(category.imagePublicId);
+        }
+        if (category.imageMobilePublicId) {
+            await cloudinary.uploader.destroy(category.imageMobilePublicId);
         }
 
         res.json({ message: 'Category deleted' });
@@ -76,7 +80,7 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
-// ✅ Actualizar nombre de categoría
+// Renombrar
 router.put('/:id', async (req, res) => {
     try {
         const { name } = req.body;
@@ -87,29 +91,48 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// ✅ Actualizar imagen de categoría
+// Actualizar imagen desktop
 router.put('/:id/image', upload.single('image'), async (req, res) => {
     try {
         const category = await Category.findById(req.params.id);
         if (!category) return res.status(404).json({ message: 'Category not found' });
 
-        // 🗑️ Eliminar imagen anterior de Cloudinary
         if (category.imagePublicId) {
             await cloudinary.uploader.destroy(category.imagePublicId);
         }
 
-        // 🆕 Subir nueva imagen
-        category.imageUrl = req.file.path;
-        category.imagePublicId = req.file.filename;
-
+        category.imageUrl = req.file?.path;
+        category.imagePublicId = req.file?.filename;
         await category.save();
+
         res.json(category);
     } catch (err) {
         res.status(500).json({ message: 'Error updating image' });
     }
 });
 
-// ✅ Reordenar categoría
+// Actualizar imagen móvil
+router.put('/:id/image-mobile', upload.single('image'), async (req, res) => {
+    try {
+        const category = await Category.findById(req.params.id);
+        if (!category) return res.status(404).json({ message: 'Categoría no encontrada' });
+
+        if (category.imageMobilePublicId) {
+            await cloudinary.uploader.destroy(category.imageMobilePublicId);
+        }
+
+        category.imageMobile = req.file?.path;
+        category.imageMobilePublicId = req.file?.filename;
+
+        await category.save();
+        res.json({ message: '✅ Imagen móvil actualizada', category });
+    } catch (err) {
+        console.error("❌ Error al subir imagen móvil:", err);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+});
+
+// Reordenar
 router.put('/:id/reorder', async (req, res) => {
     try {
         const { order } = req.body;

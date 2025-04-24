@@ -142,6 +142,39 @@ const AdminDashboard = () => {
         setCategories([...newOrder]);
     };
 
+    const updateCategoryMobileImage = async (id, file) => {
+        console.log("📤 Actualizando imagen mobile:", id, file);
+
+        if (!file) {
+            alert("⚠️ No se seleccionó ningún archivo.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("image", file);
+
+        try {
+            const res = await fetch(`http://localhost:8080/api/categories/${id}/image-mobile`, {
+                method: "PUT",
+                body: formData,
+            });
+
+            const data = await res.json();
+            console.log("🧾 Respuesta:", data);
+
+            if (res.ok) {
+                fetchCategories();
+            } else {
+                alert(`❌ Error: ${data.message}`);
+            }
+        } catch (err) {
+            console.error("❌ Error updating mobile image:", err);
+            alert("❌ Error al actualizar la imagen móvil.");
+        }
+    };
+
+
+
     const handleCreateProduct = async () => {
         const formData = new FormData();
 
@@ -893,17 +926,35 @@ const AdminDashboard = () => {
                             {categories.map((cat, index) => (
                                 <tr key={cat._id} className="bg-zinc-700/50 backdrop-blur-xl hover:bg-zinc-700 transition rounded-lg">
                                     {/* Imagen preview */}
-                                    <td className="p-4">
+                                    {/* Imagen preview (desktop + mobile si existe) */}
+                                    <td className="p-4 space-y-2">
                                         {cat.imageUrl ? (
-                                            <img
-                                                src={cat.imageUrl}
-                                                alt={cat.name}
-                                                className="w-16 h-16 object-cover rounded-lg border border-zinc-600 shadow-md"
-                                            />
+                                            <div>
+                                                <p className="text-xs text-gray-400 mb-1">Desktop</p>
+                                                <img
+                                                    src={cat.imageUrl}
+                                                    alt={`${cat.name} desktop`}
+                                                    className="w-16 h-16 object-cover rounded-lg border border-zinc-600 shadow-md"
+                                                />
+                                            </div>
                                         ) : (
-                                            <span className="text-gray-400">Sin imagen</span>
+                                            <span className="text-gray-400">Sin imagen desktop</span>
+                                        )}
+
+                                        {cat.imageMobile ? (
+                                            <div>
+                                                <p className="text-xs text-purple-400 mt-2">Mobile</p>
+                                                <img
+                                                    src={cat.imageMobile}
+                                                    alt={`${cat.name} mobile`}
+                                                    className="w-16 h-16 object-cover rounded-lg border border-purple-500 shadow-md"
+                                                />
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-gray-500 mt-2 italic">Sin imagen mobile</p>
                                         )}
                                     </td>
+
 
                                     {/* Nombre editable */}
                                     <td className="p-4">
@@ -923,6 +974,13 @@ const AdminDashboard = () => {
                                             onChange={(e) => updateCategoryImage(cat._id, e.target.files[0])}
                                             className="w-full text-sm text-gray-300 file:bg-fuchsia-600 file:border-none file:px-3 file:py-1 file:rounded file:text-white file:cursor-pointer"
                                         />
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => updateCategoryMobileImage(cat._id, e.target.files[0])}
+                                            className="w-full text-sm text-gray-300 file:bg-purple-600 file:border-none file:px-3 file:py-1 file:rounded file:text-white file:cursor-pointer mt-2"
+                                        />
+                                        <small className="text-xs text-gray-400">Opcional – solo si necesitas una imagen distinta para mobile</small>
                                     </td>
 
                                     {/* Acciones */}
