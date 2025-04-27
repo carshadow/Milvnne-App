@@ -5,7 +5,7 @@ import { FaUser, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { Link } from "react-router-dom";
 import { z } from "zod";
 
-// ✅ Esquema de validación Zod
+
 const loginSchema = z.object({
     email: z.string().email("Debe ser un email válido"),
     password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
@@ -18,7 +18,7 @@ const LoginPage = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
-    const [fieldErrors, setFieldErrors] = useState({}); // 👈 Errores por campo
+    const [fieldErrors, setFieldErrors] = useState({});
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -26,7 +26,6 @@ const LoginPage = () => {
         setErrorMessage("");
         setFieldErrors({});
 
-        // 🧠 Validar con Zod antes de enviar
         const validation = loginSchema.safeParse({ email, password });
 
         if (!validation.success) {
@@ -40,7 +39,15 @@ const LoginPage = () => {
         }
 
         try {
-            const success = await login(email, password);
+            //  Obtener CSRF Token antes de hacer login
+            const csrfRes = await fetch("http://localhost:8080/api/csrf-token", {
+                credentials: "include", // 👈 importante para cookies
+            });
+            const csrfData = await csrfRes.json();
+            const csrfToken = csrfData.csrfToken;
+
+            // Ahora enviar el login incluyendo CSRF Token
+            const success = await login(email, password, csrfToken);
 
             if (success) {
                 window.location.href = "/";
@@ -53,6 +60,7 @@ const LoginPage = () => {
             setLoading(false);
         }
     };
+
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-zinc-900 to-slate-800 px-4">

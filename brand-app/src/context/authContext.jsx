@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from "react";
 
+
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -32,15 +33,26 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         try {
+            // 🔥 Primero obtenemos el CSRF token
+            const csrfRes = await fetch("http://localhost:8080/api/csrf-token", {
+                credentials: "include",
+            });
+            const csrfData = await csrfRes.json();
+            const csrfToken = csrfData.csrfToken;
+
+            // Luego hacemos el login
             const res = await fetch("http://localhost:8080/api/auth/login", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password }),
+                headers: {
+                    "Content-Type": "application/json",
+                    "CSRF-Token": csrfToken, // ✅
+                },
                 credentials: "include",
+                body: JSON.stringify({ email, password }),
             });
 
             if (res.ok) {
-                fetchUser(); // ✅ Obtener el usuario después del login
+                fetchUser();
                 return true;
             } else {
                 return false;
@@ -51,25 +63,54 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+
     const logout = async () => {
-        await fetch("http://localhost:8080/api/auth/logout", { method: "POST", credentials: "include" });
-        setUser(null);
+        try {
+            // 🔥 Primero obtenemos CSRF token
+            const csrfRes = await fetch("http://localhost:8080/api/csrf-token", {
+                credentials: "include",
+            });
+            const csrfData = await csrfRes.json();
+            const csrfToken = csrfData.csrfToken;
+
+            // Ahora hacemos logout enviando el token
+            await fetch("http://localhost:8080/api/auth/logout", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "CSRF-Token": csrfToken, // ✅ CSRF token aquí
+                },
+                credentials: "include",
+            });
+
+            setUser(null);
+        } catch (error) {
+            console.error("❌ Error durante logout:", error);
+        }
     };
+
     const updateUser = async (updatedData) => {
         try {
+            //  Primero obtener el CSRF Token
+            const csrfRes = await fetch("http://localhost:8080/api/csrf-token", {
+                credentials: "include",
+            });
+            const csrfData = await csrfRes.json();
+            const csrfToken = csrfData.csrfToken;
+
             const res = await fetch("http://localhost:8080/api/users/update-profile", {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
+                    "CSRF-Token": csrfToken, //  Aquí se pasa el token
                 },
                 credentials: "include",
                 body: JSON.stringify(updatedData),
             });
 
-            const data = await res.json(); // 💥 Siempre leer la respuesta
+            const data = await res.json(); //  siempre leer la respuesta
 
             if (!res.ok) {
-                // Si no fue OK, lanza el mensaje del backend
                 throw new Error(data.message || "Error al actualizar el perfil");
             }
 
@@ -85,7 +126,6 @@ export const AuthProvider = ({ children }) => {
             return { success: false, message: err.message || "Error desconocido" };
         }
     };
-
 
 
 

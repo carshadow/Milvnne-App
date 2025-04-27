@@ -1,34 +1,50 @@
 import React, { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom"; // 👈 agrega useNavigate
+import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
 const ResetPassword = () => {
     const { token } = useParams();
-    const navigate = useNavigate(); // 👈 inicializa navigate
+    const navigate = useNavigate();
     const [newPassword, setNewPassword] = useState("");
     const [message, setMessage] = useState("");
+    const [error, setError] = useState("");
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setMessage("Procesando...");
+        setError("");
 
         try {
+            //  Primero obtener el CSRF token
+            const csrfRes = await fetch("http://localhost:8080/api/csrf-token", {
+                credentials: "include",
+            });
+            const csrfData = await csrfRes.json();
+            const csrfToken = csrfData.csrfToken;
+
+            // Luego hacer el reset password enviando el CSRF token
             const res = await fetch(`http://localhost:8080/api/users/reset-password/${token}`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "CSRF-Token": csrfToken, // Asegurando CSRF protection
+                },
                 body: JSON.stringify({ password: newPassword }),
+                credentials: "include",
             });
 
             const data = await res.json();
 
             if (res.ok) {
-                setMessage("Contraseña actualizada correctamente ✅");
-                setTimeout(() => navigate("/login"), 2000); // 👈 redirige después de 2 segundos
+                setMessage("✅ Contraseña actualizada correctamente.");
+                setTimeout(() => navigate("/login"), 2000);
             } else {
-                setMessage(data.message || "Error actualizando la contraseña");
+                setError(data.message || "Error actualizando la contraseña");
+                setMessage("");
             }
         } catch (err) {
-            setMessage("Error al actualizar la contraseña");
+            setError("❌ Error de red o servidor");
+            setMessage("");
         }
     };
 
@@ -56,7 +72,14 @@ const ResetPassword = () => {
                     >
                         Actualizar
                     </button>
-                    {message && <p className="text-center text-green-400 text-sm">{message}</p>}
+
+                    {/* Mensajes */}
+                    {message && (
+                        <p className="text-center text-green-400 font-semibold text-sm">{message}</p>
+                    )}
+                    {error && (
+                        <p className="text-center text-red-400 font-semibold text-sm">{error}</p>
+                    )}
                 </form>
             </motion.div>
         </div>

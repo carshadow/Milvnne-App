@@ -5,6 +5,7 @@ import User from "../models/User.js";
 import { authenticateUser } from "../middlewares/authMiddleware.js";
 import dotenv from "dotenv";
 import { z } from "zod";
+import { csrfProtection } from "../middlewares/csrfMiddleware.js";
 
 dotenv.config();
 const router = express.Router();
@@ -22,7 +23,7 @@ const registerSchema = z.object({
 });
 
 // 📌 **Login de Usuario con Cookies**
-router.post("/login", async (req, res) => {
+router.post("/login", csrfProtection, async (req, res) => {
     try {
         const validation = loginSchema.safeParse(req.body);
 
@@ -75,13 +76,13 @@ router.get("/me", authenticateUser, async (req, res) => {
 });
 
 // 📌 **Logout para eliminar la cookie**
-router.post("/logout", (req, res) => {
+router.post("/logout", csrfProtection, (req, res) => {
     res.clearCookie("token");
     res.json({ message: "Logged out successfully" });
 });
 
 // 📌 **Registro de Usuario**
-router.post("/register", async (req, res) => {
+router.post("/register", csrfProtection, async (req, res) => {
     try {
         const validation = registerSchema.safeParse(req.body);
 

@@ -75,7 +75,7 @@ const ProfilePage = () => {
         <div className="min-h-screen bg-gradient-to-b from-black to-slate-300 py-20 px-6">
             <div className="max-w-6xl mx-auto space-y-12">
 
-                {/* 🧍 Perfil & Pedidos */}
+                {/*  Perfil & Pedidos */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -112,12 +112,6 @@ const ProfilePage = () => {
                         </div>
 
                         <div className="pt-6 flex gap-4">
-                            {/* <button
-                                onClick={() => navigate('/edit-profile')}
-                                className="px-4 py-2 rounded-full bg-white text-black font-semibold hover:bg-fuchsia-500 hover:text-white transition"
-                            >
-                                Editar Perfil
-                            </button> */}
                             <button
                                 onClick={handleLogout}
                                 className="px-4 py-2 rounded-full bg-zinc-800 text-gray-300 hover:bg-red-500 hover:text-white transition"
@@ -236,7 +230,7 @@ const ProfilePage = () => {
 
 
                 </motion.div>
-                {/* 🎯 Recomendaciones */}
+                {/*  Recomendaciones */}
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -359,22 +353,6 @@ const ProfilePage = () => {
                     </div>
                 </div>
             )}
-
-            {/* 🪟 Modal para ver todas las órdenes */}
-            {/* {showAllOrders && (
-                <div className="fixed inset-0 z-50 bg-black bg-opacity-60 flex items-center justify-center">
-                    <div className="bg-zinc-900 text-white rounded-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto relative">
-                        <button
-                            onClick={() => setShowAllOrders(false)}
-                            className="absolute top-3 right-3 text-gray-400 hover:text-white"
-                        >
-                            <FaTimes />
-                        </button>
-                        <h2 className="text-xl font-bold mb-6">Historial de Órdenes</h2>
-
-                    </div>
-                </div>
-            )} */}
         </div>
     );
 };

@@ -6,6 +6,7 @@ import { authenticateUser } from "../middlewares/authMiddleware.js";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 import { z } from "zod"; // 👈 Importamos Zod
+import { csrfProtection } from "../middlewares/csrfMiddleware.js";
 
 const router = express.Router();
 
@@ -25,7 +26,7 @@ const resetPasswordSchema = z.object({
 });
 
 // ✅ PUT /api/users/update-profile
-router.put("/update-profile", authenticateUser, async (req, res) => {
+router.put("/update-profile", authenticateUser, csrfProtection, async (req, res) => {
     try {
         // ✅ Validar datos
         const validatedData = updateProfileSchema.safeParse(req.body);
@@ -65,7 +66,7 @@ router.put("/update-profile", authenticateUser, async (req, res) => {
 });
 
 // ✅ POST /api/users/forgot-password
-router.post("/forgot-password", async (req, res) => {
+router.post("/forgot-password", csrfProtection, async (req, res) => {
     const validatedData = forgotPasswordSchema.safeParse(req.body);
     if (!validatedData.success) {
         return res.status(400).json({ message: validatedData.error.errors[0].message });
@@ -105,7 +106,7 @@ router.post("/forgot-password", async (req, res) => {
 });
 
 // ✅ POST /api/users/reset-password/:token
-router.post("/reset-password/:token", async (req, res) => {
+router.post("/reset-password/:token", csrfProtection, async (req, res) => {
     const validatedData = resetPasswordSchema.safeParse(req.body);
     if (!validatedData.success) {
         return res.status(400).json({

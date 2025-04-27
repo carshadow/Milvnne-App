@@ -4,7 +4,6 @@ import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { z } from "zod";
 
-
 const registerSchema = z.object({
     name: z.string().min(1, "El nombre es requerido"),
     email: z.string().email("Debe ser un email válido"),
@@ -23,12 +22,13 @@ const RegisterPage = () => {
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [fieldErrors, setFieldErrors] = useState({});
+    const [errorMessage, setErrorMessage] = useState("");
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setFieldErrors({});
-
+        setErrorMessage("");
 
         const validation = registerSchema.safeParse({ name, email, password, confirmPassword });
 
@@ -42,24 +42,35 @@ const RegisterPage = () => {
             return;
         }
 
-        const user = { name, email, password };
-
         try {
+            // 🔥 Pedir CSRF token
+            const csrfRes = await fetch("http://localhost:8080/api/csrf-token", {
+                credentials: "include",
+            });
+            const csrfData = await csrfRes.json();
+            const csrfToken = csrfData.csrfToken;
+
+            const user = { name, email, password };
+
             const response = await fetch("http://localhost:8080/api/auth/register", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "CSRF-Token": csrfToken,
+                },
+                credentials: "include",
                 body: JSON.stringify(user),
             });
 
             if (response.ok) {
-                alert("Registro exitoso");
+                alert("✅ Registro exitoso");
                 window.location.href = "/login";
             } else {
                 const data = await response.json();
-                alert(`Error: ${data.message}`);
+                setErrorMessage(data.message || "Error al registrarse");
             }
         } catch (error) {
-            alert("❌ Error al registrarse");
+            setErrorMessage("❌ Error al registrarse");
         } finally {
             setLoading(false);
         }
@@ -158,6 +169,13 @@ const RegisterPage = () => {
                     >
                         {loading ? "Creating..." : "Register"}
                     </button>
+
+                    {/* General register error */}
+                    {errorMessage && (
+                        <p className="text-center text-red-400 font-medium mt-2">
+                            {errorMessage}
+                        </p>
+                    )}
                 </form>
 
                 <div className="text-center mt-6">

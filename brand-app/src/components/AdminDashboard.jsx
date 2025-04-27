@@ -442,29 +442,6 @@ const AdminDashboard = () => {
         }
     };
 
-    // const deleteOrder = async (orderId) => {
-    //     if (!window.confirm("¿Estás seguro de que quieres eliminar esta orden?")) return;
-
-    //     try {
-    //         const res = await fetch(`http://localhost:8080/api/orders/${orderId}`, {
-    //             method: "DELETE",
-    //             headers: {
-    //                 Authorization: `Bearer ${token}`,
-    //             },
-    //         });
-
-    //         if (res.ok) {
-    //             alert("✅ Orden eliminada correctamente");
-    //             setAllOrders(prev => prev.filter(order => order._id !== orderId)); // actualiza UI
-    //         } else {
-    //             alert("❌ Error al eliminar la orden");
-    //         }
-    //     } catch (error) {
-    //         console.error("❌ Error al eliminar orden:", error);
-    //         alert("❌ Falló la eliminación de la orden");
-    //     }
-    // };
-
     const archiveOrder = async (orderId) => {
         try {
             const res = await fetch(`http://localhost:8080/api/orders/${orderId}/archive`, {
@@ -1118,7 +1095,7 @@ const AdminDashboard = () => {
 
             {/* Tracking order table  */}
             <div className="mt-12">
-                {/* ✅ Título y botón separados del table */}
+                {/*  Título y botón separados del table */}
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-3xl font-bold text-fuchsia-500 tracking-wide uppercase">
                         Órdenes Recientes
@@ -1135,7 +1112,7 @@ const AdminDashboard = () => {
                     </button>
                 </div>
 
-                {/* ✅ Tabla de órdenes */}
+                {/*  Tabla de órdenes */}
                 <div className="overflow-x-auto rounded-xl shadow-xl border border-zinc-700">
                     <table className="min-w-full bg-zinc-900 text-sm text-left text-white rounded-xl">
                         <thead className="bg-zinc-800 text-fuchsia-400 uppercase text-xs tracking-wider">
@@ -1207,7 +1184,7 @@ const AdminDashboard = () => {
                     </table>
                 </div>
 
-                {/* ✅ Modal de Detalles */}
+                {/*  Modal de Detalles */}
                 {showOrderModal && selectedOrder && (
                     <div className="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center">
                         <div className="bg-zinc-900 text-white rounded-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto relative">
@@ -1238,7 +1215,7 @@ const AdminDashboard = () => {
                     </div>
                 )}
 
-                {/* ✅ Modal de órdenes archivadas */}
+                {/*  Modal de órdenes archivadas */}
                 {showArchivedModal && (
                     <div className="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center">
                         <div className="bg-zinc-900 text-white rounded-xl p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto relative">
