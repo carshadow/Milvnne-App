@@ -1,8 +1,20 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { FaUser, FaEnvelope, FaLock } from "react-icons/fa";
+import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 import { Link } from "react-router-dom";
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { z } from "zod";
+
+
+const registerSchema = z.object({
+    name: z.string().min(1, "El nombre es requerido"),
+    email: z.string().email("Debe ser un email válido"),
+    password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
+    confirmPassword: z.string().min(6, "Confirma tu contraseña"),
+}).refine((data) => data.password === data.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "Las contraseñas no coinciden",
+});
+
 const RegisterPage = () => {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
@@ -10,13 +22,22 @@ const RegisterPage = () => {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [fieldErrors, setFieldErrors] = useState({});
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
+        setFieldErrors({});
 
-        if (password !== confirmPassword) {
-            alert("Passwords don't match");
+
+        const validation = registerSchema.safeParse({ name, email, password, confirmPassword });
+
+        if (!validation.success) {
+            const newErrors = {};
+            validation.error.errors.forEach(err => {
+                newErrors[err.path[0]] = err.message;
+            });
+            setFieldErrors(newErrors);
             setLoading(false);
             return;
         }
@@ -31,14 +52,14 @@ const RegisterPage = () => {
             });
 
             if (response.ok) {
-                alert("Registration successful");
+                alert("Registro exitoso");
                 window.location.href = "/login";
             } else {
                 const data = await response.json();
                 alert(`Error: ${data.message}`);
             }
         } catch (error) {
-            alert("❌ Error registering");
+            alert("❌ Error al registrarse");
         } finally {
             setLoading(false);
         }
@@ -66,9 +87,11 @@ const RegisterPage = () => {
                             placeholder="Name"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            required
-                            className="w-full bg-zinc-800 text-white border border-zinc-700 rounded-lg pl-12 py-3 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 placeholder-zinc-400"
+                            className={`w-full bg-zinc-800 text-white border ${fieldErrors.name ? 'border-red-500' : 'border-zinc-700'} rounded-lg pl-12 py-3 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 placeholder-zinc-400`}
                         />
+                        {fieldErrors.name && (
+                            <p className="text-red-400 text-xs mt-1 ml-1">{fieldErrors.name}</p>
+                        )}
                     </div>
 
                     {/* Email */}
@@ -79,9 +102,11 @@ const RegisterPage = () => {
                             placeholder="Email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            required
-                            className="w-full bg-zinc-800 text-white border border-zinc-700 rounded-lg pl-12 py-3 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 placeholder-zinc-400"
+                            className={`w-full bg-zinc-800 text-white border ${fieldErrors.email ? 'border-red-500' : 'border-zinc-700'} rounded-lg pl-12 py-3 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 placeholder-zinc-400`}
                         />
+                        {fieldErrors.email && (
+                            <p className="text-red-400 text-xs mt-1 ml-1">{fieldErrors.email}</p>
+                        )}
                     </div>
 
                     {/* Password */}
@@ -92,8 +117,7 @@ const RegisterPage = () => {
                             placeholder="Password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            required
-                            className="w-full bg-zinc-800 text-white border border-zinc-700 rounded-lg pl-12 pr-10 py-3 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 placeholder-zinc-400"
+                            className={`w-full bg-zinc-800 text-white border ${fieldErrors.password ? 'border-red-500' : 'border-zinc-700'} rounded-lg pl-12 pr-10 py-3 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 placeholder-zinc-400`}
                         />
                         <div
                             className="absolute right-4 top-3.5 cursor-pointer text-zinc-400 hover:text-fuchsia-500 transition"
@@ -101,6 +125,9 @@ const RegisterPage = () => {
                         >
                             {showPassword ? <FaEyeSlash /> : <FaEye />}
                         </div>
+                        {fieldErrors.password && (
+                            <p className="text-red-400 text-xs mt-1 ml-1">{fieldErrors.password}</p>
+                        )}
                     </div>
 
                     {/* Confirm Password */}
@@ -111,8 +138,7 @@ const RegisterPage = () => {
                             placeholder="Confirm Password"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
-                            required
-                            className="w-full bg-zinc-800 text-white border border-zinc-700 rounded-lg pl-12 pr-10 py-3 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 placeholder-zinc-400"
+                            className={`w-full bg-zinc-800 text-white border ${fieldErrors.confirmPassword ? 'border-red-500' : 'border-zinc-700'} rounded-lg pl-12 pr-10 py-3 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 placeholder-zinc-400`}
                         />
                         <div
                             className="absolute right-4 top-3.5 cursor-pointer text-zinc-400 hover:text-fuchsia-500 transition"
@@ -120,6 +146,9 @@ const RegisterPage = () => {
                         >
                             {showPassword ? <FaEyeSlash /> : <FaEye />}
                         </div>
+                        {fieldErrors.confirmPassword && (
+                            <p className="text-red-400 text-xs mt-1 ml-1">{fieldErrors.confirmPassword}</p>
+                        )}
                     </div>
 
                     {/* Submit */}
@@ -141,7 +170,6 @@ const RegisterPage = () => {
                 </div>
             </motion.div>
         </div>
-
     );
 };
 

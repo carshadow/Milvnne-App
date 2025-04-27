@@ -66,9 +66,12 @@ export const AuthProvider = ({ children }) => {
                 body: JSON.stringify(updatedData),
             });
 
-            if (!res.ok) throw new Error("Error al actualizar el perfil");
+            const data = await res.json(); // 💥 Siempre leer la respuesta
 
-            const data = await res.json();
+            if (!res.ok) {
+                // Si no fue OK, lanza el mensaje del backend
+                throw new Error(data.message || "Error al actualizar el perfil");
+            }
 
             setUser((prev) => ({
                 ...prev,
@@ -76,12 +79,13 @@ export const AuthProvider = ({ children }) => {
                 email: data.updatedUser.email,
             }));
 
-            return data;
+            return { success: true, message: data.message };
         } catch (err) {
-            console.error("Error actualizando perfil:", err);
-            return { message: "Error al actualizar perfil" };
+            console.error("❌ Error actualizando perfil:", err);
+            return { success: false, message: err.message || "Error desconocido" };
         }
     };
+
 
 
 

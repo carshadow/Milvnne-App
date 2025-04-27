@@ -5,21 +5,44 @@ import User from "../models/User.js";
 import { authenticateUser } from "../middlewares/authMiddleware.js";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
-
+import { z } from "zod"; // 👈 Importamos Zod
 
 const router = express.Router();
 
-// PUT /api/users/update-profile
+// 🧠 Esquemas de Validación
+const updateProfileSchema = z.object({
+    name: z.string().min(1, "El nombre es requerido").optional(),
+    email: z.string().email("Email inválido").optional(),
+    password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres").optional(),
+});
+
+const forgotPasswordSchema = z.object({
+    email: z.string().email("Email inválido"),
+});
+
+const resetPasswordSchema = z.object({
+    password: z.string().min(6, "La nueva contraseña debe tener al menos 6 caracteres"),
+});
+
+// ✅ PUT /api/users/update-profile
 router.put("/update-profile", authenticateUser, async (req, res) => {
     try {
+        // ✅ Validar datos
+        const validatedData = updateProfileSchema.safeParse(req.body);
+        if (!validatedData.success) {
+            return res.status(400).json({ message: validatedData.error.errors[0].message });
+        }
+
         const user = await User.findById(req.user._id).select("+password");
 
         if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
 
-        if (req.body.name) user.name = req.body.name;
-        if (req.body.email) user.email = req.body.email;
-        if (req.body.password) {
-            const hashed = await bcrypt.hash(req.body.password, 10);
+        const { name, email, password } = validatedData.data;
+
+        if (name) user.name = name;
+        if (email) user.email = email;
+        if (password) {
+            const hashed = await bcrypt.hash(password, 10);
             user.password = hashed;
         }
 
@@ -41,9 +64,14 @@ router.put("/update-profile", authenticateUser, async (req, res) => {
     }
 });
 
-// 👉 1. Solicitar enlace de recuperación
+// ✅ POST /api/users/forgot-password
 router.post("/forgot-password", async (req, res) => {
-    const { email } = req.body;
+    const validatedData = forgotPasswordSchema.safeParse(req.body);
+    if (!validatedData.success) {
+        return res.status(400).json({ message: validatedData.error.errors[0].message });
+    }
+
+    const { email } = validatedData.data;
     const user = await User.findOne({ email });
 
     if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
@@ -76,10 +104,21 @@ router.post("/forgot-password", async (req, res) => {
     res.json({ message: "Email de recuperación enviado." });
 });
 
-// 👇 2. Resetear contraseña con el token
+// ✅ POST /api/users/reset-password/:token
 router.post("/reset-password/:token", async (req, res) => {
+    const validatedData = resetPasswordSchema.safeParse(req.body);
+    if (!validatedData.success) {
+        return res.status(400).json({
+            success: false,
+            errors: validatedData.error.errors.map(err => ({
+                path: err.path,
+                message: err.message,
+            })),
+        });
+    }
+
+    const { password } = validatedData.data;
     const { token } = req.params;
-    const { password } = req.body;
 
     const user = await User.findOne({
         resetPasswordToken: token,

@@ -1,14 +1,25 @@
-
 import express from "express";
 import multer from "multer";
 import Product from "../models/Product.js";
 import { authenticateUser, verifyAdmin } from "../middlewares/authMiddleware.js";
-import { storage } from "../config/cloudinary.js"; // Asegúrate de tener este archivo
+import { storage } from "../config/cloudinary.js";
+import { z } from "zod"; // ✅ Importar Zod
 
 const router = express.Router();
 const upload = multer({ storage });
 
-// Obtener todos los productos
+// 🧠 Esquema de validación de producto
+const productSchema = z.object({
+    name: z.string().min(1, "El nombre es requerido"),
+    price: z.coerce.number({ invalid_type_error: "El precio debe ser un número" }),
+    category: z.string().min(1, "La categoría es requerida"),
+    description: z.string().min(10, "La descripción debe tener al menos 10 caracteres"),
+    hasSizes: z.coerce.boolean().optional(), // "true" o "false" string que convertimos
+    stock: z.coerce.number().optional(),
+    sizes: z.record(z.string(), z.coerce.number().min(0, "No puede ser menor a 0")).optional(),
+});
+
+// ✅ Obtener todos los productos
 router.get("/", async (req, res) => {
     try {
         const products = await Product.find();
@@ -18,7 +29,7 @@ router.get("/", async (req, res) => {
     }
 });
 
-// Obtener producto por ID
+// ✅ Obtener producto por ID
 router.get("/:id", async (req, res) => {
     try {
         const product = await Product.findById(req.params.id);
@@ -29,7 +40,7 @@ router.get("/:id", async (req, res) => {
     }
 });
 
-// Crear producto
+// ✅ Crear producto
 router.post(
     "/",
     authenticateUser,
@@ -43,29 +54,39 @@ router.post(
         try {
             const { name, price, category, description, sizes, stock, hasSizes } = req.body;
 
-            if (!name || !price || !category || !description) {
-                return res.status(400).json({ message: "Todos los campos son requeridos" });
-            }
+            // Validar con Zod antes de guardar
+            const parsed = productSchema.safeParse({
+                name,
+                price,
+                category,
+                description,
+                hasSizes,
+                stock,
+                sizes: sizes ? (typeof sizes === "string" ? JSON.parse(sizes) : sizes) : undefined,
+            });
 
-            const parsedHasSizes = hasSizes === "true";
+            if (!parsed.success) {
+                return res.status(400).json({
+                    success: false,
+                    errors: parsed.error.errors.map(err => ({
+                        path: err.path,
+                        message: err.message,
+                    })),
+                });
+            }
 
             const coverImage = req.files["coverImage"]?.[0]?.path || "";
             const hoverImage = req.files["hoverImage"]?.[0]?.path || "";
             const images = req.files["images"]?.map((img) => img.path) || [];
 
-            let parsedSizes = { S: 0, M: 0, L: 0, XL: 0 };
-            if (parsedHasSizes && sizes) {
-                parsedSizes = typeof sizes === "string" ? JSON.parse(sizes) : sizes;
-            }
-
             const newProduct = new Product({
-                name,
-                price,
-                category,
-                description,
-                hasSizes: parsedHasSizes,
-                sizes: parsedHasSizes ? parsedSizes : { S: 0, M: 0, L: 0, XL: 0 },
-                stock: parsedHasSizes ? 0 : Number(stock),
+                name: parsed.data.name,
+                price: parsed.data.price,
+                category: parsed.data.category,
+                description: parsed.data.description,
+                hasSizes: parsed.data.hasSizes,
+                stock: parsed.data.hasSizes ? 0 : parsed.data.stock,
+                sizes: parsed.data.hasSizes ? parsed.data.sizes || { S: 0, M: 0, L: 0, XL: 0 } : { S: 0, M: 0, L: 0, XL: 0 },
                 coverImage,
                 hoverImage,
                 images,
@@ -74,24 +95,13 @@ router.post(
             await newProduct.save();
             res.status(201).json({ message: "✅ Producto creado", product: newProduct });
         } catch (error) {
-            console.error("❌ Error al crear producto:");
-
-            // Muestra el contenido completo del error como string legible
-            try {
-                console.error(JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
-            } catch (jsonErr) {
-                console.error("Error al hacer JSON.stringify del error:", jsonErr);
-                console.error(error);
-            }
-
-            res.status(500).json({
-                message: error.message || "❌ Error interno del servidor",
-            });
+            console.error("❌ Error al crear producto:", error);
+            res.status(500).json({ message: error.message || "Error interno del servidor" });
         }
     }
 );
 
-// Editar producto
+// ✅ Editar producto
 router.put(
     "/:id",
     authenticateUser,
@@ -102,7 +112,26 @@ router.put(
     ]),
     async (req, res) => {
         try {
-            const { name, price, category, description, sizes, discount, originalPrice } = req.body;
+            const { name, price, category, description, sizes } = req.body;
+
+            // Validar con Zod antes de actualizar
+            const parsed = productSchema.safeParse({
+                name,
+                price,
+                category,
+                description,
+                sizes: sizes ? (typeof sizes === "string" ? JSON.parse(sizes) : sizes) : undefined,
+            });
+
+            if (!parsed.success) {
+                return res.status(400).json({
+                    success: false,
+                    errors: parsed.error.errors.map(err => ({
+                        path: err.path,
+                        message: err.message,
+                    })),
+                });
+            }
 
             const coverImage = req.files["coverImage"]?.[0]?.path;
             const images = req.files["images"]?.map((img) => img.path) || [];
@@ -110,18 +139,14 @@ router.put(
             const product = await Product.findById(req.params.id);
             if (!product) return res.status(404).json({ message: "Producto no encontrado" });
 
-            const parsedSizes = typeof sizes === "string" ? JSON.parse(sizes) : sizes;
-
             const updatedProduct = await Product.findByIdAndUpdate(
                 req.params.id,
                 {
-                    name,
-                    price,
-                    discount: discount || 0,
-                    originalPrice: originalPrice || price,
-                    category,
-                    description,
-                    sizes: parsedSizes,
+                    name: parsed.data.name,
+                    price: parsed.data.price,
+                    category: parsed.data.category,
+                    description: parsed.data.description,
+                    sizes: parsed.data.sizes,
                     coverImage: coverImage || product.coverImage,
                     images: images.length > 0 ? images : product.images,
                 },
@@ -131,12 +156,12 @@ router.put(
             res.json({ message: "✅ Producto actualizado", product: updatedProduct });
         } catch (error) {
             console.error("❌ Error al actualizar producto:", error);
-            res.status(500).json({ message: "❌ Error interno del servidor" });
+            res.status(500).json({ message: "Error interno del servidor" });
         }
     }
 );
 
-// Eliminar producto
+// ✅ Eliminar producto
 router.delete("/:id", authenticateUser, verifyAdmin, async (req, res) => {
     try {
         const product = await Product.findById(req.params.id);
@@ -146,7 +171,7 @@ router.delete("/:id", authenticateUser, verifyAdmin, async (req, res) => {
         res.json({ message: "✅ Producto eliminado correctamente" });
     } catch (error) {
         console.error("❌ Error al eliminar producto:", error);
-        res.status(500).json({ message: "❌ Error interno del servidor" });
+        res.status(500).json({ message: "Error interno del servidor" });
     }
 });
 
