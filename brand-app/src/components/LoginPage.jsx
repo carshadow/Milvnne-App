@@ -1,23 +1,43 @@
 import React, { useState, useContext } from "react";
 import { AuthContext } from "../context/authContext";
 import { motion } from "framer-motion";
-import { FaUser, FaLock } from "react-icons/fa";
+import { FaUser, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { Link } from "react-router-dom";
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { z } from "zod";
+
+// ✅ Esquema de validación Zod
+const loginSchema = z.object({
+    email: z.string().email("Debe ser un email válido"),
+    password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
+});
 
 const LoginPage = () => {
+    const { login } = useContext(AuthContext);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const { login } = useContext(AuthContext);
-    const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
-
+    const [fieldErrors, setFieldErrors] = useState({}); // 👈 Errores por campo
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        setErrorMessage(""); // limpiar error anterior
+        setErrorMessage("");
+        setFieldErrors({});
+
+        // 🧠 Validar con Zod antes de enviar
+        const validation = loginSchema.safeParse({ email, password });
+
+        if (!validation.success) {
+            const newErrors = {};
+            validation.error.errors.forEach(err => {
+                newErrors[err.path[0]] = err.message;
+            });
+            setFieldErrors(newErrors);
+            setLoading(false);
+            return;
+        }
 
         try {
             const success = await login(email, password);
@@ -56,9 +76,11 @@ const LoginPage = () => {
                             placeholder="Email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            required
-                            className="w-full bg-zinc-800 text-white border border-zinc-700 rounded-lg pl-12 py-3 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 placeholder-zinc-400"
+                            className={`w-full bg-zinc-800 text-white border ${fieldErrors.email ? 'border-red-500' : 'border-zinc-700'} rounded-lg pl-12 py-3 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 placeholder-zinc-400`}
                         />
+                        {fieldErrors.email && (
+                            <p className="text-red-400 text-xs mt-1 ml-1">{fieldErrors.email}</p>
+                        )}
                     </div>
 
                     {/* Password Input */}
@@ -69,8 +91,7 @@ const LoginPage = () => {
                             placeholder="Password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            required
-                            className="w-full bg-zinc-800 text-white border border-zinc-700 rounded-lg pl-12 pr-10 py-3 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 placeholder-zinc-400"
+                            className={`w-full bg-zinc-800 text-white border ${fieldErrors.password ? 'border-red-500' : 'border-zinc-700'} rounded-lg pl-12 pr-10 py-3 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 placeholder-zinc-400`}
                         />
                         <div
                             className="absolute right-4 top-3.5 cursor-pointer text-zinc-400 hover:text-fuchsia-500 transition"
@@ -78,6 +99,9 @@ const LoginPage = () => {
                         >
                             {showPassword ? <FaEyeSlash /> : <FaEye />}
                         </div>
+                        {fieldErrors.password && (
+                            <p className="text-red-400 text-xs mt-1 ml-1">{fieldErrors.password}</p>
+                        )}
                     </div>
 
                     {/* Submit Button */}
@@ -87,11 +111,14 @@ const LoginPage = () => {
                     >
                         {loading ? "Entrando..." : "Login"}
                     </button>
+
+                    {/* General login error */}
                     {errorMessage && (
                         <p className="text-center text-red-400 font-medium mt-2">
                             {errorMessage}
                         </p>
                     )}
+
                     <div className="text-center mt-4">
                         <Link
                             to="/forgot-password"
@@ -113,7 +140,6 @@ const LoginPage = () => {
                 </div>
             </motion.div>
         </div>
-
     );
 };
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { FaTimes } from 'react-icons/fa';
+import { z } from "zod";
 
 const AdminDashboard = () => {
     const [products, setProducts] = useState([]);
@@ -9,7 +10,8 @@ const AdminDashboard = () => {
     const token = localStorage.getItem("token");
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [showOrderModal, setShowOrderModal] = useState(false);
-
+    const [productErrors, setProductErrors] = useState({});
+    const [editingErrors, setEditingErrors] = useState({});
     const [newProduct, setNewProduct] = useState({
         name: "",
         price: "",
@@ -176,26 +178,24 @@ const AdminDashboard = () => {
 
 
     const handleCreateProduct = async () => {
-        const formData = new FormData();
+        setProductErrors({}); // Limpiar errores antes de intentar
 
+        const formData = new FormData();
         formData.append("name", newProduct.name);
         formData.append("price", newProduct.price);
         formData.append("category", newProduct.category);
         formData.append("description", newProduct.description);
-        formData.append("hasSizes", newProduct.hasSizes ? "true" : "false"); // 👈 importante
+        formData.append("hasSizes", newProduct.hasSizes ? "true" : "false");
 
-        // 👕 Si tiene tallas, enviar tallas
         if (newProduct.hasSizes) {
             formData.append("sizes", JSON.stringify(newProduct.sizes));
         } else {
-            // 📦 Si no tiene tallas, enviar stock
             formData.append("stock", newProduct.stock);
         }
 
-        // Imágenes
         formData.append("coverImage", newProduct.coverImage);
         formData.append("hoverImage", newProduct.hoverImage);
-        newProduct.images.forEach((img, i) => {
+        newProduct.images.forEach((img) => {
             formData.append("images", img);
         });
 
@@ -208,42 +208,67 @@ const AdminDashboard = () => {
                     Authorization: `Bearer ${token}`
                 }
             });
+
             const data = await res.json();
 
-            if (res.ok) {
-                alert("✅ Producto creado exitosamente");
-                // Limpieza opcional:
-                setNewProduct({
-                    name: "",
-                    price: "",
-                    category: "",
-                    description: "",
-                    hasSizes: true,
-                    sizes: { S: 0, M: 0, L: 0, XL: 0 },
-                    stock: 0,
-                    coverImage: null,
-                    hoverImage: null,
-                    images: []
-                });
-            } else {
-                alert(`❌ Error: ${data.message}`);
+            if (!res.ok) {
+                if (data.errors) {
+                    // ⚡ Mapeamos los errores en un objeto { field: message }
+                    const fieldErrors = {};
+                    data.errors.forEach(err => {
+                        fieldErrors[err.path[0]] = err.message;
+                    });
+                    setProductErrors(fieldErrors);
+                } else {
+                    setProductErrors({ general: data.message || "Error al crear producto" });
+                }
+                return;
             }
+
+            alert("✅ Producto creado exitosamente!");
+            setNewProduct({
+                name: "",
+                price: "",
+                category: "",
+                description: "",
+                hasSizes: true,
+                sizes: { S: 0, M: 0, L: 0, XL: 0 },
+                stock: 0,
+                coverImage: null,
+                hoverImage: null,
+                images: []
+            });
+            fetchProducts();
         } catch (err) {
-            console.error("❌ Error creando el producto:", err);
-            alert("Ocurrió un error al crear el producto.");
+            console.error("❌ Error creando producto:", err);
+            setProductErrors({ general: "Error de red o servidor" });
         }
     };
 
+    const editProductSchema = z.object({
+        name: z.string().min(1, "El nombre es requerido"),
+        price: z.coerce.number({ invalid_type_error: "El precio debe ser un número" }),
+        category: z.string().min(1, "La categoría es requerida"),
+        description: z.string().min(10, "La descripción debe tener al menos 10 caracteres"),
+        hasSizes: z.coerce.boolean(),
+        stock: z.coerce.number().optional(),
+        sizes: z.record(z.string(), z.coerce.number().min(0, "No puede ser menor a 0")).optional(),
+
+    });
+
     const handleEditProduct = async () => {
         if (!editingProduct) return;
+        setEditingErrors({});
 
         try {
             const discount = editingProduct.discount !== "" && !isNaN(editingProduct.discount)
                 ? parseFloat(editingProduct.discount)
                 : 0;
+
             const originalPrice = editingProduct.originalPrice !== ""
                 ? parseFloat(editingProduct.originalPrice)
                 : parseFloat(editingProduct.price);
+
             const userPrice = parseFloat(editingProduct.price);
 
             const validDiscount = isNaN(discount) ? 0 : discount;
@@ -258,19 +283,42 @@ const AdminDashboard = () => {
                 finalOriginal = userPrice;
             }
 
+            // Validar con Zod
+            const validation = editProductSchema.safeParse({
+                name: editingProduct.name,
+                price: finalPrice,
+                category: editingProduct.category || "",
+                description: editingProduct.description,
+                hasSizes: editingProduct.hasSizes ?? true,
+                stock: editingProduct.hasSizes ? undefined : editingProduct.stock,
+                sizes: editingProduct.hasSizes ? editingProduct.sizes : undefined,
+            });
+
+            if (!validation.success) {
+                const fieldErrors = {};
+                validation.error.errors.forEach(err => {
+                    fieldErrors[err.path[0]] = err.message;
+                });
+                setEditingErrors(fieldErrors);
+                return;
+            }
+
             const formData = new FormData();
             formData.append("name", editingProduct.name);
             formData.append("price", finalPrice);
             formData.append("description", editingProduct.description);
+            formData.append("category", editingProduct.category);
+            formData.append("hasSizes", editingProduct.hasSizes ? "true" : "false");
+
+            if (editingProduct.hasSizes) {
+                formData.append("sizes", JSON.stringify(editingProduct.sizes));
+            } else {
+                formData.append("stock", editingProduct.stock);
+            }
+
             formData.append("discount", validDiscount);
-            formData.append("originalPrice", finalOriginal);
+            formData.append("originalPrice", validOriginal);
 
-            // Tallas
-            Object.entries(editingProduct.sizes).forEach(([size, value]) => {
-                formData.append(`sizes[${size}]`, value);
-            });
-
-            // Archivos (si se modificaron)
             if (editingProduct.newCoverImage) {
                 formData.append("coverImage", editingProduct.newCoverImage);
             }
@@ -278,15 +326,15 @@ const AdminDashboard = () => {
                 formData.append("hoverImage", editingProduct.newHoverImage);
             }
             if (editingProduct.newImages && editingProduct.newImages.length > 0) {
-                editingProduct.newImages.forEach((file, i) => {
-                    formData.append("images", file); // importante que sea "images" sin [i] si estás usando multer.array
+                editingProduct.newImages.forEach((file) => {
+                    formData.append("images", file);
                 });
             }
 
             const res = await fetch(`http://localhost:8080/api/products/${editingProduct._id}`, {
                 method: "PUT",
                 credentials: "include",
-                body: formData
+                body: formData,
             });
 
             if (res.ok) {
@@ -295,13 +343,17 @@ const AdminDashboard = () => {
                 setEditingProduct(null);
                 setShowEditModal(false);
             } else {
-                alert("❌ Error al actualizar el producto");
+                const data = await res.json();
+                alert(`❌ Error al actualizar producto: ${data.message || "Error desconocido"}`);
             }
+
         } catch (error) {
             console.error("❌ Error updating product:", error);
             alert("❌ Error al actualizar producto");
         }
     };
+
+
 
 
 
@@ -482,6 +534,9 @@ const AdminDashboard = () => {
                             value={newProduct.name}
                             onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
                         />
+                        {productErrors.name && (
+                            <p className="text-red-400 text-xs mt-1">{productErrors.name}</p>
+                        )}
                     </div>
 
                     {/* Precio */}
@@ -494,6 +549,9 @@ const AdminDashboard = () => {
                             value={newProduct.price}
                             onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
                         />
+                        {productErrors.price && (
+                            <p className="text-red-400 text-xs mt-1">{productErrors.price}</p>
+                        )}
                     </div>
 
                     {/* Categoría */}
@@ -510,6 +568,9 @@ const AdminDashboard = () => {
                                 </option>
                             ))}
                         </select>
+                        {productErrors.category && (
+                            <p className="text-red-400 text-xs mt-1">{productErrors.category}</p>
+                        )}
                     </div>
 
                     {/* Descripción */}
@@ -521,6 +582,9 @@ const AdminDashboard = () => {
                             value={newProduct.description}
                             onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
                         />
+                        {productErrors.description && (
+                            <p className="text-red-400 text-xs mt-1">{productErrors.description}</p>
+                        )}
                     </div>
 
                     {/* Tallas */}
@@ -792,6 +856,11 @@ const AdminDashboard = () => {
                                     value={editingProduct.name}
                                     onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
                                 />
+                                {editingErrors.name && (
+                                    <motion.div className="text-red-500">
+                                        {editingErrors.name}
+                                    </motion.div>
+                                )}
                             </div>
 
                             {/* Precio y Descuento */}
@@ -804,6 +873,7 @@ const AdminDashboard = () => {
                                         value={editingProduct.price}
                                         onChange={(e) => setEditingProduct({ ...editingProduct, price: e.target.value })}
                                     />
+
                                 </div>
 
                                 <div>

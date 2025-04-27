@@ -1,21 +1,51 @@
 import express from 'express';
 import Order from '../models/Order.js';
 import { sendOrderEmail } from "../utils/mailer.js";
+import { z } from "zod";
 
+
+const checkoutSchema = z.object({
+    items: z.array(
+        z.object({
+            product: z.string(),
+            quantity: z.number(),
+            size: z.string().optional()
+        })
+    ),
+    totalAmount: z.number(),
+    address: z.string(),
+    userId: z.string().nullable().optional()
+});
+
+const updateStatusSchema = z.object({
+    status: z.string().min(1, "El estado es requerido")
+});
 
 const router = express.Router();
 
 // Ruta de Checkout (anónima o autenticada)
 router.post('/checkout', async (req, res) => {
     try {
-        const { items, totalAmount, address, userId } = req.body;
+        const validation = checkoutSchema.safeParse(req.body);
 
-        // Si el usuario está logueado, se utiliza su ID; si no, se deja null
+        if (!validation.success) {
+            console.error("❌ Error de validación:", validation.error.errors);
+            return res.status(400).json({
+                success: false,
+                errors: validation.error.errors.map(err => ({
+                    path: err.path,
+                    message: err.message
+                })),
+            });
+        }
+
+        const { items, totalAmount, address, userId } = validation.data;
+
         const order = new Order({
             products: items,
             total: totalAmount,
             address,
-            user: userId || null,  // Permite orden sin usuario logueado
+            user: userId || null,
         });
 
         await order.save();
@@ -24,6 +54,7 @@ router.post('/checkout', async (req, res) => {
         res.status(500).json({ message: "Server error", error });
     }
 });
+
 
 router.get('/user/:userId', async (req, res) => {
     try {
@@ -49,12 +80,23 @@ router.get("/", async (req, res) => {
 // Actualizar estado de la orden
 router.put("/:id/status", async (req, res) => {
     try {
-        const { status } = req.body;
+        const validation = updateStatusSchema.safeParse(req.body);
 
-        // ⚠️ Actualizamos primero
+        if (!validation.success) {
+            console.error("❌ Error de validación:", validation.error.errors);
+            return res.status(400).json({
+                success: false,
+                errors: validation.error.errors.map(err => ({
+                    path: err.path,
+                    message: err.message
+                })),
+            });
+        }
+
+        const { status } = validation.data;
+
         await Order.findByIdAndUpdate(req.params.id, { status });
 
-        // ✅ Luego buscamos con populate completo
         const updatedOrder = await Order.findById(req.params.id).populate("products.product");
 
         // 🧠 Debug
