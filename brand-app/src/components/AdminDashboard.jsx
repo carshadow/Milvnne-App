@@ -339,7 +339,7 @@ const AdminDashboard = () => {
 
             if (res.ok) {
                 fetchProducts();
-                alert("✅ Producto actualizado exitosamente!");
+                alert("Producto actualizado exitosamente!");
                 setEditingProduct(null);
                 setShowEditModal(false);
             } else {
@@ -455,7 +455,7 @@ const AdminDashboard = () => {
 
             if (res.ok) {
                 alert("✅ Orden archivada");
-                fetchAllOrders(); // refresca la tabla sin esa orden
+                fetchAllOrders();
             } else {
                 alert("❌ Error al archivar la orden");
             }
