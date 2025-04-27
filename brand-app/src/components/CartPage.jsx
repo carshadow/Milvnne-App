@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { CartContext } from '../context/CartContext';
-import { AuthContext } from '../context/authContext'; // ✅ Importado
+import { AuthContext } from '../context/authContext'; //  Importado
 import { Link, useNavigate } from 'react-router-dom';
 import { loadStripe } from "@stripe/stripe-js";
 import { motion } from 'framer-motion';
@@ -10,7 +10,7 @@ const stripePromise = loadStripe("pk_test_51QSkyUB3NdXOFdwIiRiSTs7BfhfFE1PoNYyz4
 
 const CartPage = () => {
     const { cart, removeFromCart, updateQuantity } = useContext(CartContext);
-    const { user } = useContext(AuthContext); // ✅ Usado aquí
+    const { user } = useContext(AuthContext); //  Usado aquí
     const [suggestedProducts, setSuggestedProducts] = useState([]);
     const [orders, setOrders] = useState([]);
     const navigate = useNavigate();
@@ -26,36 +26,6 @@ const CartPage = () => {
             fetchOrders(); // Solo traer órdenes si hay usuario
         }
     }, [user]);
-
-    // const handleCheckout = async () => {
-    //     const stripe = await stripePromise;
-    //     try {
-    //         // ✅ Aquí se añade el userId
-    //         const cartItems = cart.map(item => ({
-    //             product: item.product,
-    //             quantity: item.quantity,
-    //             size: item.size,
-    //             userId: user?._id || "guest"
-    //         }));
-
-    //         const response = await fetch("http://localhost:8080/api/stripe/create-checkout-session", {
-    //             method: "POST",
-    //             headers: { "Content-Type": "application/json" },
-    //             body: JSON.stringify({ cartItems }),
-    //         });
-
-    //         const session = await response.json();
-    //         if (session.id) {
-    //             localStorage.setItem("checkoutInProgress", "true");
-    //             stripe.redirectToCheckout({ sessionId: session.id });
-    //         } else {
-    //             alert(`❌ Error: ${session.message || "No session ID returned"}`);
-    //         }
-    //     } catch (error) {
-    //         console.error("❌ Error en checkout:", error);
-    //         alert("❌ Error processing payment");
-    //     }
-    // };
 
     const fetchOrders = async () => {
         try {
@@ -85,7 +55,7 @@ const CartPage = () => {
     const handleCheckout = async () => {
         const stripe = await stripePromise;
         try {
-            // ✅ Aquí se añade el userId y solo el ID del producto
+            //  Aquí se añade el userId y solo el ID del producto
             const cartItems = cart.map(item => ({
                 product: item.product._id,
                 quantity: item.quantity,

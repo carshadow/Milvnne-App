@@ -4,26 +4,42 @@ import { motion } from "framer-motion";
 const ForgotPassword = () => {
     const [email, setEmail] = useState("");
     const [status, setStatus] = useState("");
+    const [error, setError] = useState("");
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setStatus("Enviando...");
+        setError("");
 
         try {
+            //  Primero obtenemos el CSRF token
+            const csrfRes = await fetch("http://localhost:8080/api/csrf-token", {
+                credentials: "include",
+            });
+            const csrfData = await csrfRes.json();
+            const csrfToken = csrfData.csrfToken;
+
+            // Ahora enviamos la solicitud protegida
             const res = await fetch("http://localhost:8080/api/users/forgot-password", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "CSRF-Token": csrfToken, // 👈🏻 Aquí pasamos el token
+                },
                 body: JSON.stringify({ email }),
+                credentials: "include",
             });
 
             const data = await res.json();
             if (res.ok) {
-                setStatus("Revisa tu correo para cambiar tu contraseña.");
+                setStatus("✅ Revisa tu correo para cambiar tu contraseña.");
             } else {
-                setStatus(data.message || "Hubo un error");
+                setError(data.message || "Hubo un error");
+                setStatus("");
             }
         } catch (err) {
-            setStatus("Error al enviar solicitud");
+            setError("❌ Error al enviar solicitud");
+            setStatus("");
         }
     };
 
@@ -54,7 +70,14 @@ const ForgotPassword = () => {
                     >
                         Enviar enlace
                     </button>
-                    {status && <p className="text-center text-sm text-green-400">{status}</p>}
+
+                    {/* Mensajes de estado */}
+                    {status && (
+                        <p className="text-center text-green-400 font-semibold text-sm">{status}</p>
+                    )}
+                    {error && (
+                        <p className="text-center text-red-400 font-semibold text-sm">{error}</p>
+                    )}
                 </form>
             </motion.div>
         </div>

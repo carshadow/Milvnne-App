@@ -36,12 +36,12 @@ const Products = () => {
                 const imageMap = {};
                 data.forEach(c => {
                     imageMap[c.name] = {
-                        imageUrl: c.imageUrl,       // ✅ versión desktop
-                        imageMobile: c.imageMobile  // ✅ versión móvil
+                        imageUrl: c.imageUrl,       // versión desktop
+                        imageMobile: c.imageMobile  // versión móvil
                     };
                 });
                 setCategoryOrder(order);
-                setCategoryImages(imageMap); // ✅ Guarda el objeto completo
+                setCategoryImages(imageMap); //  Guarda el objeto completo
             })
             .catch(err => console.error('Error fetching categories:', err))
             .finally(() => setLoading(false));
@@ -84,15 +84,6 @@ const Products = () => {
 
     groupedProducts.push(...remainingGroups);
 
-    // const transformCloudinaryImage = (url) => {
-    //     if (!url) return '';
-    //     return url.includes('/upload/')
-    //         ? url.replace(
-    //             '/upload/',
-    //             '/upload/f_auto,q_auto:best,w_1920,h_1080,c_fill,g_auto,dpr_auto/'
-    //         )
-    //         : url;
-    // };
     return (
         <div className="min-h-screen bg-gradient-to-b from-black to-slate-400 text-white font-sans">
             {/* HERO SECTION */}

@@ -7,6 +7,8 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
+import { csrfProtection } from "./middlewares/csrfMiddleware.js";
+
 
 // 🔹 Obtener __dirname en ES Modules
 const __filename = fileURLToPath(import.meta.url);
@@ -25,6 +27,11 @@ app.use('/api/stripe/webhook', stripeWebhookRoutes); // 👈 Este debe estar ant
 app.use(express.json());
 app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 app.use(cookieParser());
+
+
+app.get("/api/csrf-token", csrfProtection, (req, res) => {
+    res.json({ csrfToken: req.csrfToken() });
+});
 
 // 📦 Crear la carpeta "uploads" si no existe
 const uploadDir = path.join(__dirname, "uploads");
