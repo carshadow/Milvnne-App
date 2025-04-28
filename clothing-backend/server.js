@@ -37,7 +37,7 @@ app.use(cors({
 // 🧠 Middlewares generales (después del webhook)
 app.use(express.json());
 // app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
-app.use(cookieParser());
+app.use(cookieParser(process.env.COOKIE_SECRET));
 
 
 app.get("/api/csrf-token", csrfProtection, (req, res) => {
