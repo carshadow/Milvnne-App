@@ -44,7 +44,7 @@ const RegisterPage = () => {
 
         try {
             // 🔥 Pedir CSRF token
-            const csrfRes = await fetch("http://localhost:8080/api/csrf-token", {
+            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
                 credentials: "include",
             });
             const csrfData = await csrfRes.json();
@@ -52,7 +52,7 @@ const RegisterPage = () => {
 
             const user = { name, email, password };
 
-            const response = await fetch("http://localhost:8080/api/auth/register", {
+            const response = await fetch("https://clothing-backend.fly.dev/api/auth/register", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

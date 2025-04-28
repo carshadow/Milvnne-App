@@ -38,7 +38,7 @@ const CheckoutPage = () => {
                 userId: user ? user._id : null,  // If logged in, pass userId
             };
 
-            const response = await fetch("http://localhost:8080/api/checkout", {
+            const response = await fetch("https://clothing-backend.fly.dev/api/checkout", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

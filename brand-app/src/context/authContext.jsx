@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
 
     const fetchUser = async () => {
         try {
-            const res = await fetch("http://localhost:8080/api/auth/me", {
+            const res = await fetch("https://clothing-backend.fly.dev/api/auth/me", {
                 credentials: "include",
             });
 
@@ -33,15 +33,13 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         try {
-            // 🔥 Primero obtenemos el CSRF token
-            const csrfRes = await fetch("http://localhost:8080/api/csrf-token", {
+            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
                 credentials: "include",
             });
             const csrfData = await csrfRes.json();
             const csrfToken = csrfData.csrfToken;
 
-            // Luego hacemos el login
-            const res = await fetch("http://localhost:8080/api/auth/login", {
+            const res = await fetch("https://clothing-backend.fly.dev/api/auth/login", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -64,17 +62,19 @@ export const AuthProvider = ({ children }) => {
     };
 
 
+
+
     const logout = async () => {
         try {
             // 🔥 Primero obtenemos CSRF token
-            const csrfRes = await fetch("http://localhost:8080/api/csrf-token", {
+            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
                 credentials: "include",
             });
             const csrfData = await csrfRes.json();
             const csrfToken = csrfData.csrfToken;
 
             // Ahora hacemos logout enviando el token
-            await fetch("http://localhost:8080/api/auth/logout", {
+            await fetch("https://clothing-backend.fly.dev/api/auth/logout", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -92,13 +92,13 @@ export const AuthProvider = ({ children }) => {
     const updateUser = async (updatedData) => {
         try {
             //  Primero obtener el CSRF Token
-            const csrfRes = await fetch("http://localhost:8080/api/csrf-token", {
+            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
                 credentials: "include",
             });
             const csrfData = await csrfRes.json();
             const csrfToken = csrfData.csrfToken;
 
-            const res = await fetch("http://localhost:8080/api/users/update-profile", {
+            const res = await fetch("https://clothing-backend.fly.dev/api/users/update-profile", {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",

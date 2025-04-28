@@ -39,16 +39,7 @@ const LoginPage = () => {
         }
 
         try {
-            //  Obtener CSRF Token antes de hacer login
-            const csrfRes = await fetch("http://localhost:8080/api/csrf-token", {
-                credentials: "include", // 👈 importante para cookies
-            });
-            const csrfData = await csrfRes.json();
-            const csrfToken = csrfData.csrfToken;
-
-            // Ahora enviar el login incluyendo CSRF Token
-            const success = await login(email, password, csrfToken);
-
+            const success = await login(email, password); // 🔥 SIN pedir csrfToken
             if (success) {
                 window.location.href = "/";
             } else {

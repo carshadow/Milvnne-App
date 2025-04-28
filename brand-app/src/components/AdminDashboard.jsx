@@ -35,7 +35,7 @@ const AdminDashboard = () => {
 
     const fetchProducts = async () => {
         try {
-            const res = await fetch("http://localhost:8080/api/products", {
+            const res = await fetch("https://clothing-backend.fly.dev/api/products", {
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (!res.ok) throw new Error(`HTTP Error! Status: ${res.status}`);
@@ -56,7 +56,7 @@ const AdminDashboard = () => {
 
     const fetchCategories = async () => {
         try {
-            const res = await fetch("http://localhost:8080/api/categories");
+            const res = await fetch("https://clothing-backend.fly.dev/api/categories");
             const data = await res.json();
             setCategories(data.sort((a, b) => a.order - b.order));
         } catch (err) {
@@ -70,7 +70,7 @@ const AdminDashboard = () => {
         formData.append("name", newCategory);
         formData.append("image", newCategoryImage);
         try {
-            const res = await fetch("http://localhost:8080/api/categories", {
+            const res = await fetch("https://clothing-backend.fly.dev/api/categories", {
                 method: "POST",
                 body: formData,
             });
@@ -88,7 +88,7 @@ const AdminDashboard = () => {
         const formData = new FormData();
         formData.append("image", file);
         try {
-            await fetch(`http://localhost:8080/api/categories/${id}/image`, {
+            await fetch(`https://clothing-backend.fly.dev/api/categories/${id}/image`, {
                 method: "PUT",
                 body: formData,
             });
@@ -100,7 +100,7 @@ const AdminDashboard = () => {
 
     const renameCategory = async (id, newName) => {
         try {
-            await fetch(`http://localhost:8080/api/categories/${id}`, {
+            await fetch(`https://clothing-backend.fly.dev/api/categories/${id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ name: newName }),
@@ -114,7 +114,7 @@ const AdminDashboard = () => {
     const deleteCategory = async (id) => {
         if (!window.confirm("¿Eliminar esta categoría?")) return;
         try {
-            await fetch(`http://localhost:8080/api/categories/${id}`, {
+            await fetch(`https://clothing-backend.fly.dev/api/categories/${id}`, {
                 method: "DELETE",
             });
             fetchCategories();
@@ -134,7 +134,7 @@ const AdminDashboard = () => {
 
         for (let i = 0; i < newOrder.length; i++) {
             newOrder[i].order = i;
-            await fetch(`http://localhost:8080/api/categories/${newOrder[i]._id}/reorder`, {
+            await fetch(`https://clothing-backend.fly.dev/api/categories/${newOrder[i]._id}/reorder`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ order: i }),
@@ -156,7 +156,7 @@ const AdminDashboard = () => {
         formData.append("image", file);
 
         try {
-            const res = await fetch(`http://localhost:8080/api/categories/${id}/image-mobile`, {
+            const res = await fetch(`https://clothing-backend.fly.dev/api/categories/${id}/image-mobile`, {
                 method: "PUT",
                 body: formData,
             });
@@ -200,7 +200,7 @@ const AdminDashboard = () => {
         });
 
         try {
-            const res = await fetch("http://localhost:8080/api/products", {
+            const res = await fetch("https://clothing-backend.fly.dev/api/products", {
                 method: "POST",
                 credentials: "include",
                 body: formData,
@@ -331,7 +331,7 @@ const AdminDashboard = () => {
                 });
             }
 
-            const res = await fetch(`http://localhost:8080/api/products/${editingProduct._id}`, {
+            const res = await fetch(`https://clothing-backend.fly.dev/api/products/${editingProduct._id}`, {
                 method: "PUT",
                 credentials: "include",
                 body: formData,
@@ -362,7 +362,7 @@ const AdminDashboard = () => {
         if (!window.confirm("Are you sure you want to delete this product?")) return;
 
         try {
-            const res = await fetch(`http://localhost:8080/api/products/${id}`, {
+            const res = await fetch(`https://clothing-backend.fly.dev/api/products/${id}`, {
                 method: "DELETE",
                 credentials: "include",
             });
@@ -399,7 +399,7 @@ const AdminDashboard = () => {
     }, []);
 
     const fetchAllOrders = async () => {
-        const res = await fetch("http://localhost:8080/api/orders", {
+        const res = await fetch("https://clothing-backend.fly.dev/api/orders", {
             headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();
@@ -408,7 +408,7 @@ const AdminDashboard = () => {
     };
 
     const updateOrderStatus = async (orderId, status) => {
-        const res = await fetch(`http://localhost:8080/api/orders/${orderId}/status`, {
+        const res = await fetch(`https://clothing-backend.fly.dev/api/orders/${orderId}/status`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
@@ -432,7 +432,7 @@ const AdminDashboard = () => {
 
     const fetchOrders = async () => {
         try {
-            const res = await fetch("http://localhost:8080/api/orders", {
+            const res = await fetch("https://clothing-backend.fly.dev/api/orders", {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const data = await res.json();
@@ -444,7 +444,7 @@ const AdminDashboard = () => {
 
     const archiveOrder = async (orderId) => {
         try {
-            const res = await fetch(`http://localhost:8080/api/orders/${orderId}/archive`, {
+            const res = await fetch(`https://clothing-backend.fly.dev/api/orders/${orderId}/archive`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -467,7 +467,7 @@ const AdminDashboard = () => {
 
     const fetchArchivedOrders = async () => {
         try {
-            const res = await fetch("http://localhost:8080/api/orders/archived", {
+            const res = await fetch("https://clothing-backend.fly.dev/api/orders/archived", {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const data = await res.json();

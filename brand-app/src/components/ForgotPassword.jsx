@@ -13,14 +13,14 @@ const ForgotPassword = () => {
 
         try {
             //  Primero obtenemos el CSRF token
-            const csrfRes = await fetch("http://localhost:8080/api/csrf-token", {
+            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
                 credentials: "include",
             });
             const csrfData = await csrfRes.json();
             const csrfToken = csrfData.csrfToken;
 
             // Ahora enviamos la solicitud protegida
-            const res = await fetch("http://localhost:8080/api/users/forgot-password", {
+            const res = await fetch("https://clothing-backend.fly.dev/api/users/forgot-password", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

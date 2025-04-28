@@ -7,7 +7,7 @@ const ProductCard = ({ product }) => {
             <Link to={`/product/${product._id}`} className="block w-full h-full">
                 {/* Imagen de portada (coverImage) */}
                 <img
-                    src={`http://localhost:8080${product.coverImage}`}
+                    src={`https://clothing-backend.fly.dev${product.coverImage}`}
                     alt={product.name}
                     className="absolute inset-0 w-full h-full object-cover rounded-md transition-opacity duration-300 opacity-100 group-hover:opacity-0"
                 />
@@ -15,7 +15,7 @@ const ProductCard = ({ product }) => {
                 {/* Imagen al hacer hover (hoverImage) */}
                 {product.hoverImage && (
                     <img
-                        src={`http://localhost:8080${product.hoverImage}`}
+                        src={`https://clothing-backend.fly.dev${product.hoverImage}`}
                         alt={`${product.name} hover`}
                         className="absolute inset-0 w-full h-full object-cover rounded-md transition-opacity duration-300 opacity-0 group-hover:opacity-100"
                     />

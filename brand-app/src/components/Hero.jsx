@@ -82,7 +82,7 @@ const Hero = () => {
     useEffect(() => {
         const fetchJustasShirt = async () => {
             try {
-                const res = await fetch("http://localhost:8080/api/products");
+                const res = await fetch("https://clothing-backend.fly.dev/api/products");
                 const products = await res.json();
 
                 // Buscar la camisa de las justas en la base de datos

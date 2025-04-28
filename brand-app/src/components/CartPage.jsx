@@ -29,7 +29,7 @@ const CartPage = () => {
 
     const fetchOrders = async () => {
         try {
-            const res = await fetch(`http://localhost:8080/api/orders/user/${user._id}`, {
+            const res = await fetch(`https://clothing-backend.fly.dev/api/orders/user/${user._id}`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
@@ -44,7 +44,7 @@ const CartPage = () => {
 
     const fetchSuggestedProducts = async () => {
         try {
-            const res = await fetch('http://localhost:8080/api/products');
+            const res = await fetch('https://clothing-backend.fly.dev/api/products');
             const data = await res.json();
             setSuggestedProducts(data.slice(0, 5));
         } catch (error) {
@@ -68,7 +68,7 @@ const CartPage = () => {
 
             }));
 
-            const response = await fetch("http://localhost:8080/api/stripe/create-checkout-session", {
+            const response = await fetch("https://clothing-backend.fly.dev/api/stripe/create-checkout-session", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ cartItems }),
