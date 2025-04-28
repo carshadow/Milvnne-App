@@ -1,6 +1,6 @@
 import express from "express";
 import multer from "multer";
-import Product from "../models/Product.js";
+import Product from "../models/product.js";
 import { authenticateUser, verifyAdmin } from "../middlewares/authMiddleware.js";
 import { storage } from "../config/cloudinary.js";
 import { z } from "zod"; // ✅ Importar Zod

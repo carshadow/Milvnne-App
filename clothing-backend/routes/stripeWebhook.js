@@ -2,7 +2,7 @@ import express from 'express';
 import Stripe from 'stripe';
 import dotenv from 'dotenv';
 import Order from '../models/Order.js';
-import Product from '../models/Product.js';
+import Product from '../models/product.js';
 import mongoose from "mongoose";
 import { sendOrderEmail } from "../utils/mailer.js";
 

@@ -22,10 +22,25 @@ const app = express();
 // ✅ Webhook de Stripe debe ir antes de express.json()
 import stripeWebhookRoutes from './routes/stripeWebhook.js';
 app.use('/api/stripe/webhook', stripeWebhookRoutes); // 👈 Este debe estar antes
+const allowedOrigins = [
+    process.env.CLIENT_URL,
+    "http://localhost:3000"
+];
+
+app.use(cors({
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
+    credentials: true,
+}));
 
 // 🧠 Middlewares generales (después del webhook)
 app.use(express.json());
-app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
+// app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 app.use(cookieParser());
 
 
@@ -74,4 +89,7 @@ app.use((req, res) => {
 
 // 🚀 Iniciar servidor
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+});
