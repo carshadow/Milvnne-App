@@ -1,6 +1,5 @@
 import React, { createContext, useState, useEffect } from "react";
 
-
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -8,7 +7,7 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetchUser(); // Al montar, verificar si el usuario sigue autenticado
+        fetchUser();
     }, []);
 
     const fetchUser = async () => {
@@ -21,11 +20,11 @@ export const AuthProvider = ({ children }) => {
                 const data = await res.json();
                 setUser(data);
             } else {
-                logout();
+                setUser(null);
             }
         } catch (error) {
             console.error("❌ Error fetching user:", error);
-            logout();
+            setUser(null);
         } finally {
             setLoading(false);
         }
@@ -33,24 +32,26 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         try {
+            // 🔥 Primero obtener el CSRF Token
             const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
                 credentials: "include",
             });
             const csrfData = await csrfRes.json();
             const csrfToken = csrfData.csrfToken;
 
+            // 🔥 Luego enviar el login
             const res = await fetch("https://clothing-backend.fly.dev/api/auth/login", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "CSRF-Token": csrfToken, // ✅
+                    "CSRF-Token": csrfToken,
                 },
                 credentials: "include",
                 body: JSON.stringify({ email, password }),
             });
 
             if (res.ok) {
-                fetchUser();
+                await fetchUser();
                 return true;
             } else {
                 return false;
@@ -61,33 +62,30 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-
-
-
     const logout = async () => {
         try {
-            // 🔥 Primero obtenemos CSRF token
             const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
                 credentials: "include",
             });
             const csrfData = await csrfRes.json();
             const csrfToken = csrfData.csrfToken;
 
-            // Ahora hacemos logout enviando el token
             await fetch("https://clothing-backend.fly.dev/api/auth/logout", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "CSRF-Token": csrfToken, // ✅ CSRF token aquí
+                    "CSRF-Token": csrfToken,
                 },
                 credentials: "include",
             });
 
             setUser(null);
         } catch (error) {
-            console.error("❌ Error durante logout:", error);
+            console.error("❌ Logout error:", error);
         }
     };
+
+
 
     const updateUser = async (updatedData) => {
         try {
