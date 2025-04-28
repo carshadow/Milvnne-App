@@ -23,8 +23,9 @@ const app = express();
 import stripeWebhookRoutes from './routes/stripeWebhook.js';
 app.use('/api/stripe/webhook', stripeWebhookRoutes); // 👈 Este debe estar antes
 const allowedOrigins = [
-    process.env.CLIENT_URL,
-    "http://localhost:3000"
+    "http://localhost:3000", // 👈 para desarrollo local
+    "https://brand-app.fly.dev", // 👈 tu frontend deploy en producción
+    "https://tu-dominio.com", // 👈 si compraste dominio propio
 ];
 
 app.use(cors({
@@ -35,6 +36,7 @@ app.use(cors({
             callback(new Error("Not allowed by CORS"));
         }
     },
+
     credentials: true,
 }));
 
