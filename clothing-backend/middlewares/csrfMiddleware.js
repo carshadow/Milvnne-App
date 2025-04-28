@@ -1,11 +1,12 @@
+// middlewares/csrfMiddleware.js
 import csrf from "csurf";
 
 export const csrfProtection = csrf({
     cookie: {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production", // 🔥 secure solo en producción
-        sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // 🔥 None en producción
-        domain: process.env.NODE_ENV === "production" ? ".fly.dev" : undefined, // 🔥 MUY IMPORTANTE
+        secure: true,          // 🔥 Requerido por Fly.io (HTTPS)
+        sameSite: "None",       // 🔥 Necesario porque tu frontend está en otro dominio
+        signed: true            // 🔥 MUY MUY IMPORTANTE porque tus cookies están firmadas
     },
     ignoreMethods: ["GET", "HEAD", "OPTIONS"],
 });

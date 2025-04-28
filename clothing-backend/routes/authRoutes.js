@@ -52,11 +52,10 @@ router.post("/login", csrfProtection, async (req, res) => {
 
         res.cookie("token", token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "Strict",
-            maxAge: 14 * 24 * 60 * 60 * 1000,
+            secure: true, // Fly usa HTTPS siempre
+            sameSite: "None", // 🧠 Mismo que en CSRF
+            maxAge: 14 * 24 * 60 * 60 * 1000, // 14 días
         });
-
         res.json({ message: "Login successful" });
 
     } catch (error) {
@@ -77,7 +76,12 @@ router.get("/me", authenticateUser, async (req, res) => {
 
 // 📌 **Logout para eliminar la cookie**
 router.post("/logout", csrfProtection, (req, res) => {
-    res.clearCookie("token");
+    res.cookie("token", token, {
+        httpOnly: true,
+        secure: true, // Fly usa HTTPS siempre
+        sameSite: "None", // 🧠 Mismo que en CSRF
+        maxAge: 14 * 24 * 60 * 60 * 1000, // 14 días
+    });
     res.json({ message: "Logged out successfully" });
 });
 
