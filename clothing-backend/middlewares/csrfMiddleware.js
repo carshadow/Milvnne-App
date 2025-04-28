@@ -4,7 +4,7 @@ export const csrfProtection = csrf({
     cookie: {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "None", // ✅ para permitir frontend y backend separados
+        sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     },
     ignoreMethods: ["GET", "HEAD", "OPTIONS"],
 });
