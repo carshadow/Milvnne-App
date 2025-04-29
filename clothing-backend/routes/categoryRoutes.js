@@ -3,7 +3,7 @@ import multer from 'multer';
 import Category from '../models/Category.js';
 import { v2 as cloudinary } from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
-import { csrfProtection } from "../middlewares/csrfMiddleware.js";
+import { authenticateUser, verifyAdmin } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
@@ -26,7 +26,7 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage });
 
-// Obtener todas las categorías
+// Obtener todas las categorías (no necesita autenticación)
 router.get('/', async (req, res) => {
     try {
         const categories = await Category.find().sort({ order: 1 });
@@ -37,7 +37,7 @@ router.get('/', async (req, res) => {
 });
 
 // Crear categoría
-router.post('/', upload.single('image'), csrfProtection, async (req, res) => {
+router.post('/', authenticateUser, verifyAdmin, upload.single('image'), async (req, res) => {
     try {
         const { name } = req.body;
         if (!name) return res.status(400).json({ message: 'Category name is required' });
@@ -63,7 +63,7 @@ router.post('/', upload.single('image'), csrfProtection, async (req, res) => {
 });
 
 // Eliminar categoría
-router.delete('/:id', csrfProtection, async (req, res) => {
+router.delete('/:id', authenticateUser, verifyAdmin, async (req, res) => {
     try {
         const category = await Category.findByIdAndDelete(req.params.id);
         if (!category) return res.status(404).json({ message: 'Category not found' });
@@ -81,8 +81,8 @@ router.delete('/:id', csrfProtection, async (req, res) => {
     }
 });
 
-// Renombrar
-router.put('/:id', csrfProtection, async (req, res) => {
+// Renombrar categoría
+router.put('/:id', authenticateUser, verifyAdmin, async (req, res) => {
     try {
         const { name } = req.body;
         const updated = await Category.findByIdAndUpdate(req.params.id, { name }, { new: true });
@@ -93,7 +93,7 @@ router.put('/:id', csrfProtection, async (req, res) => {
 });
 
 // Actualizar imagen desktop
-router.put('/:id/image', upload.single('image'), csrfProtection, async (req, res) => {
+router.put('/:id/image', authenticateUser, verifyAdmin, upload.single('image'), async (req, res) => {
     try {
         const category = await Category.findById(req.params.id);
         if (!category) return res.status(404).json({ message: 'Category not found' });
@@ -113,7 +113,7 @@ router.put('/:id/image', upload.single('image'), csrfProtection, async (req, res
 });
 
 // Actualizar imagen móvil
-router.put('/:id/image-mobile', upload.single('image'), csrfProtection, async (req, res) => {
+router.put('/:id/image-mobile', authenticateUser, verifyAdmin, upload.single('image'), async (req, res) => {
     try {
         const category = await Category.findById(req.params.id);
         if (!category) return res.status(404).json({ message: 'Categoría no encontrada' });
@@ -133,8 +133,8 @@ router.put('/:id/image-mobile', upload.single('image'), csrfProtection, async (r
     }
 });
 
-// Reordenar
-router.put('/:id/reorder', csrfProtection, async (req, res) => {
+// Reordenar categoría
+router.put('/:id/reorder', authenticateUser, verifyAdmin, async (req, res) => {
     try {
         const { order } = req.body;
         const updated = await Category.findByIdAndUpdate(req.params.id, { order }, { new: true });

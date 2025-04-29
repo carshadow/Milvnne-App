@@ -3,7 +3,7 @@ import multer from "multer";
 import Product from "../models/product.js";
 import { authenticateUser, verifyAdmin } from "../middlewares/authMiddleware.js";
 import { storage } from "../config/cloudinary.js";
-import { z } from "zod"; // ✅ Importar Zod
+import { z } from "zod";
 
 const router = express.Router();
 const upload = multer({ storage });
@@ -14,12 +14,12 @@ const productSchema = z.object({
     price: z.coerce.number({ invalid_type_error: "El precio debe ser un número" }),
     category: z.string().min(1, "La categoría es requerida"),
     description: z.string().min(10, "La descripción debe tener al menos 10 caracteres"),
-    hasSizes: z.coerce.boolean().optional(), // "true" o "false" string que convertimos
+    hasSizes: z.coerce.boolean().optional(),
     stock: z.coerce.number().optional(),
     sizes: z.record(z.string(), z.coerce.number().min(0, "No puede ser menor a 0")).optional(),
 });
 
-// ✅ Obtener todos los productos
+// ✅ Obtener todos los productos (público)
 router.get("/", async (req, res) => {
     try {
         const products = await Product.find();
@@ -29,7 +29,7 @@ router.get("/", async (req, res) => {
     }
 });
 
-// ✅ Obtener producto por ID
+// ✅ Obtener producto por ID (público)
 router.get("/:id", async (req, res) => {
     try {
         const product = await Product.findById(req.params.id);
@@ -40,7 +40,7 @@ router.get("/:id", async (req, res) => {
     }
 });
 
-// ✅ Crear producto
+// ✅ Crear producto (protegido)
 router.post(
     "/",
     authenticateUser,
@@ -54,7 +54,6 @@ router.post(
         try {
             const { name, price, category, description, sizes, stock, hasSizes } = req.body;
 
-            // Validar con Zod antes de guardar
             const parsed = productSchema.safeParse({
                 name,
                 price,
@@ -101,7 +100,7 @@ router.post(
     }
 );
 
-// ✅ Editar producto
+// ✅ Editar producto (protegido)
 router.put(
     "/:id",
     authenticateUser,
@@ -114,7 +113,6 @@ router.put(
         try {
             const { name, price, category, description, sizes } = req.body;
 
-            // Validar con Zod antes de actualizar
             const parsed = productSchema.safeParse({
                 name,
                 price,
@@ -161,7 +159,7 @@ router.put(
     }
 );
 
-// ✅ Eliminar producto
+// ✅ Eliminar producto (protegido)
 router.delete("/:id", authenticateUser, verifyAdmin, async (req, res) => {
     try {
         const product = await Product.findById(req.params.id);
