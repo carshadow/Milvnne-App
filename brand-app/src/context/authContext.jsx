@@ -11,15 +11,25 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const fetchUser = async () => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            setUser(null);
+            setLoading(false);
+            return;
+        }
+
         try {
             const res = await fetch("https://clothing-backend.fly.dev/api/auth/me", {
-                credentials: "include",
+                headers: {
+                    Authorization: `Bearer ${token}`, // ✅ PASA EL TOKEN AQUÍ
+                },
             });
 
             if (res.ok) {
                 const data = await res.json();
                 setUser(data);
             } else {
+                localStorage.removeItem("token");
                 setUser(null);
             }
         } catch (error) {
@@ -30,58 +40,33 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+
     const login = async (email, password) => {
         try {
-            // 🔥 Primero obtener el CSRF Token
-            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
-                credentials: "include",
-            });
-            const csrfData = await csrfRes.json();
-            const csrfToken = csrfData.csrfToken;
-
-            // 🔥 Luego enviar el login
             const res = await fetch("https://clothing-backend.fly.dev/api/auth/login", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "CSRF-Token": csrfToken,
-                },
-                credentials: "include",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, password }),
             });
 
-            if (res.ok) {
-                await fetchUser();
-                return true;
-            } else {
-                return false;
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.message || "Error al iniciar sesión");
             }
+
+            localStorage.setItem("token", data.token); // ✅ guardar el token
+            setUser(data.user);
+            return true;
         } catch (error) {
             console.error("❌ Login error:", error);
             return false;
         }
     };
 
-    const logout = async () => {
-        try {
-            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
-                credentials: "include",
-            });
-            const csrfData = await csrfRes.json();
-            const csrfToken = csrfData.csrfToken;
-
-            await fetch("https://clothing-backend.fly.dev/api/auth/logout", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "CSRF-Token": csrfToken,
-                },
-                credentials: "include",
-            });
-            setUser(null);
-        } catch (error) {
-            console.error("❌ Logout error:", error);
-        }
+    const logout = () => {
+        localStorage.removeItem("token");
+        setUser(null);
     };
 
 
