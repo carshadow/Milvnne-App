@@ -7,51 +7,48 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
-import { csrfProtection } from "./middlewares/csrfMiddleware.js";
+import { csrfProtection } from "./middlewares/csrfMiddleware.js"; // ✅ el que YA tienes
 
-
-// 🔹 Obtener __dirname en ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Load environment variables
 dotenv.config();
 
 const app = express();
 
-// ✅ Webhook de Stripe debe ir antes de express.json()
+// ✅ Webhook de Stripe PRIMERO
 import stripeWebhookRoutes from './routes/stripeWebhook.js';
-app.use('/api/stripe/webhook', stripeWebhookRoutes); // 👈 Este debe estar antes
+app.use('/api/stripe/webhook', stripeWebhookRoutes);
+
+// ✅ CORS correcto
 const allowedOrigins = [
-    "http://localhost:3000", // 👈 para desarrollo local
-    "https://brand-app.fly.dev", // 👈 tu frontend deploy en producción
-    "https://tu-dominio.com", // 👈 si compraste dominio propio
+    "http://localhost:3000",
+    "https://brand-app.fly.dev",
+    "https://tu-dominio.com", // solo si tienes un dominio real
 ];
 
 app.use(cors({
-    origin: "https://brand-app.fly.dev", // 👈 directamente tu frontend
+    origin: allowedOrigins,
     credentials: true,
 }));
 
-
-// 🧠 Middlewares generales (después del webhook)
+// ✅ Middlewares generales
 app.use(express.json());
-// app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 app.use(cookieParser(process.env.COOKIE_SECRET));
 
-
-app.get("/api/csrf-token", (req, res) => {
+// ✅ ÚNICAMENTE aquí aplicamos CSRF a /api/csrf-token
+app.get("/api/csrf-token", csrfProtection, (req, res) => {
     res.json({ csrfToken: req.csrfToken() });
 });
 
-// 📦 Crear la carpeta "uploads" si no existe
+// 📦 Carpeta uploads
 const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir);
 }
 app.use("/uploads", express.static(uploadDir));
 
-// 🌐 Conexión a MongoDB
+// 🌐 Conexión MongoDB
 mongoose
     .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => console.log("✅ MongoDB connected"))
@@ -60,7 +57,7 @@ mongoose
         process.exit(1);
     });
 
-// 🔁 Importar rutas
+// 📌 Importar rutas
 import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
@@ -78,14 +75,13 @@ app.use("/api/Stripe", StripeRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/users", userRoutes);
 
-// ⚠️ Ruta 404 si no se encuentra ninguna
+// Ruta 404 si no encuentra
 app.use((req, res) => {
     res.status(404).json({ message: "API route not found" });
 });
 
-// 🚀 Iniciar servidor
+// 🚀 Levantar servidor
 const PORT = process.env.PORT || 8080;
-
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on port ${PORT}`);
 });
