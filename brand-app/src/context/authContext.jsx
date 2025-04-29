@@ -78,7 +78,6 @@ export const AuthProvider = ({ children }) => {
                 },
                 credentials: "include",
             });
-
             setUser(null);
         } catch (error) {
             console.error("❌ Logout error:", error);

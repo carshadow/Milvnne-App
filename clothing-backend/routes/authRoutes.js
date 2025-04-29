@@ -76,14 +76,15 @@ router.get("/me", authenticateUser, async (req, res) => {
 
 // 📌 **Logout para eliminar la cookie**
 router.post("/logout", csrfProtection, (req, res) => {
-    res.cookie("token", token, {
+    res.clearCookie("token", {
         httpOnly: true,
-        secure: true, // Fly usa HTTPS siempre
-        sameSite: "None", // 🧠 Mismo que en CSRF
-        maxAge: 14 * 24 * 60 * 60 * 1000, // 14 días
+        secure: true,
+        sameSite: "None",
+        signed: true,
     });
     res.json({ message: "Logged out successfully" });
 });
+
 
 // 📌 **Registro de Usuario**
 router.post("/register", csrfProtection, async (req, res) => {
