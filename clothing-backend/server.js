@@ -34,7 +34,7 @@ app.use(cors({
 
 // ✅ Middlewares generales
 app.use(express.json());
-app.use(cookieParser(process.env.COOKIE_SECRET));
+app.use(cookieParser(process.env.COOKIE_SECRET, { signed: true }));
 
 // ✅ ÚNICAMENTE aquí aplicamos CSRF a /api/csrf-token
 app.get("/api/csrf-token", csrfProtection, (req, res) => {
