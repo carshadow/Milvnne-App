@@ -90,6 +90,9 @@ const AdminDashboard = () => {
         try {
             await fetch(`https://clothing-backend.fly.dev/api/categories/${id}/image`, {
                 method: "PUT",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
                 body: formData,
             });
             fetchCategories();
@@ -156,8 +159,11 @@ const AdminDashboard = () => {
         formData.append("image", file);
 
         try {
-            const res = await fetch(`https://clothing-backend.fly.dev/api/categories/${id}/image-mobile`, {
+            await fetch(`https://clothing-backend.fly.dev/api/categories/${id}/image`, {
                 method: "PUT",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
                 body: formData,
             });
 
@@ -334,6 +340,9 @@ const AdminDashboard = () => {
             const res = await fetch(`https://clothing-backend.fly.dev/api/products/${editingProduct._id}`, {
                 method: "PUT",
                 credentials: "include",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
                 body: formData,
             });
 
