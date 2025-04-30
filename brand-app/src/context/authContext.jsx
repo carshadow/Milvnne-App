@@ -87,7 +87,7 @@ export const AuthProvider = ({ children }) => {
                     "CSRF-Token": csrfToken, //  Aquí se pasa el token
                 },
                 credentials: "include",
-                body: JSON.stringify(updatedData),
+                body: JSON.stringify(updatedData)
             });
 
             const data = await res.json(); //  siempre leer la respuesta

@@ -159,7 +159,7 @@ const AdminDashboard = () => {
         formData.append("image", file);
 
         try {
-            await fetch(`https://clothing-backend.fly.dev/api/categories/${id}/image`, {
+            const res = await fetch(`https://clothing-backend.fly.dev/api/categories/${id}/image-mobile`, { // ⚡ ojo que aquí también corregí el endpoint
                 method: "PUT",
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -180,6 +180,7 @@ const AdminDashboard = () => {
             alert("❌ Error al actualizar la imagen móvil.");
         }
     };
+
 
 
 
@@ -593,13 +594,14 @@ const AdminDashboard = () => {
                                 <div key={size} className="flex flex-col w-[48%] md:w-[23%]">
                                     <label className="text-sm text-gray-300 mb-1">{size}</label>
                                     <input
-                                        type="number"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
                                         className="bg-zinc-800 border border-zinc-600 p-2 rounded-lg"
-                                        value={newProduct.sizes[size] || 0}
+                                        value={newProduct.sizes[size] || ""}
                                         onChange={(e) =>
                                             setNewProduct({
                                                 ...newProduct,
-                                                sizes: { ...newProduct.sizes, [size]: e.target.value || 0 }
+                                                sizes: { ...newProduct.sizes, [size]: e.target.value }
                                             })
                                         }
                                     />
