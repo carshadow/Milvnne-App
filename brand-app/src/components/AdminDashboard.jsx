@@ -418,27 +418,41 @@ const AdminDashboard = () => {
     };
 
     const updateOrderStatus = async (orderId, status) => {
-        const res = await fetch(`https://clothing-backend.fly.dev/api/orders/${orderId}/status`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`
-            },
-            body: JSON.stringify({ status })
-        });
-        if (res.ok) {
+        try {
+            // 1. Obtener CSRF token
+            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
+                credentials: "include",
+            });
+            const csrfData = await csrfRes.json();
+            const csrfToken = csrfData.csrfToken;
+
+            // 2. Hacer la solicitud PUT con el token
+            const res = await fetch(`https://clothing-backend.fly.dev/api/orders/${orderId}/status`, {
+                method: "PUT",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                    "CSRF-Token": csrfToken, // 👈 CSRF aquí
+                },
+                body: JSON.stringify({ status }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                alert(`❌ Error: ${data.message || "No se pudo actualizar el estado"}`);
+                return;
+            }
+
             alert("📩 Estado actualizado y email enviado al cliente");
             fetchAllOrders();
+        } catch (error) {
+            console.error("❌ Error actualizando estado:", error);
+            alert("❌ Fallo al actualizar el estado");
         }
-
-        if (res.ok) fetchAllOrders();
     };
 
-    const [orders, setOrders] = useState([]);
-
-    useEffect(() => {
-        fetchOrders();
-    }, []);
 
     const fetchOrders = async () => {
         try {
