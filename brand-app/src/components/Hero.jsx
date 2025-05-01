@@ -124,8 +124,7 @@ const Hero = () => {
 
     return (
         <div className="bg-black">
-            <div className="relative h-screen w-full flex flex-col lg:flex-row overflow-hidden bg-black">
-
+            <div className="relative h-screen w-full flex flex-col md:flex-row overflow-hidden bg-black">
                 {/* 📸 Imagen (todo el fondo en mobile, mitad en desktop) */}
                 <div className="w-full md:w-1/2 h-full relative">
                     <div className="absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out">
