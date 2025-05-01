@@ -2,7 +2,7 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import User from "../models/User.js";
 import { authenticateUser } from "../middlewares/authMiddleware.js";
-import csrfProtection from "../middlewares/csrfMiddleware.js"; // 👈 Asegúrate que esto exista
+import { csrfProtection } from "../middlewares/csrfMiddleware.js"; // 👈 Asegúrate que esto exista
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 import { z } from "zod";
