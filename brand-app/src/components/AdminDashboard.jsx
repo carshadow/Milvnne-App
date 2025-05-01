@@ -66,14 +66,27 @@ const AdminDashboard = () => {
 
     const createCategory = async () => {
         if (!newCategory || !newCategoryImage) return;
+
         const formData = new FormData();
         formData.append("name", newCategory);
         formData.append("image", newCategoryImage);
+
         try {
+            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
+                credentials: "include",
+            });
+            const csrfData = await csrfRes.json();
+            const csrfToken = csrfData.csrfToken;
+
             const res = await fetch("https://clothing-backend.fly.dev/api/categories", {
                 method: "POST",
+                headers: {
+                    "CSRF-Token": csrfToken
+                },
+                credentials: "include",
                 body: formData,
             });
+
             if (res.ok) {
                 setNewCategory("");
                 setNewCategoryImage(null);
@@ -83,6 +96,7 @@ const AdminDashboard = () => {
             console.error("Error creating category:", err);
         }
     };
+
 
     const updateCategoryImage = async (id, file) => {
         const formData = new FormData();
@@ -103,9 +117,19 @@ const AdminDashboard = () => {
 
     const renameCategory = async (id, newName) => {
         try {
+            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
+                credentials: "include",
+            });
+            const csrfData = await csrfRes.json();
+            const csrfToken = csrfData.csrfToken;
+
             await fetch(`https://clothing-backend.fly.dev/api/categories/${id}`, {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "CSRF-Token": csrfToken
+                },
+                credentials: "include",
                 body: JSON.stringify({ name: newName }),
             });
             fetchCategories();
@@ -114,17 +138,39 @@ const AdminDashboard = () => {
         }
     };
 
+
     const deleteCategory = async (id) => {
         if (!window.confirm("¿Eliminar esta categoría?")) return;
+
         try {
-            await fetch(`https://clothing-backend.fly.dev/api/categories/${id}`, {
-                method: "DELETE",
+            //  1. Obtener el token CSRF
+            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
+                credentials: "include",
             });
-            fetchCategories();
+            const csrfData = await csrfRes.json();
+            const csrfToken = csrfData.csrfToken;
+
+            //  2. Hacer el DELETE con el token
+            const res = await fetch(`https://clothing-backend.fly.dev/api/categories/${id}`, {
+                method: "DELETE",
+                credentials: "include",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "CSRF-Token": csrfToken
+                }
+            });
+
+            if (res.ok) {
+                fetchCategories();
+            } else {
+                const errorData = await res.json();
+                alert(`❌ Error al eliminar: ${errorData.message}`);
+            }
         } catch (err) {
             console.error("Delete failed", err);
         }
     };
+
 
     const moveCategory = async (index, direction) => {
         const newOrder = [...categories];
@@ -372,9 +418,21 @@ const AdminDashboard = () => {
         if (!window.confirm("Are you sure you want to delete this product?")) return;
 
         try {
+            // ✅ 1. Obtener el token CSRF
+            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
+                credentials: "include",
+            });
+            const csrfData = await csrfRes.json();
+            const csrfToken = csrfData.csrfToken;
+
+            // ✅ 2. Enviar el DELETE con el token
             const res = await fetch(`https://clothing-backend.fly.dev/api/products/${id}`, {
                 method: "DELETE",
                 credentials: "include",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "CSRF-Token": csrfToken
+                }
             });
 
             if (res.ok) {
@@ -389,6 +447,7 @@ const AdminDashboard = () => {
             alert("❌ Failed to delete product");
         }
     };
+
 
     const getAvailabilityStatus = (product) => {
         if (product.hasSizes) {
@@ -942,14 +1001,13 @@ const AdminDashboard = () => {
                                         <div key={size} className="flex flex-col">
                                             <span className="text-xs text-gray-400 mb-1">{size}</span>
                                             <input
-                                                inputMode="numeric"
-                                                pattern="[0-9]*"
-                                                className="bg-zinc-800 border border-zinc-600 p-2 rounded-lg"
-                                                value={newProduct.sizes[size] || ""}
+                                                type="number"
+                                                className="bg-zinc-800 border border-zinc-600 p-2 rounded"
+                                                value={editingProduct.sizes[size] || 0}
                                                 onChange={(e) =>
                                                     setEditingProduct({
-                                                        ...newProduct,
-                                                        sizes: { ...newProduct.sizes, [size]: e.target.value }
+                                                        ...editingProduct,
+                                                        sizes: { ...editingProduct.sizes, [size]: e.target.value },
                                                     })
                                                 }
                                             />
