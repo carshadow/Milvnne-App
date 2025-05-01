@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }) => {
         try {
             const res = await fetch("https://clothing-backend.fly.dev/api/auth/me", {
                 headers: {
-                    Authorization: `Bearer ${token}`, // ✅ PASA EL TOKEN AQUÍ
+                    Authorization: `Bearer ${token}`, // PASA EL TOKEN AQUÍ
                 },
             });
 
@@ -55,7 +55,7 @@ export const AuthProvider = ({ children }) => {
                 throw new Error(data.message || "Error al iniciar sesión");
             }
 
-            localStorage.setItem("token", data.token); // ✅ guardar el token
+            localStorage.setItem("token", data.token); //  guardar el token
             setUser(data.user);
             return true;
         } catch (error) {
@@ -73,24 +73,29 @@ export const AuthProvider = ({ children }) => {
 
     const updateUser = async (updatedData) => {
         try {
-            //  Primero obtener el CSRF Token
+            // 1. Obtener el CSRF token
             const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
                 credentials: "include",
             });
             const csrfData = await csrfRes.json();
             const csrfToken = csrfData.csrfToken;
 
+            // 2. Obtener el JWT del localStorage
+            const token = localStorage.getItem("token"); //  Asegúrate que se guarda en el login
+
+            // 3. Hacer la solicitud protegida
             const res = await fetch("https://clothing-backend.fly.dev/api/users/update-profile", {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
-                    "CSRF-Token": csrfToken, //  Aquí se pasa el token
+                    "CSRF-Token": csrfToken,
+                    "Authorization": `Bearer ${token}`, //  NECESARIO para pasar el middleware
                 },
                 credentials: "include",
-                body: JSON.stringify(updatedData)
+                body: JSON.stringify(updatedData),
             });
 
-            const data = await res.json(); //  siempre leer la respuesta
+            const data = await res.json();
 
             if (!res.ok) {
                 throw new Error(data.message || "Error al actualizar el perfil");
