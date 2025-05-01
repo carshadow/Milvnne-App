@@ -18,7 +18,7 @@ const Hero = () => {
     const cards = [
         { src: '/images/oriela.png', label: 'ATHLETIC', video: "/images/v09044g40000cnf06knog65nfj7d1o7g.MP4" },
         { src: '/images/comfy.png', label: 'COMFY', video: "/images/v15044gf0000cv50gffog65lmvf5l6c0.MP4" },
-        { src: '/images/joggersHover.png', label: 'RUNNING', video: "/images/v09044g40000cnf06knog65nfj7d1o7g.MP4" },
+        { src: '/images/joggershover.png', label: 'RUNNING', video: "/images/v09044g40000cnf06knog65nfj7d1o7g.MP4" },
         { src: '/images/accesories.png', label: 'ACCESSORIES', video: "/images/v12044gd0000cucm4ifog65kc90dtra0.MP4" },
         { src: '/images/gymWear.png', label: 'GYM', video: "/images/v15044gf0000cs6205fog65qimm34gog.MP4" },
     ];
