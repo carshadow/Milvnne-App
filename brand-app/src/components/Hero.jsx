@@ -469,7 +469,7 @@ const Hero = () => {
                     <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden shadow-xl hover:scale-[1.02] transition-transform duration-300">
                         <div className="h-64 overflow-hidden">
                             <img
-                                src="/images/justas25.jpeg"
+                                src="/images/Justas25.jpeg"
                                 alt="UPR Carolina"
                                 className="w-full h-full object-cover"
                             />

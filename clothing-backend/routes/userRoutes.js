@@ -2,6 +2,7 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import User from "../models/User.js";
 import { authenticateUser } from "../middlewares/authMiddleware.js";
+import csrfProtection from "../middlewares/csrfMiddleware.js"; // 👈 Asegúrate que esto exista
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 import { z } from "zod";
@@ -23,8 +24,8 @@ const resetPasswordSchema = z.object({
     password: z.string().min(6, "La nueva contraseña debe tener al menos 6 caracteres"),
 });
 
-// ✅ PUT /api/users/update-profile (protegido con authenticateUser)
-router.put("/update-profile", authenticateUser, async (req, res) => {
+//  Ruta protegida con autenticación y CSRF
+router.put("/update-profile", authenticateUser, csrfProtection, async (req, res) => {
     try {
         const validatedData = updateProfileSchema.safeParse(req.body);
         if (!validatedData.success) {
@@ -61,7 +62,7 @@ router.put("/update-profile", authenticateUser, async (req, res) => {
     }
 });
 
-// ✅ POST /api/users/forgot-password (sin login, sí puede tener CSRF opcional)
+// POST /forgot-password
 router.post("/forgot-password", async (req, res) => {
     try {
         const validatedData = forgotPasswordSchema.safeParse(req.body);
@@ -107,7 +108,7 @@ router.post("/forgot-password", async (req, res) => {
     }
 });
 
-// ✅ POST /api/users/reset-password/:token (sin login, sí puede tener CSRF opcional)
+// POST /reset-password/:token
 router.post("/reset-password/:token", async (req, res) => {
     try {
         const validatedData = resetPasswordSchema.safeParse(req.body);
