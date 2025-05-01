@@ -569,7 +569,7 @@ const Hero = () => {
 
                     {/* Galería tipo grid */}
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-                        {["/images/justas25.jpeg", "/images/Worldwide.jpg", "/images/comfy.png", "/images/running.png"].map((src, index) => (
+                        {["/images/Justas25.jpeg", "/images/Worldwide.jpg", "/images/comfy.png", "/images/running.png"].map((src, index) => (
                             <div
                                 key={index}
                                 className="relative group overflow-hidden rounded-xl border border-white/10 shadow-xl"
