@@ -461,12 +461,22 @@ const AdminDashboard = () => {
 
     const archiveOrder = async (orderId) => {
         try {
+            //  1. Obtener el token CSRF
+            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
+                credentials: "include",
+            });
+            const csrfData = await csrfRes.json();
+            const csrfToken = csrfData.csrfToken;
+
+
             const res = await fetch(`https://clothing-backend.fly.dev/api/orders/${orderId}/archive`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`
+                    "Authorization": `Bearer ${token}`,
+                    "CSRF-Token": csrfToken // 👈 se requiere
                 },
+                credentials: "include",
                 body: JSON.stringify({ archived: true })
             });
 
@@ -474,8 +484,10 @@ const AdminDashboard = () => {
                 alert("✅ Orden archivada");
                 fetchAllOrders();
             } else {
-                alert("❌ Error al archivar la orden");
+                const err = await res.json();
+                alert("❌ Error al archivar: " + (err.message || "Error desconocido"));
             }
+
         } catch (error) {
             console.error("❌ Error al archivar:", error);
             alert("❌ Fallo al archivar la orden");
@@ -930,13 +942,14 @@ const AdminDashboard = () => {
                                         <div key={size} className="flex flex-col">
                                             <span className="text-xs text-gray-400 mb-1">{size}</span>
                                             <input
-                                                type="number"
-                                                className="bg-zinc-800 border border-zinc-600 p-2 rounded"
-                                                value={editingProduct.sizes[size] || 0}
+                                                inputMode="numeric"
+                                                pattern="[0-9]*"
+                                                className="bg-zinc-800 border border-zinc-600 p-2 rounded-lg"
+                                                value={newProduct.sizes[size] || ""}
                                                 onChange={(e) =>
                                                     setEditingProduct({
-                                                        ...editingProduct,
-                                                        sizes: { ...editingProduct.sizes, [size]: e.target.value },
+                                                        ...newProduct,
+                                                        sizes: { ...newProduct.sizes, [size]: e.target.value }
                                                     })
                                                 }
                                             />
