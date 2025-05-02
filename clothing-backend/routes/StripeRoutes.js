@@ -39,8 +39,8 @@ router.post("/create-checkout-session", async (req, res) => {
             payment_method_types: ["card"],
             line_items: lineItems,
             mode: "payment",
-            success_url: "http://localhost:3000/success",
-            cancel_url: "http://localhost:3000/cart",
+            success_url: "https://brand-app.fly.dev/success",
+            cancel_url: "https://brand-app.fly.dev/cart",
             customer_creation: 'always', // Esto le permite a Stripe guardar el email que el usuario ponga
             custom_fields: [
                 {
