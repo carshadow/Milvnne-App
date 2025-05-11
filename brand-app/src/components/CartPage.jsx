@@ -87,6 +87,14 @@ const CartPage = () => {
         }
     };
 
+    //  Cálculo del subtotal
+    const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
+
+    //  Tarifa de Stripe: 2.9% + $0.30
+    const stripeFee = subtotal > 0 ? subtotal * 0.029 + 0.30 : 0;
+
+    //  Total con tarifa incluida
+    const totalWithFee = subtotal + stripeFee;
 
     const total = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
 
@@ -161,12 +169,16 @@ const CartPage = () => {
                         <div className="space-y-3 text-gray-300 text-sm">
                             <div className="flex justify-between">
                                 <span>Subtotal</span>
-                                <span>${total.toFixed(2)}</span>
+                                <span>${subtotal.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>Tarifa por servicio</span>
+                                <span>${stripeFee.toFixed(2)}</span>
                             </div>
                             <hr className="border-gray-600 my-4" />
                             <div className="flex justify-between font-bold text-white text-lg">
                                 <span>Total</span>
-                                <span>${total.toFixed(2)}</span>
+                                <span>${totalWithFee.toFixed(2)}</span>
                             </div>
                         </div>
 
