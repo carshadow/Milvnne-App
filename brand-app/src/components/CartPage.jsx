@@ -91,7 +91,7 @@ const CartPage = () => {
     const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
 
     //  Tarifa de Stripe: 2.9% + $0.30
-    const stripeFee = subtotal > 0 ? subtotal * 0.029 + 0.30 : 0;
+    const stripeFee = subtotal > 0 ? subtotal * 0.10 + 0.30 : 0;
 
     //  Total con tarifa incluida
     const totalWithFee = subtotal + stripeFee;
