@@ -15,11 +15,7 @@ const __dirname = dirname(__filename);
 dotenv.config();
 const app = express();
 
-// Stripe webhook primero
-import stripeWebhookRoutes from './routes/stripeWebhook.js';
-app.use('/api/stripe/webhook', stripeWebhookRoutes);
 
-//  CORS antes de cualquier middleware que maneje datos
 const allowedOrigins = [
     "http://localhost:3000",
     "https://brand-app.fly.dev",
@@ -37,23 +33,33 @@ app.use(cors({
     credentials: true,
 }));
 
-//  Middlewares principales
+//  Header extra de seguridad para cookies cross-origin
+app.use((req, res, next) => {
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    next();
+});
+
+//  Stripe webhook 
+import stripeWebhookRoutes from './routes/stripeWebhook.js';
+app.use('/api/stripe/webhook', stripeWebhookRoutes);
+
+// Middlewares principales
 app.use(express.json());
 app.use(cookieParser(process.env.COOKIE_SECRET, { signed: true }));
 
-//  Ruta segura para obtener el token CSRF
+//  Ruta segura para CSRF token
 app.get("/api/csrf-token", csrfProtection, (req, res) => {
     res.json({ csrfToken: req.csrfToken() });
 });
 
-//  Carpeta uploads para imágenes
+// Carpeta de imágenes
 const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir);
 }
 app.use("/uploads", express.static(uploadDir));
 
-//  MongoDB
+//  Conexión a MongoDB
 mongoose
     .connect(process.env.MONGO_URI, {
         useNewUrlParser: true,
@@ -65,7 +71,7 @@ mongoose
         process.exit(1);
     });
 
-// 📌 Rutas
+// Rutas principales
 import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
@@ -87,7 +93,7 @@ app.use((req, res) => {
     res.status(404).json({ message: "API route not found" });
 });
 
-// 🚀 Iniciar servidor
+//  Iniciar servidor
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on port ${PORT}`);
