@@ -4,6 +4,8 @@ import Category from '../models/Category.js';
 import { v2 as cloudinary } from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import { authenticateUser, verifyAdmin } from "../middlewares/authMiddleware.js";
+import csrfProtection from "../middlewares/csrfMiddleware.js";
+
 
 const router = express.Router();
 
@@ -37,7 +39,7 @@ router.get('/', async (req, res) => {
 });
 
 // Crear categoría
-router.post('/', authenticateUser, verifyAdmin, upload.single('image'), async (req, res) => {
+router.post('/', authenticateUser, verifyAdmin, csrfProtection, upload.single('image'), async (req, res) => {
     try {
         const { name } = req.body;
         if (!name) return res.status(400).json({ message: 'Category name is required' });
@@ -63,7 +65,7 @@ router.post('/', authenticateUser, verifyAdmin, upload.single('image'), async (r
 });
 
 // Eliminar categoría
-router.delete('/:id', authenticateUser, verifyAdmin, async (req, res) => {
+router.delete('/:id', authenticateUser, verifyAdmin, csrfProtection, async (req, res) => {
     try {
         const category = await Category.findByIdAndDelete(req.params.id);
         if (!category) return res.status(404).json({ message: 'Category not found' });
@@ -82,7 +84,7 @@ router.delete('/:id', authenticateUser, verifyAdmin, async (req, res) => {
 });
 
 // Renombrar categoría
-router.put('/:id', authenticateUser, verifyAdmin, async (req, res) => {
+router.put('/:id', authenticateUser, verifyAdmin, csrfProtection, async (req, res) => {
     try {
         const { name } = req.body;
         const updated = await Category.findByIdAndUpdate(req.params.id, { name }, { new: true });
@@ -93,7 +95,7 @@ router.put('/:id', authenticateUser, verifyAdmin, async (req, res) => {
 });
 
 // Actualizar imagen desktop
-router.put('/:id/image', authenticateUser, verifyAdmin, upload.single('image'), async (req, res) => {
+router.put('/:id/image', authenticateUser, verifyAdmin, csrfProtection, upload.single('image'), async (req, res) => {
     try {
         const category = await Category.findById(req.params.id);
         if (!category) return res.status(404).json({ message: 'Category not found' });
@@ -113,7 +115,7 @@ router.put('/:id/image', authenticateUser, verifyAdmin, upload.single('image'), 
 });
 
 // Actualizar imagen móvil
-router.put('/:id/image-mobile', authenticateUser, verifyAdmin, upload.single('image'), async (req, res) => {
+router.put('/:id/image-mobile', authenticateUser, verifyAdmin, csrfProtection, upload.single('image'), async (req, res) => {
     try {
         const category = await Category.findById(req.params.id);
         if (!category) return res.status(404).json({ message: 'Categoría no encontrada' });
@@ -134,7 +136,7 @@ router.put('/:id/image-mobile', authenticateUser, verifyAdmin, upload.single('im
 });
 
 // Reordenar categoría
-router.put('/:id/reorder', authenticateUser, verifyAdmin, async (req, res) => {
+router.put('/:id/reorder', authenticateUser, verifyAdmin, csrfProtection, async (req, res) => {
     try {
         const { order } = req.body;
         const updated = await Category.findByIdAndUpdate(req.params.id, { order }, { new: true });
