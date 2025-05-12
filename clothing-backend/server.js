@@ -19,7 +19,6 @@ const app = express();
 const allowedOrigins = [
     "http://localhost:3000",
     "https://brand-app.fly.dev",
-    "https://tu-dominio.com",
 ];
 
 // ✅ Middleware CORS
@@ -31,7 +30,7 @@ app.use(cors({
             callback(new Error("Not allowed by CORS"));
         }
     },
-    credentials: true,
+    credentials: true
 }));
 
 // ✅ Preflight para todos los endpoints
