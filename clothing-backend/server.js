@@ -15,13 +15,14 @@ const __dirname = dirname(__filename);
 dotenv.config();
 const app = express();
 
-
+// ✅ Lista de dominios permitidos
 const allowedOrigins = [
     "http://localhost:3000",
     "https://brand-app.fly.dev",
     "https://tu-dominio.com",
 ];
 
+// ✅ Middleware CORS
 app.use(cors({
     origin: function (origin, callback) {
         if (!origin || allowedOrigins.includes(origin)) {
@@ -33,33 +34,39 @@ app.use(cors({
     credentials: true,
 }));
 
-//  Header extra de seguridad para cookies cross-origin
+// ✅ Preflight para todos los endpoints
+app.options("*", cors({
+    origin: allowedOrigins,
+    credentials: true
+}));
+
+// ✅ Header extra para cookies cross-origin
 app.use((req, res, next) => {
     res.setHeader("Access-Control-Allow-Credentials", "true");
     next();
 });
 
-//  Stripe webhook 
+// ✅ Stripe webhook debe ir antes del express.json()
 import stripeWebhookRoutes from './routes/stripeWebhook.js';
 app.use('/api/stripe/webhook', stripeWebhookRoutes);
 
-// Middlewares principales
+// ✅ Middlewares principales
 app.use(express.json());
 app.use(cookieParser(process.env.COOKIE_SECRET, { signed: true }));
 
-//  Ruta segura para CSRF token
+// ✅ CSRF Token route
 app.get("/api/csrf-token", csrfProtection, (req, res) => {
     res.json({ csrfToken: req.csrfToken() });
 });
 
-// Carpeta de imágenes
+// ✅ Carpeta uploads
 const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir);
 }
 app.use("/uploads", express.static(uploadDir));
 
-//  Conexión a MongoDB
+// ✅ Conexión MongoDB
 mongoose
     .connect(process.env.MONGO_URI, {
         useNewUrlParser: true,
@@ -71,7 +78,7 @@ mongoose
         process.exit(1);
     });
 
-// Rutas principales
+// ✅ Rutas
 import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
@@ -88,12 +95,12 @@ app.use("/api/Stripe", StripeRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/users", userRoutes);
 
-//  Ruta no encontrada
+// ✅ Ruta no encontrada
 app.use((req, res) => {
     res.status(404).json({ message: "API route not found" });
 });
 
-//  Iniciar servidor
+// ✅ Iniciar servidor
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on port ${PORT}`);
