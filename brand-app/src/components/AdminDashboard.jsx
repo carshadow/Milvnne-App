@@ -81,6 +81,7 @@ const AdminDashboard = () => {
             const res = await fetch("https://clothing-backend.fly.dev/api/categories", {
                 method: "POST",
                 headers: {
+                    "Authorization": `Bearer ${token}`,
                     "CSRF-Token": csrfToken
                 },
                 credentials: "include",
