@@ -22,29 +22,20 @@ const allowedOrigins = [
 ];
 
 // ✅ Middleware CORS
-app.use(cors({
-    origin: function (origin, callback) {
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error("Not allowed by CORS"));
-        }
-    },
-    credentials: true
-}));
-
-// ✅ Preflight para todos los endpoints
-app.options("*", cors({
-    origin: allowedOrigins,
-    credentials: true
-}));
-
-// ✅ Header extra para cookies cross-origin
+// ✅ Middleware CORS personalizado
 app.use((req, res, next) => {
-    res.setHeader("Access-Control-Allow-Origin", req.headers.origin);
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+        res.setHeader("Access-Control-Allow-Origin", origin);
+    }
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, CSRF-Token");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+
+    if (req.method === "OPTIONS") {
+        return res.sendStatus(200);
+    }
+
     next();
 });
 
