@@ -4,7 +4,7 @@ import Category from '../models/Category.js';
 import { v2 as cloudinary } from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import { authenticateUser, verifyAdmin } from "../middlewares/authMiddleware.js";
-import csrfProtection from "../middlewares/csrfMiddleware.js";
+import { csrfProtection } from "../middlewares/csrfMiddleware.js";
 
 
 const router = express.Router();
