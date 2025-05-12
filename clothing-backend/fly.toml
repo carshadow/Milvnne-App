@@ -1,8 +1,3 @@
-# fly.toml app configuration file generated for clothing-backend on 2025-04-27T21:03:37-04:00
-#
-# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
-#
-
 app = 'clothing-backend'
 primary_region = 'mia'
 
@@ -12,14 +7,14 @@ primary_region = 'mia'
   NODE_ENV = "production"
 
 [http_service]
- internal_port = 8080
+  internal_port = 8080
   force_https = true
   auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 1
   processes = ['app']
 
-    [[http_service.ports]]
+  [[http_service.ports]]
     handlers = ["http"]
     port = 80
 
@@ -27,8 +22,15 @@ primary_region = 'mia'
     handlers = ["tls", "http"]
     port = 443
 
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "15s"
+    method = "get"
+    path = "/api/csrf-token"
+    protocol = "http"
+    timeout = "10s"
+
 [[vm]]
   memory = '1gb'
   cpu_kind = 'shared'
   cpus = 1
-

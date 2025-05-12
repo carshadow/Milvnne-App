@@ -22,9 +22,8 @@ const allowedOrigins = [
 ];
 
 // ✅ Middleware CORS
-// ✅ Middleware CORS personalizado
 app.use((req, res, next) => {
-    const origin = req.headers.origin;
+    const origin = req.headers.origin || "";
     if (allowedOrigins.includes(origin)) {
         res.setHeader("Access-Control-Allow-Origin", origin);
     }
@@ -38,6 +37,7 @@ app.use((req, res, next) => {
 
     next();
 });
+
 
 // ✅ Stripe webhook debe ir antes del express.json()
 import stripeWebhookRoutes from './routes/stripeWebhook.js';
