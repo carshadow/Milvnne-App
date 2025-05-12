@@ -107,24 +107,37 @@ router.put(
     verifyAdmin,
     upload.fields([
         { name: "coverImage", maxCount: 1 },
+        { name: "hoverImage", maxCount: 1 },
         { name: "images", maxCount: 4 },
     ]),
     async (req, res) => {
         try {
-            const { name, price, category, description, sizes } = req.body;
+            const {
+                name,
+                price,
+                category,
+                description,
+                sizes,
+                stock,
+                hasSizes,
+                discount,
+                originalPrice,
+            } = req.body;
 
             const parsed = productSchema.safeParse({
                 name,
                 price,
                 category,
                 description,
+                hasSizes,
+                stock,
                 sizes: sizes ? (typeof sizes === "string" ? JSON.parse(sizes) : sizes) : undefined,
             });
 
             if (!parsed.success) {
                 return res.status(400).json({
                     success: false,
-                    errors: parsed.error.errors.map(err => ({
+                    errors: parsed.error.errors.map((err) => ({
                         path: err.path,
                         message: err.message,
                     })),
@@ -132,22 +145,30 @@ router.put(
             }
 
             const coverImage = req.files["coverImage"]?.[0]?.path;
+            const hoverImage = req.files["hoverImage"]?.[0]?.path;
             const images = req.files["images"]?.map((img) => img.path) || [];
 
             const product = await Product.findById(req.params.id);
             if (!product) return res.status(404).json({ message: "Producto no encontrado" });
 
+            const updatedFields = {
+                name: parsed.data.name,
+                price: parsed.data.price,
+                category: parsed.data.category,
+                description: parsed.data.description,
+                hasSizes: parsed.data.hasSizes,
+                sizes: parsed.data.hasSizes ? parsed.data.sizes : { S: 0, M: 0, L: 0, XL: 0 },
+                stock: parsed.data.hasSizes ? 0 : parsed.data.stock,
+                discount: discount ?? 0,
+                originalPrice: originalPrice ?? parsed.data.price,
+                coverImage: coverImage || product.coverImage,
+                hoverImage: hoverImage || product.hoverImage,
+                images: images.length > 0 ? images : product.images,
+            };
+
             const updatedProduct = await Product.findByIdAndUpdate(
                 req.params.id,
-                {
-                    name: parsed.data.name,
-                    price: parsed.data.price,
-                    category: parsed.data.category,
-                    description: parsed.data.description,
-                    sizes: parsed.data.sizes,
-                    coverImage: coverImage || product.coverImage,
-                    images: images.length > 0 ? images : product.images,
-                },
+                updatedFields,
                 { new: true }
             );
 
@@ -158,6 +179,7 @@ router.put(
         }
     }
 );
+
 
 // ✅ Eliminar producto (protegido)
 router.delete("/:id", authenticateUser, verifyAdmin, async (req, res) => {
