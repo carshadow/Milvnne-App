@@ -25,7 +25,7 @@ const ProfilePage = () => {
     const fetchOrders = async () => {
         setLoadingOrders(true);
         try {
-            const res = await fetch(`http://localhost:8080/api/orders/user/${user._id}`, {
+            const res = await fetch(`https://clothing-backend.fly.dev/api/orders/user/${user._id}`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
@@ -42,7 +42,7 @@ const ProfilePage = () => {
 
     const fetchSuggestedProducts = async () => {
         try {
-            const res = await fetch('http://localhost:8080/api/products');
+            const res = await fetch('https://clothing-backend.fly.dev/api/products');
             const data = await res.json();
             setSuggestedProducts(data.slice(0, 5));
         } catch (error) {

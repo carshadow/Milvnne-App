@@ -18,7 +18,7 @@ const Products = () => {
     // Fetch products
     useEffect(() => {
         setLoading(true); // Asegura que comienza como true
-        fetch('http://localhost:8080/api/products')
+        fetch('https://clothing-backend.fly.dev/api/products')
             .then(res => res.json())
             .then(data => setProducts(data))
 
@@ -29,7 +29,7 @@ const Products = () => {
     // Fetch categories (order + image)
     useEffect(() => {
         setLoading(true);
-        fetch('http://localhost:8080/api/categories')
+        fetch('https://clothing-backend.fly.dev/api/categories')
             .then(res => res.json())
             .then(data => {
                 const order = data.map(c => c.name);

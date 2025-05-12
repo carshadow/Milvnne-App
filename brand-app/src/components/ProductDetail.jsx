@@ -14,7 +14,7 @@ const ProductDetail = () => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        fetch(`http://localhost:8080/api/products/${id}`)
+        fetch(`https://clothing-backend.fly.dev/api/products/${id}`)
             .then((res) => {
                 if (!res.ok) throw new Error(`HTTP Error! Status: ${res.status}`);
                 return res.json();

@@ -27,7 +27,7 @@ const EditUserProfile = () => {
         try {
             const data = await updateUser({ name, email, password });
 
-            if (data.success) { // ✅ Ahora sí correctamente
+            if (data.success) { // Ahora sí correctamente
                 setSuccessMessage(data.message || 'Perfil actualizado correctamente');
             } else {
                 if (data.errors) {
@@ -120,7 +120,7 @@ const EditUserProfile = () => {
                                 onChange={(e) => setPassword(e.target.value)}
                                 className={`w-full bg-zinc-800 text-white border ${errors.password ? 'border-red-500' : 'border-zinc-700'} rounded-lg pl-12 pr-10 py-3 focus:outline-none focus:ring-2 ${errors.password ? 'focus:ring-red-500' : 'focus:ring-fuchsia-500'} placeholder-zinc-400`}
                             />
-                            {/* Ojo 👀 que el icono del ojo debe quedarse afuera */}
+                            {/* Ojo  que el icono del ojo debe quedarse afuera */}
                         </motion.div>
 
                         <div

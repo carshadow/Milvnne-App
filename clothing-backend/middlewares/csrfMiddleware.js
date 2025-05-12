@@ -1,11 +1,11 @@
-// middlewares/csrfMiddleware.js
 import csrf from "csurf";
 
 export const csrfProtection = csrf({
     cookie: {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production", // Solo en producción se activa secure
-        sameSite: "Strict", // Previene ataques Cross-Site
+        secure: true,
+        sameSite: "none",
+        signed: true,
     },
     ignoreMethods: ["GET", "HEAD", "OPTIONS"],
 });

@@ -23,25 +23,14 @@ const registerSchema = z.object({
 });
 
 // 📌 **Login de Usuario con Cookies**
-router.post("/login", csrfProtection, async (req, res) => {
+// ✅ Nuevo login sin cookie
+router.post("/login", async (req, res) => {
     try {
-        const validation = loginSchema.safeParse(req.body);
+        const { email, password } = req.body;
 
-        if (!validation.success) {
-            return res.status(400).json({
-                success: false,
-                errors: validation.error.errors.map(err => ({
-                    path: err.path,
-                    message: err.message
-                })),
-            });
-        }
-
-        const { email, password } = validation.data;
         const user = await User.findOne({ email }).select("+password");
-
         if (!user || !(await bcrypt.compare(password, user.password))) {
-            return res.status(400).json({ message: "Invalid email or password" });
+            return res.status(400).json({ message: "Email o contraseña inválidos" });
         }
 
         const token = jwt.sign(
@@ -50,20 +39,22 @@ router.post("/login", csrfProtection, async (req, res) => {
             { expiresIn: "14d" }
         );
 
-        res.cookie("token", token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "Strict",
-            maxAge: 14 * 24 * 60 * 60 * 1000,
+        res.json({
+            message: "Login exitoso",
+            token, // 👈 Aquí va el JWT en el body
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                isAdmin: user.isAdmin
+            }
         });
-
-        res.json({ message: "Login successful" });
-
-    } catch (error) {
-        console.error("❌ Login Error:", error);
-        res.status(500).json({ message: "Server error" });
+    } catch (err) {
+        console.error("Login error:", err);
+        res.status(500).json({ message: "Error del servidor" });
     }
 });
+
 
 // 📌 **Ruta para verificar el usuario autenticado**
 router.get("/me", authenticateUser, async (req, res) => {
@@ -77,9 +68,15 @@ router.get("/me", authenticateUser, async (req, res) => {
 
 // 📌 **Logout para eliminar la cookie**
 router.post("/logout", csrfProtection, (req, res) => {
-    res.clearCookie("token");
+    res.clearCookie("token", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "None",
+        signed: true,
+    });
     res.json({ message: "Logged out successfully" });
 });
+
 
 // 📌 **Registro de Usuario**
 router.post("/register", csrfProtection, async (req, res) => {

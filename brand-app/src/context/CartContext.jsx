@@ -24,7 +24,7 @@ export const CartProvider = ({ children }) => {
     useEffect(() => {
         const fetchCart = async () => {
             try {
-                const res = await fetch('http://localhost:8080/api/cart', {
+                const res = await fetch('https://clothing-backend.fly.dev/api/cart', {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -51,7 +51,7 @@ export const CartProvider = ({ children }) => {
     const addToCart = async (productId, quantity, size) => {
         try {
             const token = localStorage.getItem("token");
-            const res = await fetch("http://localhost:8080/api/cart", {
+            const res = await fetch("https://clothing-backend.fly.dev/api/cart", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -79,7 +79,7 @@ export const CartProvider = ({ children }) => {
 
             if (token) {
                 // Si el usuario está autenticado, eliminar desde la API
-                const response = await fetch(`http://localhost:8080/api/cart/${cartItemId}`, {
+                const response = await fetch(`https://clothing-backend.fly.dev/api/cart/${cartItemId}`, {
                     method: "DELETE",
                     headers: {
                         "Content-Type": "application/json",

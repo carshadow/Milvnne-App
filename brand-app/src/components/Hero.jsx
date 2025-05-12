@@ -18,7 +18,7 @@ const Hero = () => {
     const cards = [
         { src: '/images/oriela.png', label: 'ATHLETIC', video: "/images/v09044g40000cnf06knog65nfj7d1o7g.MP4" },
         { src: '/images/comfy.png', label: 'COMFY', video: "/images/v15044gf0000cv50gffog65lmvf5l6c0.MP4" },
-        { src: '/images/joggersHover.png', label: 'RUNNING', video: "/images/v09044g40000cnf06knog65nfj7d1o7g.MP4" },
+        { src: '/images/joggershover.png', label: 'RUNNING', video: "/images/v09044g40000cnf06knog65nfj7d1o7g.MP4" },
         { src: '/images/accesories.png', label: 'ACCESSORIES', video: "/images/v12044gd0000cucm4ifog65kc90dtra0.MP4" },
         { src: '/images/gymWear.png', label: 'GYM', video: "/images/v15044gf0000cs6205fog65qimm34gog.MP4" },
     ];
@@ -82,7 +82,7 @@ const Hero = () => {
     useEffect(() => {
         const fetchJustasShirt = async () => {
             try {
-                const res = await fetch("http://localhost:8080/api/products");
+                const res = await fetch("https://clothing-backend.fly.dev/api/products");
                 const products = await res.json();
 
                 // Buscar la camisa de las justas en la base de datos
@@ -469,7 +469,7 @@ const Hero = () => {
                     <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden shadow-xl hover:scale-[1.02] transition-transform duration-300">
                         <div className="h-64 overflow-hidden">
                             <img
-                                src="/images/justas25.jpeg"
+                                src="/images/Justas25.jpeg"
                                 alt="UPR Carolina"
                                 className="w-full h-full object-cover"
                             />
@@ -569,7 +569,7 @@ const Hero = () => {
 
                     {/* Galería tipo grid */}
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-                        {["/images/justas25.jpeg", "/images/Worldwide.jpg", "/images/comfy.png", "/images/running.png"].map((src, index) => (
+                        {["/images/Justas25.jpeg", "/images/Worldwide.jpg", "/images/comfy.png", "/images/running.png"].map((src, index) => (
                             <div
                                 key={index}
                                 className="relative group overflow-hidden rounded-xl border border-white/10 shadow-xl"

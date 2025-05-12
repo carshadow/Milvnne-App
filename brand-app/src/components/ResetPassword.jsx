@@ -16,14 +16,14 @@ const ResetPassword = () => {
 
         try {
             //  Primero obtener el CSRF token
-            const csrfRes = await fetch("http://localhost:8080/api/csrf-token", {
+            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
                 credentials: "include",
             });
             const csrfData = await csrfRes.json();
             const csrfToken = csrfData.csrfToken;
 
             // Luego hacer el reset password enviando el CSRF token
-            const res = await fetch(`http://localhost:8080/api/users/reset-password/${token}`, {
+            const res = await fetch(`https://clothing-backend.fly.dev/api/users/reset-password/${token}`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
