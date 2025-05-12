@@ -2,11 +2,14 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { FaTimes } from 'react-icons/fa';
 import { z } from "zod";
+import { useContext } from "react";
+import { AuthContext } from "../context/authContext";
 
 const AdminDashboard = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const { user } = useContext(AuthContext);
     const token = localStorage.getItem("token");
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [showOrderModal, setShowOrderModal] = useState(false);
