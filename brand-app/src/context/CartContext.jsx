@@ -10,28 +10,29 @@ export const CartProvider = ({ children }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // Cargar carrito desde localStorage cuando cambia el usuario
+    // Cargar carrito del localStorage cuando el user esté listo
     useEffect(() => {
-        if (user && user._id) {
-            const storedCart = localStorage.getItem(`cart_${user._id}`);
-            if (storedCart) {
-                setCart(JSON.parse(storedCart));
-            } else {
-                setCart([]);
-            }
+        if (!user) return; // Espera a que AuthContext cargue el usuario
+
+        const cartKey = user ? `cart_${user._id}` : "cart_guest";
+        const storedCart = localStorage.getItem(cartKey);
+
+        if (storedCart) {
+            setCart(JSON.parse(storedCart));
+        } else {
+            setCart([]); // evita que quede undefined
         }
     }, [user]);
 
-    // Guardar carrito en localStorage cuando cambia
+    // Guardar carrito en localStorage
     useEffect(() => {
-        if (user && user._id) {
-            if (cart.length > 0) {
-                localStorage.setItem(`cart_${user._id}`, JSON.stringify(cart));
-            } else {
-                localStorage.removeItem(`cart_${user._id}`);
-            }
+        if (!user) return;
+        const cartKey = `cart_${user._id}`;
+        if (Array.isArray(cart)) {
+            localStorage.setItem(cartKey, JSON.stringify(cart));
         }
     }, [cart, user]);
+
 
     // Cargar carrito desde la API si está autenticado
     useEffect(() => {
