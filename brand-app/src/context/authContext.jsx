@@ -5,6 +5,7 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [token, setToken] = useState(localStorage.getItem("token"));
 
     useEffect(() => {
         fetchUser();
@@ -57,6 +58,7 @@ export const AuthProvider = ({ children }) => {
 
             localStorage.setItem("token", data.token); //  guardar el token
             setUser(data.user);
+            setToken(data.token);
             return true;
         } catch (error) {
             console.error("❌ Login error:", error);
@@ -67,6 +69,7 @@ export const AuthProvider = ({ children }) => {
     const logout = () => {
         localStorage.removeItem("token");
         setUser(null);
+        setToken(null);
     };
 
 
@@ -117,7 +120,7 @@ export const AuthProvider = ({ children }) => {
 
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, loading, updateUser }}>
+        <AuthContext.Provider value={{ user, token, login, logout, loading, updateUser }}>
             {children}
         </AuthContext.Provider>
     );

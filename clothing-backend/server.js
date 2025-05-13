@@ -15,45 +15,51 @@ const __dirname = dirname(__filename);
 dotenv.config();
 const app = express();
 
-// Stripe webhook primero
-import stripeWebhookRoutes from './routes/stripeWebhook.js';
-app.use('/api/stripe/webhook', stripeWebhookRoutes);
-
-//  CORS antes de cualquier middleware que maneje datos
+// ✅ Lista de dominios permitidos
 const allowedOrigins = [
     "http://localhost:3000",
     "https://brand-app.fly.dev",
-    "https://tu-dominio.com",
 ];
 
-app.use(cors({
-    origin: function (origin, callback) {
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error("Not allowed by CORS"));
-        }
-    },
-    credentials: true,
-}));
+// ✅ Middleware CORS
+app.use((req, res, next) => {
+    const origin = req.headers.origin || "";
+    if (allowedOrigins.includes(origin)) {
+        res.setHeader("Access-Control-Allow-Origin", origin);
+    }
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, CSRF-Token");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
 
-//  Middlewares principales
+    if (req.method === "OPTIONS") {
+        return res.sendStatus(200);
+    }
+
+    next();
+});
+
+
+// ✅ Stripe webhook debe ir antes del express.json()
+import stripeWebhookRoutes from './routes/stripeWebhook.js';
+app.use('/api/stripe/webhook', stripeWebhookRoutes);
+
+// ✅ Middlewares principales
 app.use(express.json());
 app.use(cookieParser(process.env.COOKIE_SECRET, { signed: true }));
 
-//  Ruta segura para obtener el token CSRF
+// ✅ CSRF Token route
 app.get("/api/csrf-token", csrfProtection, (req, res) => {
     res.json({ csrfToken: req.csrfToken() });
 });
 
-//  Carpeta uploads para imágenes
+// ✅ Carpeta uploads
 const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir);
 }
 app.use("/uploads", express.static(uploadDir));
 
-//  MongoDB
+// ✅ Conexión MongoDB
 mongoose
     .connect(process.env.MONGO_URI, {
         useNewUrlParser: true,
@@ -65,7 +71,7 @@ mongoose
         process.exit(1);
     });
 
-// 📌 Rutas
+// ✅ Rutas
 import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
@@ -82,12 +88,12 @@ app.use("/api/Stripe", StripeRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/users", userRoutes);
 
-//  Ruta no encontrada
+// ✅ Ruta no encontrada
 app.use((req, res) => {
     res.status(404).json({ message: "API route not found" });
 });
 
-// 🚀 Iniciar servidor
+// ✅ Iniciar servidor
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on port ${PORT}`);
