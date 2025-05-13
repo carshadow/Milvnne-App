@@ -70,7 +70,11 @@ const Navbar = () => {
                             onClick={() => window.scrollTo(0, 0)}
                             className="flex items-center gap-2 hover:text-fuchsia-500 transition-colors"
                         >
-                            <FaHome className="text-xl" />
+                            <img
+                                src="/images/loguito.PNG"
+                                alt="Icono personalizado"
+                                className="w-5 h-5 object-contain"
+                            />
                             <span>About</span>
                         </Link>
                     </li>
