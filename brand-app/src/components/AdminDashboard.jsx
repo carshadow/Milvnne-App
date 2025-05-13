@@ -9,8 +9,7 @@ const AdminDashboard = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const { user } = useContext(AuthContext);
-    const token = localStorage.getItem("token");
+    const { user, token } = useContext(AuthContext);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [showOrderModal, setShowOrderModal] = useState(false);
     const [productErrors, setProductErrors] = useState({});
