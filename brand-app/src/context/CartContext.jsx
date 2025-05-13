@@ -10,6 +10,30 @@ export const CartProvider = ({ children }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
+    // Restaurar carrito de localStorage al montar (antes de AuthContext estar listo)
+    useEffect(() => {
+        const restoreCartFromLocal = () => {
+            const rawGuestCart = localStorage.getItem("cart_guest");
+            const rawUserCart = user && user._id ? localStorage.getItem(`cart_${user._id}`) : null;
+
+            const storedCart = rawUserCart || rawGuestCart;
+
+            if (storedCart && storedCart !== "[]") {
+                try {
+                    const parsedCart = JSON.parse(storedCart);
+                    if (Array.isArray(parsedCart)) {
+                        setCart(parsedCart);
+                    }
+                } catch (e) {
+                    console.error("Error parsing stored cart:", e);
+                }
+            }
+        };
+
+        restoreCartFromLocal();
+    }, [user]);
+
+
     // Cargar carrito del localStorage cuando el user esté listo
     useEffect(() => {
         if (!user) return; // Espera a que AuthContext cargue el usuario
