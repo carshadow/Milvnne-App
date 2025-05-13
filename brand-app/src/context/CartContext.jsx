@@ -24,6 +24,15 @@ export const CartProvider = ({ children }) => {
     useEffect(() => {
         const fetchCart = async () => {
             try {
+                const fromCheckout = localStorage.getItem("checkoutInProgress");
+                const isSuccessPage = window.location.pathname.includes("/success");
+
+                // 🚫 Si viene del checkout y no es success, no hagas fetch
+                if (fromCheckout && !isSuccessPage) {
+                    console.log("⏪ Canceló el pago, no actualizamos el carrito.");
+                    return;
+                }
+
                 const res = await fetch('https://clothing-backend.fly.dev/api/cart', {
                     method: 'GET',
                     headers: {
@@ -32,11 +41,8 @@ export const CartProvider = ({ children }) => {
                 });
                 const data = await res.json();
 
-                // Filtrar solo los productos válidos que existen en la base de datos
                 const validCartItems = data.filter(item => item.product !== null);
                 setCart(validCartItems);
-
-                // Actualiza localStorage
                 localStorage.setItem('cart', JSON.stringify(validCartItems));
             } catch (error) {
                 console.error("Error fetching cart:", error);
@@ -45,6 +51,7 @@ export const CartProvider = ({ children }) => {
 
         fetchCart();
     }, []);
+
 
 
     // Function to add an item to the cart
