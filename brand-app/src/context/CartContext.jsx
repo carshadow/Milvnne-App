@@ -1,29 +1,76 @@
 import React, { createContext, useState, useEffect } from "react";
+import { useContext } from "react";
+import { AuthContext } from "../context/authContext";
 
 export const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
+    const { user } = useContext(AuthContext);
     const [cart, setCart] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // Fetch cart items when the page loads (from localStorage or API)
+    // Restaurar carrito de localStorage al montar (antes de AuthContext estar listo)
     useEffect(() => {
-        const storedCart = localStorage.getItem("cart");
-        if (storedCart) {
-            setCart(JSON.parse(storedCart));  // Initialize cart from localStorage
-        }
-    }, []);
+        const restoreCartFromLocal = () => {
+            const rawGuestCart = localStorage.getItem("cart_guest");
+            const rawUserCart = user && user._id ? localStorage.getItem(`cart_${user._id}`) : null;
 
-    // Update localStorage whenever the cart changes
+            const storedCart = rawUserCart || rawGuestCart;
+
+            if (storedCart && storedCart !== "[]") {
+                try {
+                    const parsedCart = JSON.parse(storedCart);
+                    if (Array.isArray(parsedCart)) {
+                        setCart(parsedCart);
+                    }
+                } catch (e) {
+                    console.error("Error parsing stored cart:", e);
+                }
+            }
+        };
+
+        restoreCartFromLocal();
+    }, [user]);
+
+
+    // Cargar carrito del localStorage cuando el user esté listo
     useEffect(() => {
-        if (cart.length > 0) {
-            localStorage.setItem("cart", JSON.stringify(cart)); // Save to localStorage
+        if (!user) return; // Espera a que AuthContext cargue el usuario
+
+        const cartKey = user ? `cart_${user._id}` : "cart_guest";
+        const storedCart = localStorage.getItem(cartKey);
+
+        if (storedCart) {
+            setCart(JSON.parse(storedCart));
+        } else {
+            setCart([]); // evita que quede undefined
         }
-    }, [cart]);
+    }, [user]);
+
+    // Guardar carrito en localStorage
+    useEffect(() => {
+        if (!user) return;
+        const cartKey = `cart_${user._id}`;
+        if (Array.isArray(cart)) {
+            localStorage.setItem(cartKey, JSON.stringify(cart));
+        }
+    }, [cart, user]);
+
+
+    // Cargar carrito desde la API si está autenticado
     useEffect(() => {
         const fetchCart = async () => {
             try {
+                // Si se volvió desde Stripe sin pagar, NO hacer fetch
+                const fromCheckout = localStorage.getItem("checkoutInProgress");
+                const successPage = window.location.pathname.includes("/success");
+
+                if (fromCheckout && !successPage) {
+                    console.log("Volviendo del checkout sin completar pago, no actualizo cart.");
+                    return;
+                }
+
                 const res = await fetch('https://clothing-backend.fly.dev/api/cart', {
                     method: 'GET',
                     headers: {
@@ -31,23 +78,23 @@ export const CartProvider = ({ children }) => {
                     },
                 });
                 const data = await res.json();
-
-                // Filtrar solo los productos válidos que existen en la base de datos
                 const validCartItems = data.filter(item => item.product !== null);
                 setCart(validCartItems);
 
-                // Actualiza localStorage
-                localStorage.setItem('cart', JSON.stringify(validCartItems));
+                if (user && user._id) {
+                    localStorage.setItem(`cart_${user._id}`, JSON.stringify(validCartItems));
+                }
             } catch (error) {
                 console.error("Error fetching cart:", error);
             }
         };
 
-        fetchCart();
-    }, []);
+        if (user && user._id) {
+            fetchCart();
+        }
+    }, [user]);
 
 
-    // Function to add an item to the cart
     const addToCart = async (productId, quantity, size) => {
         try {
             const token = localStorage.getItem("token");
@@ -57,13 +104,13 @@ export const CartProvider = ({ children }) => {
                     "Content-Type": "application/json",
                     ...(token && { "Authorization": `Bearer ${token}` }),
                 },
-                body: JSON.stringify({ productId, quantity, size }), // Include size here
+                body: JSON.stringify({ productId, quantity, size }),
             });
 
             const data = await res.json();
             if (res.ok) {
                 const updatedCart = [...cart, data.cartItem];
-                setCart(updatedCart); // Update the cart in the state
+                setCart(updatedCart);
             } else {
                 console.error("Error adding product to cart:", data.message);
             }
@@ -72,13 +119,11 @@ export const CartProvider = ({ children }) => {
         }
     };
 
-    // Function to remove an item from the cart
     const removeFromCart = async (cartItemId) => {
         try {
             const token = localStorage.getItem("token");
 
             if (token) {
-                // Si el usuario está autenticado, eliminar desde la API
                 const response = await fetch(`https://clothing-backend.fly.dev/api/cart/${cartItemId}`, {
                     method: "DELETE",
                     headers: {
@@ -94,10 +139,11 @@ export const CartProvider = ({ children }) => {
                     console.error("Error al eliminar producto:", data.message);
                 }
             } else {
-                // Si el usuario NO está autenticado, eliminarlo solo del localStorage
                 const updatedCart = cart.filter(item => item._id !== cartItemId);
                 setCart(updatedCart);
-                localStorage.setItem("cart", JSON.stringify(updatedCart));
+                if (user && user._id) {
+                    localStorage.setItem(`cart_${user._id}`, JSON.stringify(updatedCart));
+                }
             }
         } catch (error) {
             console.error("Error eliminando producto del carrito:", error);
@@ -107,9 +153,12 @@ export const CartProvider = ({ children }) => {
     const getCartItemCount = () => {
         return cart.reduce((total, item) => total + item.quantity, 0);
     };
+
     const clearCart = () => {
         setCart([]);
-        localStorage.removeItem("cart"); // Borra el carrito del almacenamiento local
+        if (user && user._id) {
+            localStorage.removeItem(`cart_${user._id}`);
+        }
     };
 
     const updateQuantity = (itemId, newQuantity) => {
@@ -122,24 +171,8 @@ export const CartProvider = ({ children }) => {
         );
     };
 
-
-    // const addToCart = (product, size) => {
-    //     const existingItem = cart.find((item) => item.product._id === product._id && item.size === size);
-    //     if (existingItem) {
-    //         setCart(cart.map(item =>
-    //             item.product._id === product._id && item.size === size
-    //                 ? { ...item, quantity: item.quantity + 1 }
-    //                 : item
-    //         ));
-    //     } else {
-    //         setCart([...cart, { product, size, quantity: 1 }]);
-    //     }
-    // };
-
-
-
     return (
-        <CartContext.Provider value={{ cart, addToCart, removeFromCart, addToCart, getCartItemCount, clearCart, updateQuantity, loading, error }}>
+        <CartContext.Provider value={{ cart, addToCart, removeFromCart, getCartItemCount, clearCart, updateQuantity, loading, error }}>
             {children}
         </CartContext.Provider>
     );
