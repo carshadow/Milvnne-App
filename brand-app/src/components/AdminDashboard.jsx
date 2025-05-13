@@ -104,19 +104,30 @@ const AdminDashboard = () => {
     const updateCategoryImage = async (id, file) => {
         const formData = new FormData();
         formData.append("image", file);
+
         try {
+            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
+                credentials: "include",
+            });
+            const csrfData = await csrfRes.json();
+            const csrfToken = csrfData.csrfToken;
+
             await fetch(`https://clothing-backend.fly.dev/api/categories/${id}/image`, {
                 method: "PUT",
                 headers: {
                     Authorization: `Bearer ${token}`,
+                    "CSRF-Token": csrfToken,
                 },
+                credentials: "include",
                 body: formData,
             });
+
             fetchCategories();
         } catch (err) {
             console.error("Error updating image:", err);
         }
     };
+
 
     const renameCategory = async (id, newName) => {
         try {
@@ -197,28 +208,27 @@ const AdminDashboard = () => {
     };
 
     const updateCategoryMobileImage = async (id, file) => {
-        console.log("📤 Actualizando imagen mobile:", id, file);
-
-        if (!file) {
-            alert("⚠️ No se seleccionó ningún archivo.");
-            return;
-        }
-
         const formData = new FormData();
         formData.append("image", file);
 
         try {
-            const res = await fetch(`https://clothing-backend.fly.dev/api/categories/${id}/image-mobile`, { // ⚡ ojo que aquí también corregí el endpoint
+            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
+                credentials: "include",
+            });
+            const csrfData = await csrfRes.json();
+            const csrfToken = csrfData.csrfToken;
+
+            const res = await fetch(`https://clothing-backend.fly.dev/api/categories/${id}/image-mobile`, {
                 method: "PUT",
                 headers: {
                     Authorization: `Bearer ${token}`,
+                    "CSRF-Token": csrfToken,
                 },
+                credentials: "include",
                 body: formData,
             });
 
             const data = await res.json();
-            console.log("🧾 Respuesta:", data);
-
             if (res.ok) {
                 fetchCategories();
             } else {
@@ -229,6 +239,7 @@ const AdminDashboard = () => {
             alert("❌ Error al actualizar la imagen móvil.");
         }
     };
+
 
 
 
