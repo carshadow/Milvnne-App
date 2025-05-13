@@ -744,10 +744,19 @@ const AdminDashboard = () => {
                             type="file"
                             accept="image/*"
                             className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
-                            onChange={(e) =>
-                                setNewProduct({ ...newProduct, coverImage: e.target.files[0] })
-                            }
+                            onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (!file) return;
+
+                                if (file.type === "image/heic" || file.name.endsWith(".heic") || file.name.endsWith(".HEIC")) {
+                                    alert("❌ Formato HEIC no soportado. Usa JPG o PNG.");
+                                    return;
+                                }
+
+                                setNewProduct({ ...newProduct, coverImage: file });
+                            }}
                         />
+
                     </div>
 
                     <div className="flex flex-col w-full md:w-[48%] mt-4">
@@ -756,10 +765,19 @@ const AdminDashboard = () => {
                             type="file"
                             accept="image/*"
                             className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
-                            onChange={(e) =>
-                                setNewProduct({ ...newProduct, hoverImage: e.target.files[0] })
-                            }
+                            onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (!file) return;
+
+                                if (file.type === "image/heic" || file.name.endsWith(".heic") || file.name.endsWith(".HEIC")) {
+                                    alert("❌ Formato HEIC no soportado. Usa JPG o PNG.");
+                                    return;
+                                }
+
+                                setNewProduct({ ...newProduct, hoverImage: file });
+                            }}
                         />
+
                     </div>
 
                     {/* Imágenes adicionales */}
@@ -773,14 +791,24 @@ const AdminDashboard = () => {
                             className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
                             onChange={(e) => {
                                 const files = Array.from(e.target.files);
+                                const hasHEIC = files.some(f =>
+                                    f.type === "image/heic" || f.name.endsWith(".heic") || f.name.endsWith(".HEIC")
+                                );
+                                if (hasHEIC) {
+                                    alert("❌ Una o más imágenes son HEIC. Usa JPG o PNG.");
+                                    return;
+                                }
+
                                 const totalImages = newProduct.images.length + files.length;
                                 if (totalImages > 4) {
                                     alert("Máximo 4 imágenes adicionales");
                                     return;
                                 }
+
                                 setNewProduct({ ...newProduct, images: [...newProduct.images, ...files] });
                             }}
                         />
+
 
                         {/* Vista previa */}
                         {newProduct.images.length > 0 && (
@@ -922,9 +950,20 @@ const AdminDashboard = () => {
                                 <input
                                     type="file"
                                     accept="image/*"
-                                    onChange={(e) => setEditingProduct({ ...editingProduct, newCoverImage: e.target.files[0] })}
-                                    className="block w-full text-sm text-gray-300 file:bg-fuchsia-600 file:border-none file:px-4 file:py-2 file:rounded file:text-white file:cursor-pointer"
+                                    className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
+                                    onChange={(e) => {
+                                        const file = e.target.files[0];
+                                        if (!file) return;
+
+                                        if (file.type === "image/heic" || file.name.endsWith(".heic") || file.name.endsWith(".HEIC")) {
+                                            alert("❌ Formato HEIC no soportado. Usa JPG o PNG.");
+                                            return;
+                                        }
+
+                                        setNewProduct({ ...newProduct, coverImage: file });
+                                    }}
                                 />
+
                             </div>
 
                             {/* Hover image */}
@@ -933,9 +972,20 @@ const AdminDashboard = () => {
                                 <input
                                     type="file"
                                     accept="image/*"
-                                    onChange={(e) => setEditingProduct({ ...editingProduct, newHoverImage: e.target.files[0] })}
-                                    className="block w-full text-sm text-gray-300 file:bg-fuchsia-600 file:border-none file:px-4 file:py-2 file:rounded file:text-white file:cursor-pointer"
+                                    className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
+                                    onChange={(e) => {
+                                        const file = e.target.files[0];
+                                        if (!file) return;
+
+                                        if (file.type === "image/heic" || file.name.endsWith(".heic") || file.name.endsWith(".HEIC")) {
+                                            alert("❌ Formato HEIC no soportado. Usa JPG o PNG.");
+                                            return;
+                                        }
+
+                                        setNewProduct({ ...newProduct, hoverImage: file });
+                                    }}
                                 />
+
                             </div>
 
                             {/* Adicionales */}
@@ -944,10 +994,27 @@ const AdminDashboard = () => {
                                 <input
                                     type="file"
                                     accept="image/*"
-                                    multiple
-                                    onChange={(e) => setEditingProduct({ ...editingProduct, newImages: [...e.target.files] })}
-                                    className="block w-full text-sm text-gray-300 file:bg-fuchsia-600 file:border-none file:px-4 file:py-2 file:rounded file:text-white file:cursor-pointer"
+                                    className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
+                                    onChange={(e) => {
+                                        const files = Array.from(e.target.files);
+                                        const hasHEIC = files.some(f =>
+                                            f.type === "image/heic" || f.name.endsWith(".heic") || f.name.endsWith(".HEIC")
+                                        );
+                                        if (hasHEIC) {
+                                            alert("❌ Una o más imágenes son HEIC. Usa JPG o PNG.");
+                                            return;
+                                        }
+
+                                        const totalImages = newProduct.images.length + files.length;
+                                        if (totalImages > 4) {
+                                            alert("Máximo 4 imágenes adicionales");
+                                            return;
+                                        }
+
+                                        setNewProduct({ ...newProduct, images: [...newProduct.images, ...files] });
+                                    }}
                                 />
+
                             </div>
 
                             {/* Nombre */}
@@ -1144,15 +1211,37 @@ const AdminDashboard = () => {
                                         <input
                                             type="file"
                                             accept="image/*"
-                                            onChange={(e) => updateCategoryImage(cat._id, e.target.files[0])}
+                                            onChange={(e) => {
+                                                const file = e.target.files[0];
+                                                if (!file) return;
+
+                                                if (file.type === "image/heic" || file.name.endsWith(".heic") || file.name.endsWith(".HEIC")) {
+                                                    alert("❌ Formato HEIC no soportado. Usa JPG o PNG.");
+                                                    return;
+                                                }
+
+                                                updateCategoryImage(cat._id, file);
+                                            }}
                                             className="w-full text-sm text-gray-300 file:bg-fuchsia-600 file:border-none file:px-3 file:py-1 file:rounded file:text-white file:cursor-pointer"
                                         />
+
                                         <input
                                             type="file"
                                             accept="image/*"
-                                            onChange={(e) => updateCategoryMobileImage(cat._id, e.target.files[0])}
+                                            onChange={(e) => {
+                                                const file = e.target.files[0];
+                                                if (!file) return;
+
+                                                if (file.type === "image/heic" || file.name.endsWith(".heic") || file.name.endsWith(".HEIC")) {
+                                                    alert("❌ Formato HEIC no soportado. Usa JPG o PNG.");
+                                                    return;
+                                                }
+
+                                                updateCategoryMobileImage(cat._id, file);
+                                            }}
                                             className="w-full text-sm text-gray-300 file:bg-purple-600 file:border-none file:px-3 file:py-1 file:rounded file:text-white file:cursor-pointer mt-2"
                                         />
+
                                         <small className="text-xs text-gray-400">Opcional – solo si necesitas una imagen distinta para mobile</small>
                                     </td>
 
@@ -1194,12 +1283,24 @@ const AdminDashboard = () => {
 
                     <div className="flex flex-col lg:flex-row gap-6">
                         <input
-                            type="text"
-                            placeholder="Nombre nueva categoría"
-                            value={newCategory}
-                            onChange={(e) => setNewCategory(e.target.value)}
-                            className="w-full lg:w-1/3 bg-zinc-700 border border-zinc-600 p-3 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (!file) return;
+
+                                // Verificamos si es HEIC (usado por iPhone)
+                                if (file.type === "image/heic" || file.name.endsWith(".heic") || file.name.endsWith(".HEIC")) {
+                                    alert("❌ Formato HEIC no soportado. Usa JPG o PNG desde tu galería.");
+                                    return;
+                                }
+
+                                setNewCategoryImage(file);
+                            }}
+                            className="w-full lg:w-1/3 text-sm file:bg-fuchsia-600 file:border-none file:px-4 file:py-2 file:rounded-lg file:text-white file:cursor-pointer"
                         />
+
+
 
                         <input
                             type="file"
