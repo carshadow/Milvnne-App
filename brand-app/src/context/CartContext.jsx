@@ -62,6 +62,15 @@ export const CartProvider = ({ children }) => {
     useEffect(() => {
         const fetchCart = async () => {
             try {
+                // Si se volvió desde Stripe sin pagar, NO hacer fetch
+                const fromCheckout = localStorage.getItem("checkoutInProgress");
+                const successPage = window.location.pathname.includes("/success");
+
+                if (fromCheckout && !successPage) {
+                    console.log("Volviendo del checkout sin completar pago, no actualizo cart.");
+                    return;
+                }
+
                 const res = await fetch('https://clothing-backend.fly.dev/api/cart', {
                     method: 'GET',
                     headers: {
@@ -71,6 +80,7 @@ export const CartProvider = ({ children }) => {
                 const data = await res.json();
                 const validCartItems = data.filter(item => item.product !== null);
                 setCart(validCartItems);
+
                 if (user && user._id) {
                     localStorage.setItem(`cart_${user._id}`, JSON.stringify(validCartItems));
                 }
@@ -83,6 +93,7 @@ export const CartProvider = ({ children }) => {
             fetchCart();
         }
     }, [user]);
+
 
     const addToCart = async (productId, quantity, size) => {
         try {
