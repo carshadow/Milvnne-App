@@ -54,19 +54,30 @@ const CartPage = () => {
 
     const handleCheckout = async () => {
         const stripe = await stripePromise;
-        try {
-            //  Aquí se añade el userId y solo el ID del producto
-            const cartItems = cart.map(item => ({
-                product: item.product._id,
-                quantity: item.quantity,
-                size: item.size,
-                userId: user?._id || "guest",
-                name: item.product.name,
-                price: item.product.price,
-                image: item.product.coverImage,
-                email: user?.email || "carlos.sanchez.castillo2003@gmail.com"
 
-            }));
+        try {
+            const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
+            const stripeFee = subtotal > 0 ? subtotal * 0.050 + 0.30 : 0;
+
+            const cartItems = [
+                ...cart.map(item => ({
+                    product: item.product._id,
+                    quantity: item.quantity,
+                    size: item.size,
+                    userId: user?._id || "guest",
+                    name: item.product.name,
+                    price: item.product.price,
+                    image: item.product.coverImage,
+                    email: user?.email || "carlos.sanchez.castillo2003@gmail.com"
+                })),
+                {
+                    name: "Tarifa de servicio",
+                    quantity: 1,
+                    price: stripeFee,
+                    image: "https://brand-app.fly.dev/service-fee.png",
+                    userId: user?._id || "guest"
+                }
+            ];
 
             const response = await fetch("https://clothing-backend.fly.dev/api/stripe/create-checkout-session", {
                 method: "POST",
@@ -86,6 +97,7 @@ const CartPage = () => {
             alert("❌ Error processing payment");
         }
     };
+
 
     //  Cálculo del subtotal
     const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);

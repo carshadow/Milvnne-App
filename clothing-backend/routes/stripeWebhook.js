@@ -43,13 +43,14 @@ router.post('/', express.raw({ type: 'application/json' }), async (req, res) => 
             const totalAmount = session.amount_total / 100;
 
             // Formatear productos
-            const cleanItems = rawItems.map(item => ({
-                product: item.product,
-                quantity: item.quantity,
-                size: item.size,
-                coverImage: item.coverImage
-            }));
-
+            const cleanItems = rawItems
+                .filter(item => item.product) // ✅ Solo productos reales
+                .map(item => ({
+                    product: item.product,
+                    quantity: item.quantity,
+                    size: item.size,
+                    coverImage: item.coverImage
+                }));
             console.log("🧽 Productos limpios para guardar:", cleanItems);
 
             // 🧾 Guardar orden

@@ -15,16 +15,12 @@ router.post("/create-checkout-session", async (req, res) => {
         }
 
         const lineItems = cartItems.map((item) => {
-            const imageUrl =
-                item.image?.startsWith("http")
-                    ? item.image
-                    : `http://localhost:8080${item.image}`;
-
+            const imageUrl = item.image?.startsWith("http") ? item.image : `https://brand-app.fly.dev${item.image}`;
             return {
                 price_data: {
                     currency: "usd",
                     product_data: {
-                        name: `${item.name} - ${item.size || "Stock"}`,
+                        name: item.name,
                         images: [imageUrl],
                     },
                     unit_amount: Math.round(item.price * 100),
@@ -32,6 +28,7 @@ router.post("/create-checkout-session", async (req, res) => {
                 quantity: item.quantity,
             };
         });
+
 
         const customerEmail = cartItems[0]?.email;
 

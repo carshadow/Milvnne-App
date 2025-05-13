@@ -62,12 +62,12 @@ export const CartProvider = ({ children }) => {
     useEffect(() => {
         const fetchCart = async () => {
             try {
-                // Si se volvió desde Stripe sin pagar, NO hacer fetch
                 const fromCheckout = localStorage.getItem("checkoutInProgress");
-                const successPage = window.location.pathname.includes("/success");
+                const isSuccessPage = window.location.pathname.includes("/success");
 
-                if (fromCheckout && !successPage) {
-                    console.log("Volviendo del checkout sin completar pago, no actualizo cart.");
+                // 🚫 Si viene del checkout y no es success, no hagas fetch
+                if (fromCheckout && !isSuccessPage) {
+                    console.log("⏪ Canceló el pago, no actualizamos el carrito.");
                     return;
                 }
 
@@ -78,12 +78,10 @@ export const CartProvider = ({ children }) => {
                     },
                 });
                 const data = await res.json();
+
                 const validCartItems = data.filter(item => item.product !== null);
                 setCart(validCartItems);
-
-                if (user && user._id) {
-                    localStorage.setItem(`cart_${user._id}`, JSON.stringify(validCartItems));
-                }
+                localStorage.setItem('cart', JSON.stringify(validCartItems));
             } catch (error) {
                 console.error("Error fetching cart:", error);
             }
@@ -95,6 +93,8 @@ export const CartProvider = ({ children }) => {
     }, [user]);
 
 
+
+    // Function to add an item to the cart
     const addToCart = async (productId, quantity, size) => {
         try {
             const token = localStorage.getItem("token");
