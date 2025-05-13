@@ -190,22 +190,45 @@ const AdminDashboard = () => {
         const newOrder = [...categories];
         const targetIndex = index + direction;
         if (targetIndex < 0 || targetIndex >= newOrder.length) return;
+
+        // Intercambiar las posiciones
         [newOrder[index], newOrder[targetIndex]] = [
             newOrder[targetIndex],
             newOrder[index],
         ];
 
-        for (let i = 0; i < newOrder.length; i++) {
-            newOrder[i].order = i;
-            await fetch(`https://clothing-backend.fly.dev/api/categories/${newOrder[i]._id}/reorder`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ order: i }),
+        try {
+            // Obtener el token CSRF
+            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
+                credentials: "include",
             });
-        }
+            const csrfData = await csrfRes.json();
+            const csrfToken = csrfData.csrfToken;
 
-        setCategories([...newOrder]);
+            // Actualizar el orden en el backend
+            for (let i = 0; i < newOrder.length; i++) {
+                newOrder[i].order = i;
+
+                await fetch(`https://clothing-backend.fly.dev/api/categories/${newOrder[i]._id}/reorder`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`,
+                        "CSRF-Token": csrfToken
+                    },
+                    credentials: "include",
+                    body: JSON.stringify({ order: i }),
+                });
+            }
+
+            // Actualizar en frontend
+            setCategories([...newOrder]);
+        } catch (err) {
+            console.error("❌ Error moviendo categorías:", err);
+            alert("❌ Error al reordenar categorías");
+        }
     };
+
 
     const updateCategoryMobileImage = async (id, file) => {
         const formData = new FormData();
