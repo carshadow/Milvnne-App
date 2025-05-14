@@ -1337,7 +1337,7 @@ const AdminDashboard = () => {
                                     return;
                                 }
 
-                                updateCategoryMobileImage(cat._id, file);
+                                updateCategoryMobileImage(file);
                             }}
                             className="w-full lg:w-1/3 text-sm file:bg-purple-600 file:border-none file:px-4 file:py-2 file:rounded-lg file:text-white file:cursor-pointer"
                         />
