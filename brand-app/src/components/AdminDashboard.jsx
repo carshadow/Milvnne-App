@@ -149,6 +149,40 @@ const AdminDashboard = () => {
         }
     };
 
+    const updateCategoryMobileImage = async (id, file) => {
+        const formData = new FormData();
+        formData.append("image", file);
+
+        try {
+            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
+                credentials: "include",
+            });
+            const csrfData = await csrfRes.json();
+            const csrfToken = csrfData.csrfToken;
+
+            const res = await fetch(`https://clothing-backend.fly.dev/api/categories/${id}/image-mobile`, {
+                method: "PUT",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "CSRF-Token": csrfToken,
+                },
+                credentials: "include",
+                body: formData,
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                fetchCategories();
+            } else {
+                alert(`❌ Error: ${data.message}`);
+            }
+        } catch (err) {
+            console.error("❌ Error updating mobile image:", err);
+            alert("❌ Error al actualizar la imagen móvil.");
+        }
+    };
+
+
 
     const renameCategory = async (id, newName) => {
         try {
@@ -251,38 +285,6 @@ const AdminDashboard = () => {
     };
 
 
-    const updateCategoryMobileImage = async (id, file) => {
-        const formData = new FormData();
-        formData.append("image", file);
-
-        try {
-            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
-                credentials: "include",
-            });
-            const csrfData = await csrfRes.json();
-            const csrfToken = csrfData.csrfToken;
-
-            const res = await fetch(`https://clothing-backend.fly.dev/api/categories/${id}/image-mobile`, {
-                method: "PUT",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "CSRF-Token": csrfToken,
-                },
-                credentials: "include",
-                body: formData,
-            });
-
-            const data = await res.json();
-            if (res.ok) {
-                fetchCategories();
-            } else {
-                alert(`❌ Error: ${data.message}`);
-            }
-        } catch (err) {
-            console.error("❌ Error updating mobile image:", err);
-            alert("❌ Error al actualizar la imagen móvil.");
-        }
-    };
 
 
 
@@ -1334,7 +1336,7 @@ const AdminDashboard = () => {
                                     return;
                                 }
 
-                                updateCategoryMobileImage(file);
+                                setNewCategoryMobileImage(file);
                             }}
                             className="w-full lg:w-1/3 text-sm file:bg-fuchsia-600 file:border-none file:px-4 file:py-2 file:rounded-lg file:text-white file:cursor-pointer"
                         />
