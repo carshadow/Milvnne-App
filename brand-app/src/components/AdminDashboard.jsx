@@ -33,6 +33,7 @@ const AdminDashboard = () => {
     const [categories, setCategories] = useState([]);
     const [newCategory, setNewCategory] = useState("");
     const [newCategoryImage, setNewCategoryImage] = useState(null);
+    const [newCategoryMobileImage, setNewCategoryMobileImage] = useState(null);
 
 
     const fetchProducts = async () => {
@@ -90,15 +91,35 @@ const AdminDashboard = () => {
                 body: formData,
             });
 
+            const created = await res.json();
+
             if (res.ok) {
+                // 🟣 Subir imagen móvil si se seleccionó
+                if (newCategoryMobileImage) {
+                    const mobileForm = new FormData();
+                    mobileForm.append("image", newCategoryMobileImage);
+
+                    await fetch(`https://clothing-backend.fly.dev/api/categories/${created._id}/image-mobile`, {
+                        method: "PUT",
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            "CSRF-Token": csrfToken,
+                        },
+                        credentials: "include",
+                        body: mobileForm,
+                    });
+                }
+
                 setNewCategory("");
                 setNewCategoryImage(null);
+                setNewCategoryMobileImage(null);
                 fetchCategories();
             }
         } catch (err) {
             console.error("Error creating category:", err);
         }
     };
+
 
 
     const updateCategoryImage = async (id, file) => {
@@ -1231,15 +1252,13 @@ const AdminDashboard = () => {
                                             onChange={(e) => {
                                                 const file = e.target.files[0];
                                                 if (!file) return;
-
                                                 if (file.type === "image/heic" || file.name.endsWith(".heic") || file.name.endsWith(".HEIC")) {
-                                                    alert("❌ Formato HEIC no soportado. Usa JPG o PNG.");
+                                                    alert("❌ Formato HEIC no soportado. Usa JPG o PNG desde tu galería.");
                                                     return;
                                                 }
-
-                                                updateCategoryMobileImage(cat._id, file);
+                                                setNewCategoryMobileImage(file);
                                             }}
-                                            className="w-full text-sm text-gray-300 file:bg-purple-600 file:border-none file:px-3 file:py-1 file:rounded file:text-white file:cursor-pointer mt-2"
+                                            className="w-full lg:w-1/3 text-sm file:bg-purple-600 file:border-none file:px-4 file:py-2 file:rounded-lg file:text-white file:cursor-pointer"
                                         />
 
                                         <small className="text-xs text-gray-400">Opcional – solo si necesitas una imagen distinta para mobile</small>
@@ -1305,9 +1324,24 @@ const AdminDashboard = () => {
                         <input
                             type="file"
                             accept="image/*"
-                            onChange={(e) => setNewCategoryImage(e.target.files[0])}
-                            className="w-full lg:w-1/3 text-sm file:bg-fuchsia-600 file:border-none file:px-4 file:py-2 file:rounded-lg file:text-white file:cursor-pointer"
+                            onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (!file) return;
+
+                                if (
+                                    file.type === "image/heic" ||
+                                    file.name.endsWith(".heic") ||
+                                    file.name.endsWith(".HEIC")
+                                ) {
+                                    alert("❌ Formato HEIC no soportado. Usa JPG o PNG desde tu galería.");
+                                    return;
+                                }
+
+                                setNewCategoryMobileImage(file);
+                            }}
+                            className="w-full lg:w-1/3 text-sm file:bg-purple-600 file:border-none file:px-4 file:py-2 file:rounded-lg file:text-white file:cursor-pointer"
                         />
+
 
                         <button
                             onClick={createCategory}
