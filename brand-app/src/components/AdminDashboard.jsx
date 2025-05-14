@@ -1328,19 +1328,17 @@ const AdminDashboard = () => {
                                 const file = e.target.files[0];
                                 if (!file) return;
 
-                                if (
-                                    file.type === "image/heic" ||
-                                    file.name.endsWith(".heic") ||
-                                    file.name.endsWith(".HEIC")
-                                ) {
+                                // Verificamos si es HEIC (usado por iPhone)
+                                if (file.type === "image/heic" || file.name.endsWith(".heic") || file.name.endsWith(".HEIC")) {
                                     alert("❌ Formato HEIC no soportado. Usa JPG o PNG desde tu galería.");
                                     return;
                                 }
 
                                 updateCategoryMobileImage(file);
                             }}
-                            className="w-full lg:w-1/3 text-sm file:bg-purple-600 file:border-none file:px-4 file:py-2 file:rounded-lg file:text-white file:cursor-pointer"
+                            className="w-full lg:w-1/3 text-sm file:bg-fuchsia-600 file:border-none file:px-4 file:py-2 file:rounded-lg file:text-white file:cursor-pointer"
                         />
+
 
 
                         <button
