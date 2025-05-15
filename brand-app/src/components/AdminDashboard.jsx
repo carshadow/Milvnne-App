@@ -70,6 +70,16 @@ const AdminDashboard = () => {
     const createCategory = async () => {
         if (!newCategory || !newCategoryImage) return;
 
+        // ✅ VALIDACIÓN desktop image
+        if (
+            !newCategoryImage.type ||
+            newCategoryImage.type === "image/heic" ||
+            newCategoryImage.name?.toLowerCase().endsWith(".heic")
+        ) {
+            alert("❌ Formato HEIC no soportado. Usa JPG o PNG.");
+            return;
+        }
+
         const formData = new FormData();
         formData.append("name", newCategory);
         formData.append("image", newCategoryImage);
@@ -94,8 +104,17 @@ const AdminDashboard = () => {
             const created = await res.json();
 
             if (res.ok) {
-                // 🟣 Subir imagen móvil si se seleccionó
+                // ✅ VALIDACIÓN mobile image
                 if (newCategoryMobileImage) {
+                    if (
+                        !newCategoryMobileImage.type ||
+                        newCategoryMobileImage.type === "image/heic" ||
+                        newCategoryMobileImage.name?.toLowerCase().endsWith(".heic")
+                    ) {
+                        alert("❌ Formato HEIC no soportado en móvil. Usa JPG o PNG.");
+                        return;
+                    }
+
                     const mobileForm = new FormData();
                     mobileForm.append("image", newCategoryMobileImage);
 
@@ -122,7 +141,16 @@ const AdminDashboard = () => {
 
 
 
+
     const updateCategoryImage = async (id, file) => {
+        if (
+            !file.type ||
+            file.type === "image/heic" ||
+            file.name?.toLowerCase().endsWith(".heic")
+        ) {
+            alert("❌ Formato HEIC no soportado. Usa JPG o PNG.");
+            return;
+        }
         const formData = new FormData();
         formData.append("image", file);
 
@@ -150,6 +178,14 @@ const AdminDashboard = () => {
     };
 
     const updateCategoryMobileImage = async (id, file) => {
+        if (
+            !file.type ||
+            file.type === "image/heic" ||
+            file.name?.toLowerCase().endsWith(".heic")
+        ) {
+            alert("❌ Formato HEIC no soportado. Usa JPG o PNG.");
+            return;
+        }
         const formData = new FormData();
         formData.append("image", file);
 
