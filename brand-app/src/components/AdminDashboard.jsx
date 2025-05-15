@@ -1300,7 +1300,7 @@ const AdminDashboard = () => {
                                                     return;
                                                 }
 
-                                                setNewCategoryMobileImage(file); // ✅ ESTO ES LO QUE FALTABA
+                                                updateCategoryMobileImage(cat._id, file); // ✅ Ahora sí hace el PUT al backend
                                             }}
                                             className="w-full lg:w-1/3 text-sm file:bg-purple-600 file:border-none file:px-4 file:py-2 file:rounded-lg file:text-white file:cursor-pointer"
                                         />
