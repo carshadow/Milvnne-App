@@ -1290,11 +1290,17 @@ const AdminDashboard = () => {
                                             onChange={(e) => {
                                                 const file = e.target.files[0];
                                                 if (!file) return;
-                                                if (file.type === "image/heic" || file.name.endsWith(".heic") || file.name.endsWith(".HEIC")) {
-                                                    alert("❌ Formato HEIC no soportado. Usa JPG o PNG desde tu galería.");
+
+                                                if (
+                                                    file.type === "image/heic" ||
+                                                    file.name.endsWith(".heic") ||
+                                                    file.name.endsWith(".HEIC")
+                                                ) {
+                                                    alert("❌ Formato HEIC no soportado. Usa JPG o PNG.");
                                                     return;
                                                 }
-                                                updateCategoryMobileImage(cat._id, file); // ✅ Este sí hace el PUT correctamente
+
+                                                setNewCategoryMobileImage(file); // ✅ ESTO ES LO QUE FALTABA
                                             }}
                                             className="w-full lg:w-1/3 text-sm file:bg-purple-600 file:border-none file:px-4 file:py-2 file:rounded-lg file:text-white file:cursor-pointer"
                                         />
@@ -1359,7 +1365,7 @@ const AdminDashboard = () => {
 
 
 
-                        {/* <input
+                        {<input
                             type="file"
                             accept="image/*"
                             onChange={(e) => {
@@ -1372,7 +1378,7 @@ const AdminDashboard = () => {
                                 updateCategoryMobileImage(cat._id, file); // ✅ Este sí hace el PUT correctamente
                             }}
                             className="w-full lg:w-1/3 text-sm file:bg-purple-600 file:border-none file:px-4 file:py-2 file:rounded-lg file:text-white file:cursor-pointer"
-                        /> */}
+                        />}
 
 
 
