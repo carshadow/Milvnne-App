@@ -143,6 +143,7 @@ const AdminDashboard = () => {
 
 
     const updateCategoryImage = async (id, file) => {
+        console.log("❌ Backend response:", data);
         if (
             !file.type ||
             file.type === "image/heic" ||
@@ -178,6 +179,7 @@ const AdminDashboard = () => {
     };
 
     const updateCategoryMobileImage = async (id, file) => {
+        console.log("❌ Backend response:", data);
         if (
             !file.type ||
             file.type === "image/heic" ||
