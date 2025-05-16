@@ -180,15 +180,20 @@ const AdminDashboard = () => {
     };
 
     const updateCategoryMobileImage = async (id, file) => {
+        console.log("📦 Archivo recibido:", file);
+
+        // Validación: permitir solo JPG, JPEG, PNG, WebP (y permitir si el nombre lo dice aunque el .type venga vacío)
+        const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+        const fileName = file.name?.toLowerCase();
 
         if (
-            !file.type ||
-            file.type === "image/heic" ||
-            file.name?.toLowerCase().endsWith(".heic")
+            !(allowedTypes.includes(file.type)) &&
+            !(fileName?.endsWith(".jpg") || fileName?.endsWith(".jpeg") || fileName?.endsWith(".png") || fileName?.endsWith(".webp"))
         ) {
-            alert("❌ Formato HEIC no soportado. Usa JPG o PNG.");
+            alert("❌ Solo se permiten imágenes JPG, PNG o WebP.");
             return;
         }
+
         const formData = new FormData();
         formData.append("image", file);
 
@@ -209,18 +214,22 @@ const AdminDashboard = () => {
                 body: formData,
             });
 
+            console.log("🛰 Estado de respuesta:", res.status);
+
             const data = await res.json();
-            console.log("❌ Backend response:", data);
+            console.log("🧾 Respuesta del backend:", data);
+
             if (res.ok) {
                 fetchCategories();
             } else {
                 alert(`❌ Error: ${data.message}`);
             }
         } catch (err) {
-            console.error("❌ Error updating mobile image:", err);
+            console.error("❌ Error al hacer fetch a /image-mobile:", err);
             alert("❌ Error al actualizar la imagen móvil.");
         }
     };
+
 
 
 
@@ -1314,16 +1323,18 @@ const AdminDashboard = () => {
                                                             { type: "image/jpeg" }
                                                         );
 
-                                                        setNewCategoryMobileImage(convertedFile);
+                                                        await updateCategoryMobileImage(cat._id, convertedFile); // ✅ se sube la imagen convertida
                                                     } catch (err) {
+                                                        console.error("❌ Error convirtiendo HEIC:", err);
                                                         alert("❌ No se pudo convertir la imagen HEIC. Usa otra imagen.");
                                                     }
                                                 } else {
-                                                    updateCategoryMobileImage(cat._id, file);
+                                                    await updateCategoryMobileImage(cat._id, file); // ✅ imagen normal
                                                 }
                                             }}
                                             className="w-full lg:w-1/3 text-sm file:bg-purple-600 file:border-none file:px-4 file:py-2 file:rounded-lg file:text-white file:cursor-pointer"
                                         />
+
 
 
 
