@@ -4,7 +4,6 @@ import { FaTimes } from 'react-icons/fa';
 import { z } from "zod";
 import { useContext } from "react";
 import { AuthContext } from "../context/authContext";
-import heic2any from "heic2any";
 
 const AdminDashboard = () => {
     const [products, setProducts] = useState([]);
@@ -1317,7 +1316,7 @@ const AdminDashboard = () => {
                                                         alert("❌ No se pudo convertir la imagen HEIC. Usa JPG o PNG.");
                                                     }
                                                 } else {
-                                                    setNewCategoryMobileImage(file);
+                                                    updateCategoryImage(cat._id, file);
                                                 }
                                             }}
                                             className="w-full lg:w-1/3 text-sm file:bg-purple-600 file:border-none file:px-4 file:py-2 file:rounded-lg file:text-white file:cursor-pointer"
