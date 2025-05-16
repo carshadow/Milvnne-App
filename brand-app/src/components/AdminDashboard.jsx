@@ -182,7 +182,6 @@ const AdminDashboard = () => {
     const updateCategoryMobileImage = async (id, file) => {
         console.log("📦 Archivo recibido:", file);
 
-        // Validación: permitir solo JPG, JPEG, PNG, WebP (y permitir si el nombre lo dice aunque el .type venga vacío)
         const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
         const fileName = file.name?.toLowerCase();
 
@@ -216,8 +215,15 @@ const AdminDashboard = () => {
 
             console.log("🛰 Estado de respuesta:", res.status);
 
-            const data = await res.json();
-            console.log("🧾 Respuesta del backend:", data);
+            let data;
+            try {
+                data = await res.json();
+                console.log("🧾 Respuesta del backend:", data);
+            } catch (jsonErr) {
+                console.warn("⚠️ No se pudo parsear JSON:", jsonErr);
+                alert("❌ La imagen fue subida pero hubo un error al interpretar la respuesta.");
+                return;
+            }
 
             if (res.ok) {
                 fetchCategories();
@@ -229,6 +235,7 @@ const AdminDashboard = () => {
             alert("❌ Error al actualizar la imagen móvil.");
         }
     };
+
 
 
 
