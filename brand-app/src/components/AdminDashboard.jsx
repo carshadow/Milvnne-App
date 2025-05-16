@@ -182,11 +182,17 @@ const AdminDashboard = () => {
     const updateCategoryMobileImage = async (id, file) => {
         console.log("📦 Archivo recibido:", file);
 
+        if (!file) {
+            alert("❌ No se seleccionó ningún archivo.");
+            return;
+        }
+
         const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
         const fileName = file.name?.toLowerCase();
 
+        // ✅ Solo validamos file.type si existe, si no nos guiamos por la extensión
         if (
-            !(allowedTypes.includes(file.type)) &&
+            file.type && !allowedTypes.includes(file.type) &&
             !(fileName?.endsWith(".jpg") || fileName?.endsWith(".jpeg") || fileName?.endsWith(".png") || fileName?.endsWith(".webp"))
         ) {
             alert("❌ Solo se permiten imágenes JPG, PNG o WebP.");
@@ -237,6 +243,7 @@ const AdminDashboard = () => {
             alert("❌ Error al actualizar la imagen móvil.");
         }
     };
+
 
 
 
