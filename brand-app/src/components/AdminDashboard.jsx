@@ -208,6 +208,8 @@ const AdminDashboard = () => {
             });
             const csrfData = await csrfRes.json();
             const csrfToken = csrfData.csrfToken;
+            console.log("🛡 Token CSRF:", csrfToken);
+            console.log("🔐 Bearer Token:", token);
 
             const res = await fetch(`https://clothing-backend.fly.dev/api/categories/${id}/image-mobile`, {
                 method: "PUT",
