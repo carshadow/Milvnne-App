@@ -4,8 +4,6 @@ import { FaTimes } from 'react-icons/fa';
 import { z } from "zod";
 import { useContext } from "react";
 import { AuthContext } from "../context/authContext";
-import heic2any from "heic2any";
-
 
 const AdminDashboard = () => {
     const [products, setProducts] = useState([]);
@@ -1291,39 +1289,23 @@ const AdminDashboard = () => {
                                         <input
                                             type="file"
                                             accept="image/*"
-                                            onChange={async (e) => {
+                                            onChange={(e) => {
                                                 const file = e.target.files[0];
                                                 if (!file) return;
 
-                                                const isHeic = file.name.toLowerCase().endsWith(".heic") ||
-                                                    file.name.toLowerCase().endsWith(".heif") ||
+                                                if (
                                                     file.type === "image/heic" ||
-                                                    file.type === "";
-
-                                                if (isHeic) {
-                                                    try {
-                                                        const convertedBlob = await heic2any({
-                                                            blob: file,
-                                                            toType: "image/jpeg",
-                                                            quality: 0.9
-                                                        });
-
-                                                        const convertedFile = new File([convertedBlob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), {
-                                                            type: "image/jpeg"
-                                                        });
-
-                                                        setNewCategoryMobileImage(convertedFile);
-                                                    } catch (error) {
-                                                        console.error("Error al convertir HEIC:", error);
-                                                        alert("❌ No se pudo convertir la imagen HEIC. Usa JPG o PNG.");
-                                                    }
-                                                } else {
-                                                    updateCategoryImage(cat._id, file);
+                                                    file.name.endsWith(".heic") ||
+                                                    file.name.endsWith(".HEIC")
+                                                ) {
+                                                    alert("❌ Formato HEIC no soportado. Usa JPG o PNG.");
+                                                    return;
                                                 }
+
+                                                updateCategoryMobileImage(cat._id, file); // ✅ Ahora sí hace el PUT al backend
                                             }}
                                             className="w-full lg:w-1/3 text-sm file:bg-purple-600 file:border-none file:px-4 file:py-2 file:rounded-lg file:text-white file:cursor-pointer"
                                         />
-
 
                                         <small className="text-xs text-gray-400">Opcional – solo si necesitas una imagen distinta para mobile</small>
                                     </td>
