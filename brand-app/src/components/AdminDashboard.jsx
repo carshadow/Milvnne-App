@@ -4,6 +4,8 @@ import { FaTimes } from 'react-icons/fa';
 import { z } from "zod";
 import { useContext } from "react";
 import { AuthContext } from "../context/authContext";
+import heic2any from "heic2any";
+
 
 const AdminDashboard = () => {
     const [products, setProducts] = useState([]);
