@@ -218,6 +218,7 @@ const AdminDashboard = () => {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     "CSRF-Token": csrfToken,
+                    "Origin": "https://brand-app.fly.dev" // 👈 Asegúrate que este sea tu frontend en Fly.io
                 },
                 credentials: "include",
                 body: formData,
