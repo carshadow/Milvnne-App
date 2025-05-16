@@ -215,21 +215,23 @@ const AdminDashboard = () => {
 
             console.log("🛰 Estado de respuesta:", res.status);
 
-            let data;
-            try {
+            let data = {};
+            const contentType = res.headers.get("content-type");
+
+            if (contentType && contentType.includes("application/json")) {
                 data = await res.json();
-                console.log("🧾 Respuesta del backend:", data);
-            } catch (jsonErr) {
-                console.warn("⚠️ No se pudo parsear JSON:", jsonErr);
-                alert("❌ La imagen fue subida pero hubo un error al interpretar la respuesta.");
-                return;
+            } else {
+                data = { message: "✅ Imagen actualizada (sin respuesta JSON)" };
             }
+
+            console.log("🧾 Respuesta del backend:", data);
 
             if (res.ok) {
                 fetchCategories();
             } else {
                 alert(`❌ Error: ${data.message}`);
             }
+
         } catch (err) {
             console.error("❌ Error al hacer fetch a /image-mobile:", err);
             alert("❌ Error al actualizar la imagen móvil.");
