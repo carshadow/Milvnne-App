@@ -208,6 +208,8 @@ const AdminDashboard = () => {
             });
             const csrfData = await csrfRes.json();
             const csrfToken = csrfData.csrfToken;
+
+            // ✅ Logs para verificar tokens
             console.log("🛡 Token CSRF:", csrfToken);
             console.log("🔐 Bearer Token:", token);
 
@@ -221,23 +223,31 @@ const AdminDashboard = () => {
                 body: formData,
             });
 
-            console.log("🛰 Estado de respuesta:", res.status);
-
+            // ✅ Manejamos respuesta correctamente, incluso si NO es JSON
             let data = {};
-            const contentType = res.headers.get("content-type");
+            let rawText = "";
 
-            if (contentType && contentType.includes("application/json")) {
-                data = await res.json();
-            } else {
-                data = { message: "✅ Imagen actualizada (sin respuesta JSON)" };
+            try {
+                const contentType = res.headers.get("content-type");
+
+                if (contentType && contentType.includes("application/json")) {
+                    data = await res.json();
+                } else {
+                    rawText = await res.text();
+                    data = { message: "Respuesta no JSON del servidor", raw: rawText };
+                }
+            } catch (err) {
+                data = { message: "No se pudo interpretar la respuesta del servidor" };
             }
 
+            console.log("🛰 Estado de respuesta:", res.status);
             console.log("🧾 Respuesta del backend:", data);
+            console.log("📄 Respuesta cruda:", rawText);
 
             if (res.ok) {
                 fetchCategories();
             } else {
-                alert(`❌ Error: ${data.message}`);
+                alert(`❌ Error ${res.status}: ${data.message}`);
             }
 
         } catch (err) {
