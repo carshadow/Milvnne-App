@@ -19,7 +19,7 @@ const app = express();
 const allowedOrigins = [
     "http://localhost:3000",
     "https://brand-app.fly.dev",
-    "https://clothing-backend.fly.dev/"
+    "https://clothing-backend.fly.dev"
 
 ];
 
