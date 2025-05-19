@@ -19,7 +19,7 @@ const app = express();
 const allowedOrigins = [
     "http://localhost:3000",
     "https://brand-app.fly.dev",
-    "https://clothing-backend.fly.dev/"
+    "https://clothing-backend.fly.dev"
 
 ];
 
@@ -39,6 +39,19 @@ app.use((req, res, next) => {
 
     next();
 });
+
+// ✅ Manejar preflight para todas las rutas
+app.options("*", (req, res) => {
+    const origin = req.headers.origin || "";
+    if (allowedOrigins.includes(origin)) {
+        res.setHeader("Access-Control-Allow-Origin", origin);
+    }
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, CSRF-Token");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    return res.sendStatus(200);
+});
+
 
 
 // ✅ Stripe webhook debe ir antes del express.json()
