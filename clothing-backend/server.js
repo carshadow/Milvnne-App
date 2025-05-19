@@ -19,7 +19,7 @@ const app = express();
 const allowedOrigins = [
     "http://localhost:3000",
     "https://brand-app.fly.dev",
-    "https://clothing-backend.fly.dev"
+    "https://clothing-backend.fly.dev/"
 
 ];
 
@@ -109,7 +109,7 @@ app.use((req, res) => {
 });
 
 // ✅ Iniciar servidor
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Server running on port ${PORT}`);
+app.listen(8080, '0.0.0.0', () => {
+    console.log(`🚀 Server running on port 8080`);
 });
+
