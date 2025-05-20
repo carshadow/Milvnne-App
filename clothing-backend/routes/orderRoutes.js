@@ -2,7 +2,7 @@ import express from 'express';
 import Order from '../models/Order.js';
 import { sendOrderEmail } from "../utils/mailer.js";
 import { z } from "zod";
-import { csrfProtection } from "../middlewares/csrfMiddleware.js";
+
 
 
 const checkoutSchema = z.object({
@@ -25,7 +25,7 @@ const updateStatusSchema = z.object({
 const router = express.Router();
 
 // Ruta de Checkout (anónima o autenticada)
-router.post('/checkout', csrfProtection, async (req, res) => {
+router.post('/checkout', async (req, res) => {
     try {
         const validation = checkoutSchema.safeParse(req.body);
 
@@ -57,7 +57,7 @@ router.post('/checkout', csrfProtection, async (req, res) => {
 });
 
 
-router.get('/user/:userId', csrfProtection, async (req, res) => {
+router.get('/user/:userId', async (req, res) => {
     try {
         const userId = req.params.userId;
         const orders = await Order.find({ user: userId }).sort({ createdAt: -1 }).populate('products.product');
@@ -79,7 +79,7 @@ router.get("/", async (req, res) => {
 });
 
 // Actualizar estado de la orden
-router.put("/:id/status", csrfProtection, async (req, res) => {
+router.put("/:id/status", async (req, res) => {
     try {
         const validation = updateStatusSchema.safeParse(req.body);
 
@@ -156,7 +156,7 @@ router.put("/:id/status", csrfProtection, async (req, res) => {
 
 
 // ❌ Eliminar orden por ID
-router.delete('/:id', csrfProtection, async (req, res) => {
+router.delete('/:id', async (req, res) => {
     try {
         const order = await Order.findById(req.params.id);
         if (!order) return res.status(404).json({ message: "Orden no encontrada" });
@@ -171,7 +171,7 @@ router.delete('/:id', csrfProtection, async (req, res) => {
 
 
 // Archivar orden (sin eliminarla de la base de datos)
-router.put('/:id/archive', csrfProtection, async (req, res) => {
+router.put('/:id/archive', async (req, res) => {
     try {
         const order = await Order.findByIdAndUpdate(
             req.params.id,

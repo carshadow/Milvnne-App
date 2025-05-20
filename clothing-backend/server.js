@@ -7,7 +7,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
-import { csrfProtection } from "./middlewares/csrfMiddleware.js";
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -63,9 +63,9 @@ app.use(express.json());
 app.use(cookieParser(process.env.COOKIE_SECRET, { signed: true }));
 
 // ✅ CSRF Token route
-app.get("/api/csrf-token", csrfProtection, (req, res) => {
-    res.json({ csrfToken: req.csrfToken() });
-});
+// app.get("/api/csrf-token", csrfProtection, (req, res) => {
+//     res.json({ csrfToken: req.csrfToken() });
+// });
 
 // ✅ Carpeta uploads
 const uploadDir = path.join(__dirname, "uploads");

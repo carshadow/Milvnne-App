@@ -87,17 +87,12 @@ const AdminDashboard = () => {
         formData.append("image", newCategoryImage);
 
         try {
-            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
-                credentials: "include",
-            });
-            const csrfData = await csrfRes.json();
-            const csrfToken = csrfData.csrfToken;
 
             const res = await fetch("https://clothing-backend.fly.dev/api/categories", {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${token}`,
-                    "CSRF-Token": csrfToken
+
                 },
                 credentials: "include",
                 body: formData,
@@ -124,7 +119,7 @@ const AdminDashboard = () => {
                         method: "PUT",
                         headers: {
                             Authorization: `Bearer ${token}`,
-                            "CSRF-Token": csrfToken,
+
                         },
                         credentials: "include",
                         body: mobileForm,
@@ -157,17 +152,13 @@ const AdminDashboard = () => {
         formData.append("image", file);
 
         try {
-            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
-                credentials: "include",
-            });
-            const csrfData = await csrfRes.json();
-            const csrfToken = csrfData.csrfToken;
+
 
             await fetch(`https://clothing-backend.fly.dev/api/categories/${id}/image`, {
                 method: "PUT",
                 headers: {
                     Authorization: `Bearer ${token}`,
-                    "CSRF-Token": csrfToken,
+
                 },
                 credentials: "include",
                 body: formData,
@@ -203,21 +194,17 @@ const AdminDashboard = () => {
         formData.append("image", file);
 
         try {
-            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
-                credentials: "include",
-            });
-            const csrfData = await csrfRes.json();
-            const csrfToken = csrfData.csrfToken;
+
 
             // ✅ Logs para verificar tokens
-            console.log("🛡 Token CSRF:", csrfToken);
+
             console.log("🔐 Bearer Token:", token);
 
             const res = await fetch(`https://clothing-backend.fly.dev/api/categories/${id}/image-mobile`, {
                 method: "PUT",
                 headers: {
                     Authorization: `Bearer ${token}`,
-                    "CSRF-Token": csrfToken,
+
                     // "Origin": "https://brand-app.fly.dev" // 👈 Asegúrate que este sea tu frontend en Fly.io
                 },
                 credentials: "include",
@@ -264,17 +251,13 @@ const AdminDashboard = () => {
 
     const renameCategory = async (id, newName) => {
         try {
-            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
-                credentials: "include",
-            });
-            const csrfData = await csrfRes.json();
-            const csrfToken = csrfData.csrfToken;
+
 
             await fetch(`https://clothing-backend.fly.dev/api/categories/${id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
-                    "CSRF-Token": csrfToken
+
                 },
                 credentials: "include",
                 body: JSON.stringify({ name: newName }),
@@ -290,12 +273,7 @@ const AdminDashboard = () => {
         if (!window.confirm("¿Eliminar esta categoría?")) return;
 
         try {
-            //  1. Obtener el token CSRF
-            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
-                credentials: "include",
-            });
-            const csrfData = await csrfRes.json();
-            const csrfToken = csrfData.csrfToken;
+
 
             //  2. Hacer el DELETE con el token
             const res = await fetch(`https://clothing-backend.fly.dev/api/categories/${id}`, {
@@ -303,7 +281,7 @@ const AdminDashboard = () => {
                 credentials: "include",
                 headers: {
                     "Authorization": `Bearer ${token}`,
-                    "CSRF-Token": csrfToken
+
                 }
             });
 
@@ -331,12 +309,7 @@ const AdminDashboard = () => {
         ];
 
         try {
-            // Obtener el token CSRF
-            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
-                credentials: "include",
-            });
-            const csrfData = await csrfRes.json();
-            const csrfToken = csrfData.csrfToken;
+
 
             // Actualizar el orden en el backend
             for (let i = 0; i < newOrder.length; i++) {
@@ -347,7 +320,7 @@ const AdminDashboard = () => {
                     headers: {
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${token}`,
-                        "CSRF-Token": csrfToken
+
                     },
                     credentials: "include",
                     body: JSON.stringify({ order: i }),
@@ -556,12 +529,7 @@ const AdminDashboard = () => {
         if (!window.confirm("Are you sure you want to delete this product?")) return;
 
         try {
-            // ✅ 1. Obtener el token CSRF
-            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
-                credentials: "include",
-            });
-            const csrfData = await csrfRes.json();
-            const csrfToken = csrfData.csrfToken;
+
 
             // ✅ 2. Enviar el DELETE con el token
             const res = await fetch(`https://clothing-backend.fly.dev/api/products/${id}`, {
@@ -569,7 +537,7 @@ const AdminDashboard = () => {
                 credentials: "include",
                 headers: {
                     "Authorization": `Bearer ${token}`,
-                    "CSRF-Token": csrfToken
+
                 }
             });
 
@@ -615,17 +583,13 @@ const AdminDashboard = () => {
     };
 
     const updateOrderStatus = async (orderId, status) => {
-        const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
-            credentials: "include",
-        });
-        const csrfData = await csrfRes.json();
-        const csrfToken = csrfData.csrfToken;
+
         const res = await fetch(`https://clothing-backend.fly.dev/api/orders/${orderId}/status`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${token}`,
-                "CSRF-Token": csrfToken // ✅ aquí está el fix
+
             },
             credentials: "include",
             body: JSON.stringify({ status })
@@ -658,12 +622,7 @@ const AdminDashboard = () => {
 
     const archiveOrder = async (orderId) => {
         try {
-            //  1. Obtener el token CSRF
-            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
-                credentials: "include",
-            });
-            const csrfData = await csrfRes.json();
-            const csrfToken = csrfData.csrfToken;
+
 
 
             const res = await fetch(`https://clothing-backend.fly.dev/api/orders/${orderId}/archive`, {
@@ -671,7 +630,7 @@ const AdminDashboard = () => {
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`,
-                    "CSRF-Token": csrfToken // 👈 se requiere
+
                 },
                 credentials: "include",
                 body: JSON.stringify({ archived: true })
