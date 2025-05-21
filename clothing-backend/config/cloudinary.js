@@ -17,8 +17,6 @@ const storage = new CloudinaryStorage({
         allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'heic'],
         transformation: [
             {
-                width: 1920,           // 👈 resolución recomendada para calidad full
-                crop: "limit",         // 👈 limita el tamaño, sin recortar
                 quality: "auto:best",  // 👈 compresión inteligente
                 fetch_format: "auto",  // 👈 formato óptimo (webp, avif, etc.)
             }
