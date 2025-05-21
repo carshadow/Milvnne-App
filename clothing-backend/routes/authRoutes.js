@@ -5,7 +5,7 @@ import User from "../models/User.js";
 import { authenticateUser } from "../middlewares/authMiddleware.js";
 import dotenv from "dotenv";
 import { z } from "zod";
-import { csrfProtection } from "../middlewares/csrfMiddleware.js";
+
 
 dotenv.config();
 const router = express.Router();
@@ -67,7 +67,7 @@ router.get("/me", authenticateUser, async (req, res) => {
 });
 
 // 📌 **Logout para eliminar la cookie**
-router.post("/logout", csrfProtection, (req, res) => {
+router.post("/logout", (req, res) => {
     res.clearCookie("token", {
         httpOnly: true,
         secure: true,
@@ -79,7 +79,7 @@ router.post("/logout", csrfProtection, (req, res) => {
 
 
 // 📌 **Registro de Usuario**
-router.post("/register", csrfProtection, async (req, res) => {
+router.post("/register", async (req, res) => {
     try {
         const validation = registerSchema.safeParse(req.body);
 
