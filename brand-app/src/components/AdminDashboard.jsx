@@ -1367,22 +1367,13 @@ const AdminDashboard = () => {
 
                     <div className="flex flex-col lg:flex-row gap-6">
                         <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => {
-                                const file = e.target.files[0];
-                                if (!file) return;
-
-                                // Verificamos si es HEIC (usado por iPhone)
-                                if (file.type === "image/heic" || file.name.endsWith(".heic") || file.name.endsWith(".HEIC")) {
-                                    alert("❌ Formato HEIC no soportado. Usa JPG o PNG desde tu galería.");
-                                    return;
-                                }
-
-                                setNewCategoryImage(file);
-                            }}
-                            className="w-full lg:w-1/3 text-sm file:bg-fuchsia-600 file:border-none file:px-4 file:py-2 file:rounded-lg file:text-white file:cursor-pointer"
+                            type="text"
+                            placeholder="Nombre nueva categoría"
+                            value={newCategory}
+                            onChange={(e) => setNewCategory(e.target.value)}
+                            className="w-full lg:w-1/3 bg-zinc-700 border border-zinc-600 p-3 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
                         />
+
 
 
 
@@ -1397,7 +1388,7 @@ const AdminDashboard = () => {
                                     return;
                                 }
 
-                                setNewCategoryMobileImage(file); // ✅ usamos el setter para guardar la imagen nueva
+                                setNewCategoryImage(file); // ✅ usamos el setter para guardar la imagen nueva
                             }}
                             className="w-full lg:w-1/3 text-sm file:bg-purple-600 file:border-none file:px-4 file:py-2 file:rounded-lg file:text-white file:cursor-pointer"
                         />
