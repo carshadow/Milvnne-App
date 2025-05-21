@@ -195,7 +195,7 @@ const Products = () => {
 
                                         srcSet={`${categoryImages[group.type].imageUrl.replace('/upload/', '/upload/f_auto,q_auto,w_3840/')} 2x`}
                                         alt={`${group.type} Collection`}
-                                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                                        className="relative inset-0 w-full h-full bg-cover transition-transform duration-500 hover:scale-105"
                                     />
 
                                 </picture>
