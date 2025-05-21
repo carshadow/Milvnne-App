@@ -4,6 +4,8 @@ import { FaTimes } from 'react-icons/fa';
 import { z } from "zod";
 import { useContext } from "react";
 import { AuthContext } from "../context/authContext";
+import heic2any from "heic2any";
+
 
 const AdminDashboard = () => {
     const [products, setProducts] = useState([]);
@@ -33,6 +35,7 @@ const AdminDashboard = () => {
     const [categories, setCategories] = useState([]);
     const [newCategory, setNewCategory] = useState("");
     const [newCategoryImage, setNewCategoryImage] = useState(null);
+    const [newCategoryMobileImage, setNewCategoryMobileImage] = useState(null);
 
 
     const fetchProducts = async () => {
@@ -69,30 +72,63 @@ const AdminDashboard = () => {
     const createCategory = async () => {
         if (!newCategory || !newCategoryImage) return;
 
+        // ✅ VALIDACIÓN desktop image
+        // if (
+        //     !newCategoryImage.type ||
+        //     newCategoryImage.type === "image/heic" ||
+        //     newCategoryImage.name?.toLowerCase().endsWith(".heic")
+        // ) {
+        //     alert("❌ Formato HEIC no soportado. Usa JPG o PNG.");
+        //     return;
+        // }
+
         const formData = new FormData();
         formData.append("name", newCategory);
         formData.append("image", newCategoryImage);
 
         try {
-            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
-                credentials: "include",
-            });
-            const csrfData = await csrfRes.json();
-            const csrfToken = csrfData.csrfToken;
 
             const res = await fetch("https://clothing-backend.fly.dev/api/categories", {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${token}`,
-                    "CSRF-Token": csrfToken
+
                 },
                 credentials: "include",
                 body: formData,
             });
 
+            const created = await res.json();
+
             if (res.ok) {
+                // ✅ VALIDACIÓN mobile image
+                if (newCategoryMobileImage) {
+                    // if (
+                    //     !newCategoryMobileImage.type ||
+                    //     newCategoryMobileImage.type === "image/heic" ||
+                    //     newCategoryMobileImage.name?.toLowerCase().endsWith(".heic")
+                    // ) {
+                    //     alert("❌ Formato HEIC no soportado en móvil. Usa JPG o PNG.");
+                    //     return;
+                    // }
+
+                    const mobileForm = new FormData();
+                    mobileForm.append("image", newCategoryMobileImage);
+
+                    await fetch(`https://clothing-backend.fly.dev/api/categories/${created._id}/image-mobile`, {
+                        method: "PUT",
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+
+                        },
+                        credentials: "include",
+                        body: mobileForm,
+                    });
+                }
+
                 setNewCategory("");
                 setNewCategoryImage(null);
+                setNewCategoryMobileImage(null);
                 fetchCategories();
             }
         } catch (err) {
@@ -101,22 +137,28 @@ const AdminDashboard = () => {
     };
 
 
+
+
     const updateCategoryImage = async (id, file) => {
+        // if (
+        //     !file.type ||
+        //     file.type === "image/heic" ||
+        //     file.name?.toLowerCase().endsWith(".heic")
+        // ) {
+        //     alert("❌ Formato HEIC no soportado. Usa JPG o PNG.");
+        //     return;
+        // }
         const formData = new FormData();
         formData.append("image", file);
 
         try {
-            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
-                credentials: "include",
-            });
-            const csrfData = await csrfRes.json();
-            const csrfToken = csrfData.csrfToken;
+
 
             await fetch(`https://clothing-backend.fly.dev/api/categories/${id}/image`, {
                 method: "PUT",
                 headers: {
                     Authorization: `Bearer ${token}`,
-                    "CSRF-Token": csrfToken,
+
                 },
                 credentials: "include",
                 body: formData,
@@ -128,20 +170,94 @@ const AdminDashboard = () => {
         }
     };
 
+    const updateCategoryMobileImage = async (id, file) => {
+        console.log("📦 Archivo recibido:", file);
+
+        if (!file) {
+            alert("❌ No se seleccionó ningún archivo.");
+            return;
+        }
+
+        const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+        const fileName = file.name?.toLowerCase();
+
+        // ✅ Solo validamos file.type si existe, si no nos guiamos por la extensión
+        if (
+            file.type && !allowedTypes.includes(file.type) &&
+            !(fileName?.endsWith(".jpg") || fileName?.endsWith(".jpeg") || fileName?.endsWith(".png") || fileName?.endsWith(".webp"))
+        ) {
+            alert("❌ Solo se permiten imágenes JPG, PNG o WebP.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("image", file);
+
+        try {
+
+
+            // ✅ Logs para verificar tokens
+
+            console.log("🔐 Bearer Token:", token);
+
+            const res = await fetch(`https://clothing-backend.fly.dev/api/categories/${id}/image-mobile`, {
+                method: "PUT",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+
+                    // "Origin": "https://brand-app.fly.dev" // 👈 Asegúrate que este sea tu frontend en Fly.io
+                },
+                credentials: "include",
+                body: formData,
+            });
+
+            // ✅ Manejamos respuesta correctamente, incluso si NO es JSON
+            let data = {};
+            let rawText = "";
+
+            try {
+                const contentType = res.headers.get("content-type");
+
+                if (contentType && contentType.includes("application/json")) {
+                    data = await res.json();
+                } else {
+                    rawText = await res.text();
+                    data = { message: "Respuesta no JSON del servidor", raw: rawText };
+                }
+            } catch (err) {
+                data = { message: "No se pudo interpretar la respuesta del servidor" };
+            }
+
+            console.log("🛰 Estado de respuesta:", res.status);
+            console.log("🧾 Respuesta del backend:", data);
+            console.log("📄 Respuesta cruda:", rawText);
+
+            if (res.ok) {
+                fetchCategories();
+            } else {
+                alert(`❌ Error ${res.status}: ${data.message}`);
+            }
+
+        } catch (err) {
+            console.error("❌ Error al hacer fetch a /image-mobile:", err);
+            alert("❌ Error al actualizar la imagen móvil.");
+        }
+    };
+
+
+
+
+
 
     const renameCategory = async (id, newName) => {
         try {
-            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
-                credentials: "include",
-            });
-            const csrfData = await csrfRes.json();
-            const csrfToken = csrfData.csrfToken;
+
 
             await fetch(`https://clothing-backend.fly.dev/api/categories/${id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
-                    "CSRF-Token": csrfToken
+
                 },
                 credentials: "include",
                 body: JSON.stringify({ name: newName }),
@@ -157,12 +273,7 @@ const AdminDashboard = () => {
         if (!window.confirm("¿Eliminar esta categoría?")) return;
 
         try {
-            //  1. Obtener el token CSRF
-            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
-                credentials: "include",
-            });
-            const csrfData = await csrfRes.json();
-            const csrfToken = csrfData.csrfToken;
+
 
             //  2. Hacer el DELETE con el token
             const res = await fetch(`https://clothing-backend.fly.dev/api/categories/${id}`, {
@@ -170,7 +281,7 @@ const AdminDashboard = () => {
                 credentials: "include",
                 headers: {
                     "Authorization": `Bearer ${token}`,
-                    "CSRF-Token": csrfToken
+
                 }
             });
 
@@ -198,12 +309,7 @@ const AdminDashboard = () => {
         ];
 
         try {
-            // Obtener el token CSRF
-            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
-                credentials: "include",
-            });
-            const csrfData = await csrfRes.json();
-            const csrfToken = csrfData.csrfToken;
+
 
             // Actualizar el orden en el backend
             for (let i = 0; i < newOrder.length; i++) {
@@ -214,7 +320,7 @@ const AdminDashboard = () => {
                     headers: {
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${token}`,
-                        "CSRF-Token": csrfToken
+
                     },
                     credentials: "include",
                     body: JSON.stringify({ order: i }),
@@ -230,38 +336,6 @@ const AdminDashboard = () => {
     };
 
 
-    const updateCategoryMobileImage = async (id, file) => {
-        const formData = new FormData();
-        formData.append("image", file);
-
-        try {
-            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
-                credentials: "include",
-            });
-            const csrfData = await csrfRes.json();
-            const csrfToken = csrfData.csrfToken;
-
-            const res = await fetch(`https://clothing-backend.fly.dev/api/categories/${id}/image-mobile`, {
-                method: "PUT",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "CSRF-Token": csrfToken,
-                },
-                credentials: "include",
-                body: formData,
-            });
-
-            const data = await res.json();
-            if (res.ok) {
-                fetchCategories();
-            } else {
-                alert(`❌ Error: ${data.message}`);
-            }
-        } catch (err) {
-            console.error("❌ Error updating mobile image:", err);
-            alert("❌ Error al actualizar la imagen móvil.");
-        }
-    };
 
 
 
@@ -455,12 +529,7 @@ const AdminDashboard = () => {
         if (!window.confirm("Are you sure you want to delete this product?")) return;
 
         try {
-            // ✅ 1. Obtener el token CSRF
-            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
-                credentials: "include",
-            });
-            const csrfData = await csrfRes.json();
-            const csrfToken = csrfData.csrfToken;
+
 
             // ✅ 2. Enviar el DELETE con el token
             const res = await fetch(`https://clothing-backend.fly.dev/api/products/${id}`, {
@@ -468,7 +537,7 @@ const AdminDashboard = () => {
                 credentials: "include",
                 headers: {
                     "Authorization": `Bearer ${token}`,
-                    "CSRF-Token": csrfToken
+
                 }
             });
 
@@ -514,17 +583,13 @@ const AdminDashboard = () => {
     };
 
     const updateOrderStatus = async (orderId, status) => {
-        const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
-            credentials: "include",
-        });
-        const csrfData = await csrfRes.json();
-        const csrfToken = csrfData.csrfToken;
+
         const res = await fetch(`https://clothing-backend.fly.dev/api/orders/${orderId}/status`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${token}`,
-                "CSRF-Token": csrfToken // ✅ aquí está el fix
+
             },
             credentials: "include",
             body: JSON.stringify({ status })
@@ -557,12 +622,7 @@ const AdminDashboard = () => {
 
     const archiveOrder = async (orderId) => {
         try {
-            //  1. Obtener el token CSRF
-            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
-                credentials: "include",
-            });
-            const csrfData = await csrfRes.json();
-            const csrfToken = csrfData.csrfToken;
+
 
 
             const res = await fetch(`https://clothing-backend.fly.dev/api/orders/${orderId}/archive`, {
@@ -570,7 +630,7 @@ const AdminDashboard = () => {
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`,
-                    "CSRF-Token": csrfToken // 👈 se requiere
+
                 },
                 credentials: "include",
                 body: JSON.stringify({ archived: true })
@@ -744,10 +804,19 @@ const AdminDashboard = () => {
                             type="file"
                             accept="image/*"
                             className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
-                            onChange={(e) =>
-                                setNewProduct({ ...newProduct, coverImage: e.target.files[0] })
-                            }
+                            onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (!file) return;
+
+                                if (file.type === "image/heic" || file.name.endsWith(".heic") || file.name.endsWith(".HEIC")) {
+                                    alert("❌ Formato HEIC no soportado. Usa JPG o PNG.");
+                                    return;
+                                }
+
+                                setNewProduct({ ...newProduct, coverImage: file });
+                            }}
                         />
+
                     </div>
 
                     <div className="flex flex-col w-full md:w-[48%] mt-4">
@@ -756,10 +825,19 @@ const AdminDashboard = () => {
                             type="file"
                             accept="image/*"
                             className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
-                            onChange={(e) =>
-                                setNewProduct({ ...newProduct, hoverImage: e.target.files[0] })
-                            }
+                            onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (!file) return;
+
+                                if (file.type === "image/heic" || file.name.endsWith(".heic") || file.name.endsWith(".HEIC")) {
+                                    alert("❌ Formato HEIC no soportado. Usa JPG o PNG.");
+                                    return;
+                                }
+
+                                setNewProduct({ ...newProduct, hoverImage: file });
+                            }}
                         />
+
                     </div>
 
                     {/* Imágenes adicionales */}
@@ -773,14 +851,24 @@ const AdminDashboard = () => {
                             className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
                             onChange={(e) => {
                                 const files = Array.from(e.target.files);
+                                const hasHEIC = files.some(f =>
+                                    f.type === "image/heic" || f.name.endsWith(".heic") || f.name.endsWith(".HEIC")
+                                );
+                                if (hasHEIC) {
+                                    alert("❌ Una o más imágenes son HEIC. Usa JPG o PNG.");
+                                    return;
+                                }
+
                                 const totalImages = newProduct.images.length + files.length;
                                 if (totalImages > 4) {
                                     alert("Máximo 4 imágenes adicionales");
                                     return;
                                 }
+
                                 setNewProduct({ ...newProduct, images: [...newProduct.images, ...files] });
                             }}
                         />
+
 
                         {/* Vista previa */}
                         {newProduct.images.length > 0 && (
@@ -922,9 +1010,20 @@ const AdminDashboard = () => {
                                 <input
                                     type="file"
                                     accept="image/*"
-                                    onChange={(e) => setEditingProduct({ ...editingProduct, newCoverImage: e.target.files[0] })}
-                                    className="block w-full text-sm text-gray-300 file:bg-fuchsia-600 file:border-none file:px-4 file:py-2 file:rounded file:text-white file:cursor-pointer"
+                                    className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
+                                    onChange={(e) => {
+                                        const file = e.target.files[0];
+                                        if (!file) return;
+
+                                        if (file.type === "image/heic" || file.name.endsWith(".heic") || file.name.endsWith(".HEIC")) {
+                                            alert("❌ Formato HEIC no soportado. Usa JPG o PNG.");
+                                            return;
+                                        }
+
+                                        setNewProduct({ ...newProduct, coverImage: file });
+                                    }}
                                 />
+
                             </div>
 
                             {/* Hover image */}
@@ -933,9 +1032,20 @@ const AdminDashboard = () => {
                                 <input
                                     type="file"
                                     accept="image/*"
-                                    onChange={(e) => setEditingProduct({ ...editingProduct, newHoverImage: e.target.files[0] })}
-                                    className="block w-full text-sm text-gray-300 file:bg-fuchsia-600 file:border-none file:px-4 file:py-2 file:rounded file:text-white file:cursor-pointer"
+                                    className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
+                                    onChange={(e) => {
+                                        const file = e.target.files[0];
+                                        if (!file) return;
+
+                                        if (file.type === "image/heic" || file.name.endsWith(".heic") || file.name.endsWith(".HEIC")) {
+                                            alert("❌ Formato HEIC no soportado. Usa JPG o PNG.");
+                                            return;
+                                        }
+
+                                        setNewProduct({ ...newProduct, hoverImage: file });
+                                    }}
                                 />
+
                             </div>
 
                             {/* Adicionales */}
@@ -944,10 +1054,27 @@ const AdminDashboard = () => {
                                 <input
                                     type="file"
                                     accept="image/*"
-                                    multiple
-                                    onChange={(e) => setEditingProduct({ ...editingProduct, newImages: [...e.target.files] })}
-                                    className="block w-full text-sm text-gray-300 file:bg-fuchsia-600 file:border-none file:px-4 file:py-2 file:rounded file:text-white file:cursor-pointer"
+                                    className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
+                                    onChange={(e) => {
+                                        const files = Array.from(e.target.files);
+                                        const hasHEIC = files.some(f =>
+                                            f.type === "image/heic" || f.name.endsWith(".heic") || f.name.endsWith(".HEIC")
+                                        );
+                                        if (hasHEIC) {
+                                            alert("❌ Una o más imágenes son HEIC. Usa JPG o PNG.");
+                                            return;
+                                        }
+
+                                        const totalImages = newProduct.images.length + files.length;
+                                        if (totalImages > 4) {
+                                            alert("Máximo 4 imágenes adicionales");
+                                            return;
+                                        }
+
+                                        setNewProduct({ ...newProduct, images: [...newProduct.images, ...files] });
+                                    }}
                                 />
+
                             </div>
 
                             {/* Nombre */}
@@ -1144,15 +1271,61 @@ const AdminDashboard = () => {
                                         <input
                                             type="file"
                                             accept="image/*"
-                                            onChange={(e) => updateCategoryImage(cat._id, e.target.files[0])}
+                                            onChange={(e) => {
+                                                const file = e.target.files[0];
+                                                if (!file) return;
+
+                                                if (file.type === "image/heic" || file.name.endsWith(".heic") || file.name.endsWith(".HEIC")) {
+                                                    alert("❌ Formato HEIC no soportado. Usa JPG o PNG.");
+                                                    return;
+                                                }
+
+                                                updateCategoryImage(cat._id, file);
+                                            }}
                                             className="w-full text-sm text-gray-300 file:bg-fuchsia-600 file:border-none file:px-3 file:py-1 file:rounded file:text-white file:cursor-pointer"
                                         />
+
                                         <input
                                             type="file"
                                             accept="image/*"
-                                            onChange={(e) => updateCategoryMobileImage(cat._id, e.target.files[0])}
+                                            onChange={async (e) => {
+                                                const file = e.target.files[0];
+                                                if (!file) return;
+
+                                                const isHeic = file.name.toLowerCase().endsWith(".heic") ||
+                                                    file.name.toLowerCase().endsWith(".heif") ||
+                                                    file.type === "image/heic" ||
+                                                    file.type === "";
+
+                                                if (isHeic) {
+                                                    try {
+                                                        const convertedBlob = await heic2any({
+                                                            blob: file,
+                                                            toType: "image/jpeg",
+                                                            quality: 0.9,
+                                                        });
+
+                                                        const convertedFile = new File(
+                                                            [convertedBlob],
+                                                            file.name.replace(/\.(heic|heif)$/i, ".jpg"),
+                                                            { type: "image/jpeg" }
+                                                        );
+
+                                                        await updateCategoryMobileImage(cat._id, convertedFile); // ✅ se sube la imagen convertida
+                                                    } catch (err) {
+                                                        console.error("❌ Error convirtiendo HEIC:", err);
+                                                        alert("❌ No se pudo convertir la imagen HEIC. Usa otra imagen.");
+                                                    }
+                                                } else {
+                                                    await updateCategoryMobileImage(cat._id, file); // ✅ imagen normal
+                                                }
+                                            }}
                                             className="w-full text-sm text-gray-300 file:bg-purple-600 file:border-none file:px-3 file:py-1 file:rounded file:text-white file:cursor-pointer mt-2"
                                         />
+
+
+
+
                                         <small className="text-xs text-gray-400">Opcional – solo si necesitas una imagen distinta para mobile</small>
                                     </td>
 
@@ -1201,12 +1374,26 @@ const AdminDashboard = () => {
                             className="w-full lg:w-1/3 bg-zinc-700 border border-zinc-600 p-3 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
                         />
 
+
+
+
                         <input
                             type="file"
                             accept="image/*"
-                            onChange={(e) => setNewCategoryImage(e.target.files[0])}
-                            className="w-full lg:w-1/3 text-sm file:bg-fuchsia-600 file:border-none file:px-4 file:py-2 file:rounded-lg file:text-white file:cursor-pointer"
+                            onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (!file) return;
+                                if (file.type === "image/heic" || file.name.endsWith(".heic") || file.name.endsWith(".HEIC")) {
+                                    alert("❌ Formato HEIC no soportado. Usa JPG o PNG desde tu galería.");
+                                    return;
+                                }
+
+                                setNewCategoryImage(file); // ✅ usamos el setter para guardar la imagen nueva
+                            }}
+                            className="w-full lg:w-1/3 text-sm file:bg-purple-600 file:border-none file:px-4 file:py-2 file:rounded-lg file:text-white file:cursor-pointer"
                         />
+
+
 
                         <button
                             onClick={createCategory}

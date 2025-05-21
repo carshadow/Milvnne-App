@@ -7,7 +7,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
-import { csrfProtection } from "./middlewares/csrfMiddleware.js";
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -19,6 +19,8 @@ const app = express();
 const allowedOrigins = [
     "http://localhost:3000",
     "https://brand-app.fly.dev",
+    "https://clothing-backend.fly.dev"
+
 ];
 
 // ✅ Middleware CORS
@@ -38,6 +40,19 @@ app.use((req, res, next) => {
     next();
 });
 
+// ✅ Manejar preflight para todas las rutas
+app.options("*", (req, res) => {
+    const origin = req.headers.origin || "";
+    if (allowedOrigins.includes(origin)) {
+        res.setHeader("Access-Control-Allow-Origin", origin);
+    }
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, CSRF-Token");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    return res.sendStatus(200);
+});
+
+
 
 // ✅ Stripe webhook debe ir antes del express.json()
 import stripeWebhookRoutes from './routes/stripeWebhook.js';
@@ -48,9 +63,9 @@ app.use(express.json());
 app.use(cookieParser(process.env.COOKIE_SECRET, { signed: true }));
 
 // ✅ CSRF Token route
-app.get("/api/csrf-token", csrfProtection, (req, res) => {
-    res.json({ csrfToken: req.csrfToken() });
-});
+// app.get("/api/csrf-token", csrfProtection, (req, res) => {
+//     res.json({ csrfToken: req.csrfToken() });
+// });
 
 // ✅ Carpeta uploads
 const uploadDir = path.join(__dirname, "uploads");
@@ -94,7 +109,7 @@ app.use((req, res) => {
 });
 
 // ✅ Iniciar servidor
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Server running on port ${PORT}`);
+app.listen(8080, '0.0.0.0', () => {
+    console.log(`🚀 Server running on port 8080`);
 });
+
