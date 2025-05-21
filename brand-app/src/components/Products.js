@@ -187,13 +187,13 @@ const Products = () => {
                                     {categoryImages[group.type]?.imageMobile && (
                                         <source
                                             media="(max-width: 768px)"
-                                            srcSet={categoryImages[group.type].imageMobile.replace('/upload/', '/upload/f_auto,q_auto,w_768/')}
+                                            srcSet={categoryImages[group.type].imageMobile.replace('/upload/', '/upload/f_auto,q_auto,')}
                                         />
                                     )}
                                     <img
-                                        src={`${categoryImages[group.type].imageUrl.replace('/upload/', '/upload/f_auto,q_auto,w_1920/')}&v=${Date.now()}`}
+                                        src={`${categoryImages[group.type].imageUrl.replace('/upload/', '/upload/f_auto,q_auto/')}&v=${Date.now()}`}
 
-                                        srcSet={`${categoryImages[group.type].imageUrl.replace('/upload/', '/upload/f_auto,q_auto,w_3840/')} 2x`}
+                                        srcSet={`${categoryImages[group.type].imageUrl.replace('/upload/', '/upload/f_auto,q_auto,')} 2x`}
                                         alt={`${group.type} Collection`}
                                         className="relative inset-0 w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                                     />
