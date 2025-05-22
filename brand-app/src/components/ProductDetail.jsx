@@ -57,7 +57,8 @@ const ProductDetail = () => {
                 ← Volver a la tienda
             </Link>
 
-            <div className="flex flex-col md:flex-row gap-10 max-w-6xl mx-auto">
+            <div className="flex flex-col-reverse md:flex-row gap-10 max-w-6xl mx-auto">
+
                 {/* Galería de imágenes */}
                 <div className="w-full md:w-1/2 space-y-6">
                     <div className="bg-zinc-800 rounded-xl overflow-hidden shadow-lg">
@@ -105,7 +106,7 @@ const ProductDetail = () => {
 
 
 
-                    <p className="text-base text-gray-300 leading-relaxed bg-zinc-800 p-4 rounded-lg shadow">
+                    <p className="text-base text-gray-300 leading-relaxed bg-zinc-800 p-4 rounded-lg shadow order-2 md:order-none">
                         {product.description}
                     </p>
 
