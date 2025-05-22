@@ -21,10 +21,18 @@ const storage = new CloudinaryStorage({
     cloudinary,
     params: {
         folder: 'categories',
-        allowed_formats: ['jpg', 'jpeg', 'png'],
-        transformation: [{ width: 500, height: 500, crop: 'limit' }],
-    },
+        allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+        transformation: [
+            {
+                quality: "auto:best",
+                fetch_format: "auto",
+                crop: "limit",
+                width: 2000
+            }
+        ]
+    }
 });
+
 
 const upload = multer({ storage });
 
