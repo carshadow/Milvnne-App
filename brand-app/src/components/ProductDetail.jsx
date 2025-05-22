@@ -31,7 +31,7 @@ const ProductDetail = () => {
     }, [id]);
 
     const handleAddToCart = () => {
-        å
+
         if (product.hasSizes) {
             if (!selectedSize) return alert("Selecciona una talla");
             const stock = product.sizes[selectedSize];
