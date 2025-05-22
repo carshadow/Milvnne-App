@@ -18,7 +18,9 @@ const storage = new CloudinaryStorage({
         transformation: [
             {
                 quality: "auto:best",  // 👈 compresión inteligente
-                fetch_format: "auto",  // 👈 formato óptimo (webp, avif, etc.)
+                fetch_format: "auto",
+                crop: "limit",
+                width: 2000
             }
         ]
     }
