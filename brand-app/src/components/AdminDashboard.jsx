@@ -5,6 +5,8 @@ import { z } from "zod";
 import { useContext } from "react";
 import { AuthContext } from "../context/authContext";
 import heic2any from "heic2any";
+import { toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 
 const AdminDashboard = () => {
