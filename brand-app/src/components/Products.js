@@ -115,13 +115,13 @@ const Products = () => {
                     </motion.h1>
 
                     {/* <motion.p
-                        className="mt-6 text-lg sm:text-xl text-gray-300 max-w-xl"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 1, delay: 0.5 }}
-                    >
-                        Moda deportiva. Urbana. Sin límites. Encuentra tu próxima pieza favorita hoy.
-                    </motion.p> */}
+                            className="mt-6 text-lg sm:text-xl text-gray-300 max-w-xl"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 1, delay: 0.5 }}
+                        >
+                            Moda deportiva. Urbana. Sin límites. Encuentra tu próxima pieza favorita hoy.
+                        </motion.p> */}
 
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
@@ -130,11 +130,11 @@ const Products = () => {
                         className="mt-10"
                     >
                         {/* <Link
-                            to="/products"
-                            className="px-8 py-4 bg-fuchsia-500 text-white rounded-full text-lg font-bold shadow-lg hover:bg-fuchsia-600 transition-all"
-                        >
-                            Explorar Productos
-                        </Link> */}
+                                to="/products"
+                                className="px-8 py-4 bg-fuchsia-500 text-white rounded-full text-lg font-bold shadow-lg hover:bg-fuchsia-600 transition-all"
+                            >
+                                Explorar Productos
+                            </Link> */}
                     </motion.div>
                 </div>
             </motion.div>

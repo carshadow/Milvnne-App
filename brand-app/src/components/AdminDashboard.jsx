@@ -1064,16 +1064,16 @@ const AdminDashboard = () => {
                             </div>
 
                             {/* Imágenes adicionales */}
-                            <div className="space-y-1">
-                                <label className="text-sm text-gray-300">Imágenes Adicionales</label>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-300">Imágenes Adicionales (máx. 4)</label>
                                 <input
                                     type="file"
                                     accept="image/*"
                                     multiple
-                                    className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
+                                    className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600 w-full"
                                     onChange={(e) => {
-                                        const files = Array.from(e.target.files);
-                                        const hasHEIC = files.some(f =>
+                                        const newFiles = Array.from(e.target.files);
+                                        const hasHEIC = newFiles.some(f =>
                                             f.type === "image/heic" || f.name.endsWith(".heic") || f.name.endsWith(".HEIC")
                                         );
                                         if (hasHEIC) {
@@ -1081,48 +1081,76 @@ const AdminDashboard = () => {
                                             return;
                                         }
 
-                                        const totalImages = (editingProduct.newImages?.length || 0) + files.length;
-                                        if (totalImages > 4) {
-                                            alert("Máximo 4 imágenes nuevas");
+                                        const currentCount =
+                                            (editingProduct.images?.length || 0) +
+                                            (editingProduct.newImages?.length || 0);
+
+                                        if (currentCount + newFiles.length > 4) {
+                                            alert("❌ Solo puedes tener un máximo de 4 imágenes adicionales.");
                                             return;
                                         }
 
                                         setEditingProduct({
                                             ...editingProduct,
-                                            newImages: [...(editingProduct.newImages || []), ...files],
+                                            newImages: [...(editingProduct.newImages || []), ...newFiles],
                                         });
                                     }}
                                 />
 
-                                {/* Mostrar imágenes actuales con opción de eliminar */}
-                                {editingProduct.images && editingProduct.images.length > 0 && (
-                                    <div className="flex flex-wrap gap-3 mt-3">
-                                        {editingProduct.images.map((img, index) => (
-                                            <div key={index} className="relative group">
-                                                <img
-                                                    src={img}
-                                                    alt={`Adicional ${index + 1}`}
-                                                    className="w-20 h-20 object-cover rounded border border-zinc-600"
-                                                />
-                                                <button
-                                                    onClick={() => {
-                                                        const updatedImages = [...editingProduct.images];
-                                                        updatedImages.splice(index, 1);
-                                                        setEditingProduct({
-                                                            ...editingProduct,
-                                                            images: updatedImages,
-                                                        });
-                                                    }}
-                                                    className="absolute top-0 right-0 bg-red-600 text-white text-xs rounded-full px-1"
-                                                    title="Eliminar imagen"
-                                                >
-                                                    ✕
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
+                                {/* Vista previa de imágenes actuales */}
+                                <div className="flex flex-wrap gap-4 mt-3">
+                                    {/* Imágenes actuales */}
+                                    {editingProduct.images?.map((img, index) => (
+                                        <div key={`old-${index}`} className="relative group">
+                                            <img
+                                                src={img}
+                                                alt={`Actual ${index + 1}`}
+                                                className="w-24 h-24 object-cover rounded-md border border-zinc-600 shadow-md"
+                                            />
+                                            <button
+                                                onClick={() => {
+                                                    const updated = [...editingProduct.images];
+                                                    updated.splice(index, 1);
+                                                    setEditingProduct({
+                                                        ...editingProduct,
+                                                        images: updated,
+                                                    });
+                                                }}
+                                                className="absolute top-1 right-1 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full"
+                                                title="Eliminar"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                    ))}
+
+                                    {/* Imágenes nuevas */}
+                                    {editingProduct.newImages?.map((file, index) => (
+                                        <div key={`new-${index}`} className="relative group">
+                                            <img
+                                                src={URL.createObjectURL(file)}
+                                                alt={`Nueva ${index + 1}`}
+                                                className="w-24 h-24 object-cover rounded-md border border-purple-500 shadow-md"
+                                            />
+                                            <button
+                                                onClick={() => {
+                                                    const updated = [...editingProduct.newImages];
+                                                    updated.splice(index, 1);
+                                                    setEditingProduct({
+                                                        ...editingProduct,
+                                                        newImages: updated,
+                                                    });
+                                                }}
+                                                className="absolute top-1 right-1 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full"
+                                                title="Eliminar"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
+
 
 
                             {/* Nombre */}
