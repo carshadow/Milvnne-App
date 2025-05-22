@@ -1020,9 +1020,16 @@ const AdminDashboard = () => {
                                             return;
                                         }
 
-                                        setNewProduct({ ...newProduct, coverImage: file });
+                                        setEditingProduct({ ...editingProduct, newCoverImage: file });
                                     }}
                                 />
+                                {editingProduct.coverImage && (
+                                    <img
+                                        src={editingProduct.coverImage}
+                                        alt="Cover actual"
+                                        className="w-24 h-24 object-cover rounded-lg mt-2 border border-zinc-600"
+                                    />
+                                )}
 
                             </div>
 
@@ -1042,18 +1049,27 @@ const AdminDashboard = () => {
                                             return;
                                         }
 
-                                        setNewProduct({ ...newProduct, hoverImage: file });
+                                        setEditingProduct({ ...editingProduct, newHoverImage: file });
                                     }}
                                 />
+                                {editingProduct.hoverImage && (
+                                    <img
+                                        src={editingProduct.hoverImage}
+                                        alt="Hover actual"
+                                        className="w-24 h-24 object-cover rounded-lg mt-2 border border-zinc-600"
+                                    />
+                                )}
+
 
                             </div>
 
-                            {/* Adicionales */}
+                            {/* Imágenes adicionales */}
                             <div className="space-y-1">
                                 <label className="text-sm text-gray-300">Imágenes Adicionales</label>
                                 <input
                                     type="file"
                                     accept="image/*"
+                                    multiple
                                     className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
                                     onChange={(e) => {
                                         const files = Array.from(e.target.files);
@@ -1065,17 +1081,49 @@ const AdminDashboard = () => {
                                             return;
                                         }
 
-                                        const totalImages = newProduct.images.length + files.length;
+                                        const totalImages = (editingProduct.newImages?.length || 0) + files.length;
                                         if (totalImages > 4) {
-                                            alert("Máximo 4 imágenes adicionales");
+                                            alert("Máximo 4 imágenes nuevas");
                                             return;
                                         }
 
-                                        setNewProduct({ ...newProduct, images: [...newProduct.images, ...files] });
+                                        setEditingProduct({
+                                            ...editingProduct,
+                                            newImages: [...(editingProduct.newImages || []), ...files],
+                                        });
                                     }}
                                 />
 
+                                {/* Mostrar imágenes actuales con opción de eliminar */}
+                                {editingProduct.images && editingProduct.images.length > 0 && (
+                                    <div className="flex flex-wrap gap-3 mt-3">
+                                        {editingProduct.images.map((img, index) => (
+                                            <div key={index} className="relative group">
+                                                <img
+                                                    src={img}
+                                                    alt={`Adicional ${index + 1}`}
+                                                    className="w-20 h-20 object-cover rounded border border-zinc-600"
+                                                />
+                                                <button
+                                                    onClick={() => {
+                                                        const updatedImages = [...editingProduct.images];
+                                                        updatedImages.splice(index, 1);
+                                                        setEditingProduct({
+                                                            ...editingProduct,
+                                                            images: updatedImages,
+                                                        });
+                                                    }}
+                                                    className="absolute top-0 right-0 bg-red-600 text-white text-xs rounded-full px-1"
+                                                    title="Eliminar imagen"
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
+
 
                             {/* Nombre */}
                             <div>
