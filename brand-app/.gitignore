@@ -36,4 +36,4 @@ yarn-error.log*
 .vscode/
 
 
-uploads/
+uploads/.DS_Store

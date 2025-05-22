@@ -31,6 +31,7 @@ const ProductDetail = () => {
     }, [id]);
 
     const handleAddToCart = () => {
+
         if (product.hasSizes) {
             if (!selectedSize) return alert("Selecciona una talla");
             const stock = product.sizes[selectedSize];
@@ -73,8 +74,8 @@ const ProductDetail = () => {
                                 src={img}
                                 alt={`Miniatura ${index + 1}`}
                                 className={`w-16 h-16 object-cover rounded-lg border-2 cursor-pointer 
-                                    ${selectedImage === img ? "border-fuchsia-500" : "border-transparent"} 
-                                    hover:opacity-80 transition`}
+                            ${selectedImage === img ? "border-fuchsia-500" : "border-transparent"} 
+                            hover:opacity-80 transition`}
                                 onClick={() => setSelectedImage(img)}
                             />
                         ))}
@@ -82,8 +83,11 @@ const ProductDetail = () => {
                 </div>
 
                 {/* Información del producto */}
-                <div className="w-full md:w-1/2 space-y-8">
+                <div className="w-full md:w-1/2 flex flex-col space-y-6">
+                    {/* Nombre */}
                     <h2 className="text-4xl font-extrabold text-fuchsia-400">{product.name}</h2>
+
+                    {/* Precio */}
                     <div className="flex items-baseline gap-4 mt-2">
                         {product.discount > 0 && product.originalPrice ? (
                             <>
@@ -102,12 +106,20 @@ const ProductDetail = () => {
                         )}
                     </div>
 
+                    {/* Cantidad */}
+                    <div className="flex items-center gap-4">
+                        <label htmlFor="quantity" className="font-medium">Cantidad:</label>
+                        <input
+                            id="quantity"
+                            type="number"
+                            min="1"
+                            value={quantity}
+                            onChange={(e) => setQuantity(parseInt(e.target.value, 10))}
+                            className="w-20 text-center py-2 rounded-md bg-zinc-700 text-white border border-zinc-600"
+                        />
+                    </div>
 
-
-                    <p className="text-base text-gray-300 leading-relaxed bg-zinc-800 p-4 rounded-lg shadow">
-                        {product.description}
-                    </p>
-
+                    {/* Tallas o stock */}
                     {product.hasSizes ? (
                         <div>
                             <h3 className="text-lg font-semibold text-white mb-2">Selecciona una talla:</h3>
@@ -117,8 +129,8 @@ const ProductDetail = () => {
                                         key={size}
                                         onClick={() => setSelectedSize(size)}
                                         className={`px-4 py-2 rounded-full font-medium border transition-all
-                                            ${selectedSize === size ? "bg-fuchsia-500 text-white" : "bg-zinc-800 text-gray-300"}
-                                            ${product.sizes[size] === 0 ? "opacity-50 cursor-not-allowed" : "hover:bg-fuchsia-600"}`}
+                                    ${selectedSize === size ? "bg-fuchsia-500 text-white" : "bg-zinc-800 text-gray-300"}
+                                    ${product.sizes[size] === 0 ? "opacity-50 cursor-not-allowed" : "hover:bg-fuchsia-600"}`}
                                         disabled={product.sizes[size] === 0}
                                     >
                                         {size} {product.sizes[size] === 0 ? "Agotado" : ""}
@@ -133,18 +145,7 @@ const ProductDetail = () => {
                         </p>
                     )}
 
-                    <div className="flex items-center gap-4">
-                        <label htmlFor="quantity" className="font-medium">Cantidad:</label>
-                        <input
-                            id="quantity"
-                            type="number"
-                            min="1"
-                            value={quantity}
-                            onChange={(e) => setQuantity(parseInt(e.target.value, 10))}
-                            className="w-20 text-center py-2 rounded-md bg-zinc-700 text-white border border-zinc-600"
-                        />
-                    </div>
-
+                    {/* Botón */}
                     <button
                         onClick={handleAddToCart}
                         disabled={
@@ -156,9 +157,15 @@ const ProductDetail = () => {
                     >
                         Añadir al carrito
                     </button>
+
+                    {/* Descripción (al final en móvil) */}
+                    <p className="text-base text-gray-300 leading-relaxed bg-zinc-800 p-4 rounded-lg shadow">
+                        {product.description}
+                    </p>
                 </div>
             </div>
         </div>
+
     );
 };
 
