@@ -187,18 +187,12 @@ const Products = () => {
                                     {categoryImages[group.type]?.imageMobile && (
                                         <source
                                             media="(max-width: 768px)"
-                                            srcSet={categoryImages[group.type].imageMobile.replace(
-                                                "/upload/",
-                                                "/upload/f_auto,q_auto/"
-                                            )}
+                                            srcSet={categoryImages[group.type].imageMobile}
                                         />
                                     )}
 
                                     <img
-                                        src={categoryImages[group.type].imageUrl.replace(
-                                            "/upload/",
-                                            "/upload/f_auto,q_auto/"
-                                        )}
+                                        src={categoryImages[group.type].imageUrl}
                                         alt={`${group.type} Collection`}
                                         className="relative inset-0 w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                                     />
