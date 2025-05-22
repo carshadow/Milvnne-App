@@ -1073,23 +1073,27 @@ const AdminDashboard = () => {
                                     className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600 w-full"
                                     onChange={(e) => {
                                         const newFiles = Array.from(e.target.files);
+
                                         const hasHEIC = newFiles.some(f =>
                                             f.type === "image/heic" || f.name.endsWith(".heic") || f.name.endsWith(".HEIC")
                                         );
                                         if (hasHEIC) {
-                                            alert("❌ Una o más imágenes son HEIC. Usa JPG o PNG.");
+                                            toast.error("❌ Formato HEIC no soportado. Usa JPG o PNG.");
                                             return;
                                         }
 
-                                        const currentCount =
-                                            (editingProduct.images?.length || 0) +
-                                            (editingProduct.newImages?.length || 0);
+                                        const totalExisting = (editingProduct.images?.length || 0);
+                                        const totalNew = (editingProduct.newImages?.length || 0);
+                                        const totalSelected = newFiles.length;
 
-                                        if (currentCount + newFiles.length > 4) {
-                                            alert("❌ Solo puedes tener un máximo de 4 imágenes adicionales.");
+                                        const totalCombined = totalExisting + totalNew + totalSelected;
+
+                                        if (totalCombined > 4) {
+                                            toast.warning("🚫 Máximo 4 imágenes adicionales permitidas en total.");
                                             return;
                                         }
 
+                                        // Añadir las nuevas imágenes acumuladas
                                         setEditingProduct({
                                             ...editingProduct,
                                             newImages: [...(editingProduct.newImages || []), ...newFiles],
@@ -1097,7 +1101,7 @@ const AdminDashboard = () => {
                                     }}
                                 />
 
-                                {/* Vista previa de imágenes actuales */}
+                                {/* Vista previa */}
                                 <div className="flex flex-wrap gap-4 mt-3">
                                     {/* Imágenes actuales */}
                                     {editingProduct.images?.map((img, index) => (
@@ -1105,16 +1109,13 @@ const AdminDashboard = () => {
                                             <img
                                                 src={img}
                                                 alt={`Actual ${index + 1}`}
-                                                className="w-24 h-24 object-cover rounded-md border border-zinc-600 shadow-md"
+                                                className="w-24 h-24 object-cover rounded border border-zinc-600 shadow-md"
                                             />
                                             <button
                                                 onClick={() => {
                                                     const updated = [...editingProduct.images];
                                                     updated.splice(index, 1);
-                                                    setEditingProduct({
-                                                        ...editingProduct,
-                                                        images: updated,
-                                                    });
+                                                    setEditingProduct({ ...editingProduct, images: updated });
                                                 }}
                                                 className="absolute top-1 right-1 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full"
                                                 title="Eliminar"
@@ -1130,16 +1131,13 @@ const AdminDashboard = () => {
                                             <img
                                                 src={URL.createObjectURL(file)}
                                                 alt={`Nueva ${index + 1}`}
-                                                className="w-24 h-24 object-cover rounded-md border border-purple-500 shadow-md"
+                                                className="w-24 h-24 object-cover rounded border border-purple-500 shadow-md"
                                             />
                                             <button
                                                 onClick={() => {
                                                     const updated = [...editingProduct.newImages];
                                                     updated.splice(index, 1);
-                                                    setEditingProduct({
-                                                        ...editingProduct,
-                                                        newImages: updated,
-                                                    });
+                                                    setEditingProduct({ ...editingProduct, newImages: updated });
                                                 }}
                                                 className="absolute top-1 right-1 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full"
                                                 title="Eliminar"
@@ -1150,6 +1148,7 @@ const AdminDashboard = () => {
                                     ))}
                                 </div>
                             </div>
+
 
 
 
