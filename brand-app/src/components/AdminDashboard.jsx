@@ -485,6 +485,10 @@ const AdminDashboard = () => {
             formData.append("discount", validDiscount);
             formData.append("originalPrice", validOriginal);
 
+            (editingProduct.images || []).forEach((url) => {
+                formData.append("existingImages", url);
+            });
+
             if (editingProduct.newCoverImage) {
                 formData.append("coverImage", editingProduct.newCoverImage);
             }
@@ -496,6 +500,8 @@ const AdminDashboard = () => {
                     formData.append("images", file);
                 });
             }
+
+
 
             const res = await fetch(`https://clothing-backend.fly.dev/api/products/${editingProduct._id}`, {
                 method: "PUT",
