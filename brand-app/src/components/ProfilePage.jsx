@@ -349,6 +349,11 @@ const ProfilePage = () => {
                                             <p className="text-sm font-semibold text-white">
                                                 Orden #{order._id.slice(-6).toUpperCase()}
                                             </p>
+                                            {order.products.length > 1 && (
+                                                <span className="ml-2 text-xs flex items-center gap-1 bg-zinc-800 px-2 py-1 rounded-full text-gray-400">
+                                                    <FaShoppingBag className="text-fuchsia-400" /> +{order.products.length - 1}
+                                                </span>
+                                            )}
                                             <p className="text-xs text-fuchsia-400 mt-1">Estado: {order.status}</p>
                                             <p className="text-xs text-gray-300">Total: ${order.total.toFixed(2)}</p>
                                             <p className="text-[11px] text-gray-500 mt-1">
