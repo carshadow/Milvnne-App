@@ -2,6 +2,8 @@ import React, { useState, useEffect, useContext } from "react";
 import { useParams, Link } from "react-router-dom";
 import { CartContext } from "../context/CartContext";
 import { motion } from "framer-motion";
+import { toast } from "react-toastify";
+
 
 const ProductDetail = () => {
     const { id } = useParams();
@@ -31,21 +33,29 @@ const ProductDetail = () => {
     }, [id]);
 
     const handleAddToCart = () => {
-
         if (product.hasSizes) {
-            if (!selectedSize) return alert("Selecciona una talla");
+            if (!selectedSize) {
+                toast.warning("⚠️ Selecciona una talla");
+                return;
+            }
+
             const stock = product.sizes[selectedSize];
             if (quantity > stock) {
-                return alert(`Solo hay ${stock} disponibles para la talla ${selectedSize}`);
+                toast.error(`🚫 Solo hay ${stock} unidad(es) disponibles para la talla ${selectedSize}`);
+                return;
             }
+
             addToCart(product._id, quantity, selectedSize);
         } else {
             if (quantity > product.stock) {
-                return alert(`Solo hay ${product.stock} unidades disponibles`);
+                toast.error(`🚫 Solo hay ${product.stock} unidad(es) disponibles`);
+                return;
             }
+
             addToCart(product._id, quantity, "general");
         }
-        alert("Producto añadido al carrito");
+
+        toast.success("✅ Producto añadido al carrito");
     };
 
     if (loading) return <p className="text-center text-gray-400 pt-24">Cargando producto...</p>;

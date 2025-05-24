@@ -32,7 +32,18 @@ const App = () => {
       <AuthProvider> {/* Wrap with AuthProvider */}
 
         <CartProvider>
-          <ToastContainer />
+          <ToastContainer
+            limit={3}
+            position="bottom-center"
+            autoClose={3000}
+            hideProgressBar={true}
+            newestOnTop={true}
+            closeOnClick
+            pauseOnFocusLoss={false}
+            draggable={false}
+            pauseOnHover
+            theme="dark"
+          />
           <Navbar />
           <Routes>
             <Route path="/" element={<Products />} />

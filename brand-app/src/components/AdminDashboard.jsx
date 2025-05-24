@@ -1613,40 +1613,48 @@ const AdminDashboard = () => {
 
                 {/*  Modal de órdenes archivadas */}
                 {showArchivedModal && (
-                    <div className="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center">
-                        <div className="bg-zinc-900 text-white rounded-xl p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto relative">
+                    <div className="fixed inset-0 z-50 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center px-4">
+                        <div className="bg-gradient-to-br from-zinc-900 via-black to-zinc-950 text-white rounded-2xl w-full max-w-4xl max-h-[85vh] overflow-y-auto shadow-2xl p-8 relative border border-white/10">
+
+                            {/* Cerrar */}
                             <button
                                 onClick={() => setShowArchivedModal(false)}
-                                className="absolute top-3 right-3 text-gray-400 hover:text-white"
+                                className="absolute top-4 right-4 text-gray-400 hover:text-fuchsia-400 transition text-xl"
+                                aria-label="Cerrar historial"
                             >
                                 <FaTimes />
                             </button>
-                            <h2 className="text-xl font-bold mb-6 text-fuchsia-400">Órdenes Archivadas</h2>
 
+                            {/* Título */}
+                            <h2 className="text-2xl font-bold mb-6 text-fuchsia-400 tracking-tight">
+                                Órdenes Archivadas
+                            </h2>
+
+                            {/* Contenido */}
                             {archivedOrders.length === 0 ? (
                                 <p className="text-gray-400 italic">No hay órdenes archivadas aún.</p>
                             ) : (
-                                <div className="space-y-4">
+                                <div className="space-y-5 divide-y divide-white/10">
                                     {archivedOrders.map((order) => (
-                                        <div
-                                            key={order._id}
-                                            className="bg-zinc-800 p-4 rounded-lg shadow border border-zinc-700"
-                                        >
+                                        <div key={order._id} className="pt-5 space-y-2">
                                             <p className="text-sm font-semibold text-white">
                                                 Cliente: {order.user?.name || "Invitado"}
                                             </p>
-                                            <p className="text-sm text-gray-400">Total: ${order.total.toFixed(2)}</p>
-                                            <p className="text-sm text-gray-500">Estado: {order.status}</p>
-                                            <div className="mt-2 space-y-2">
+                                            <p className="text-sm text-fuchsia-400">Estado: {order.status}</p>
+                                            <p className="text-sm text-gray-300">Total: ${order.total.toFixed(2)}</p>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
                                                 {order.products.map((item, idx) => (
-                                                    <div key={idx} className="flex items-center gap-4">
+                                                    <div
+                                                        key={idx}
+                                                        className="bg-zinc-800 p-4 rounded-xl flex items-center gap-4 border border-white/10 shadow"
+                                                    >
                                                         <img
                                                             src={item.product?.coverImage || "/default.png"}
                                                             alt={item.product?.name}
-                                                            className="w-10 h-10 object-cover rounded border border-fuchsia-500"
+                                                            className="w-14 h-14 object-cover rounded border border-fuchsia-500"
                                                         />
                                                         <div>
-                                                            <p className="text-sm">{item.product?.name}</p>
+                                                            <p className="text-sm text-white">{item.product?.name}</p>
                                                             {item.size && <p className="text-xs text-gray-400">Talla: {item.size}</p>}
                                                             <p className="text-xs text-gray-500">Cantidad: {item.quantity}</p>
                                                         </div>
@@ -1660,6 +1668,7 @@ const AdminDashboard = () => {
                         </div>
                     </div>
                 )}
+
             </div>
 
 
