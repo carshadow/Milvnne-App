@@ -1591,6 +1591,13 @@ const AdminDashboard = () => {
                                 <FaTimes />
                             </button>
                             <h2 className="text-xl font-bold mb-4 text-fuchsia-400">Detalles de la Orden</h2>
+                            <p className="text-sm text-gray-300 mb-4">
+                                Dirección de envío:{" "}
+                                <span className="text-fuchsia-400">📍</span>
+                                <span className="text-white font-medium">
+                                    {selectedOrder.address || "No provista"}
+                                </span>
+                            </p>
                             <div className="space-y-4">
                                 {selectedOrder.products.map((item, idx) => (
                                     <div key={idx} className="bg-zinc-800 p-4 rounded-lg flex gap-4 shadow">
