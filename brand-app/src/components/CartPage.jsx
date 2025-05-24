@@ -5,6 +5,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { loadStripe } from "@stripe/stripe-js";
 import { motion } from 'framer-motion';
 import { FaShoppingBag } from 'react-icons/fa';
+import { toast } from 'react-toastify';
+
 
 const stripePromise = loadStripe("pk_test_51QSkyUB3NdXOFdwIiRiSTs7BfhfFE1PoNYyz4UaFKmjPiVNd9kkwHxIs75odcmFNC8IbUICv3mJUoF9byI8Kul94005kmqRFii");
 
@@ -78,6 +80,20 @@ const CartPage = () => {
                     userId: user?._id || "guest"
                 }
             ];
+            for (let item of cart) {
+                if (item.product.hasSizes && item.size) {
+                    const available = item.product.sizes[item.size];
+                    if (item.quantity > available) {
+                        toast.error(`🚫 Solo quedan ${available} unidad(es) disponibles para la talla ${item.size} de "${item.product.name}"`);
+                        return;
+                    }
+                } else if (!item.product.hasSizes) {
+                    if (item.quantity > item.product.stock) {
+                        toast.error(`🚫 Solo quedan ${item.product.stock} unidad(es) disponibles de "${item.product.name}"`);
+                        return;
+                    }
+                }
+            }
 
             const response = await fetch("https://clothing-backend.fly.dev/api/stripe/create-checkout-session", {
                 method: "POST",
@@ -156,8 +172,16 @@ const CartPage = () => {
                                             <span className="text-lg">{item.quantity}</span>
                                             <button
                                                 onClick={() => updateQuantity(item._id, item.quantity + 1)}
-                                                className="px-2 py-1 bg-zinc-700 rounded hover:bg-zinc-600"
-                                            >+</button>
+                                                disabled={
+                                                    item.product.hasSizes
+                                                        ? item.quantity >= item.product.sizes[item.size]
+                                                        : item.quantity >= item.product.stock
+                                                }
+                                                className="px-2 py-1 bg-zinc-700 rounded hover:bg-zinc-600 disabled:opacity-50"
+                                            >
+                                                +
+                                            </button>
+
                                         </div>
                                         <p className="text-lg text-fuchsia-400 font-bold mt-2">
                                             ${(item.product.price * item.quantity).toFixed(2)}
