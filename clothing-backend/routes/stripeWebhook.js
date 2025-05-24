@@ -32,7 +32,8 @@ router.post('/', express.raw({ type: 'application/json' }), async (req, res) => 
         try {
             const userId = metadata.userId;
             const isValidUser = userId && userId !== "guest" && mongoose.Types.ObjectId.isValid(userId);
-            const address = metadata.address || "No address";
+            const addressField = session.custom_fields?.find(field => field.key === "address");
+            const address = addressField?.text?.value || "No address";
             const rawItems = JSON.parse(metadata.items || "[]");
 
             // 👇 Mostrar los datos crudos de los productos
