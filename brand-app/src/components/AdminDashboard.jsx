@@ -1582,32 +1582,47 @@ const AdminDashboard = () => {
 
                 {/*  Modal de Detalles */}
                 {showOrderModal && selectedOrder && (
-                    <div className="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center">
-                        <div className="bg-zinc-900 text-white rounded-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto relative">
+                    <div className="fixed inset-0 z-50 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center px-4">
+                        <div className="bg-gradient-to-br from-zinc-900 via-black to-zinc-950 text-white rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-2xl p-8 relative border border-white/10">
+
+                            {/* Cerrar */}
                             <button
                                 onClick={() => setShowOrderModal(false)}
-                                className="absolute top-3 right-3 text-gray-400 hover:text-white"
+                                className="absolute top-4 right-4 text-gray-400 hover:text-fuchsia-400 transition text-xl"
+                                aria-label="Cerrar modal"
                             >
                                 <FaTimes />
                             </button>
-                            <h2 className="text-xl font-bold mb-4 text-fuchsia-400">Detalles de la Orden</h2>
-                            <p className="text-sm text-gray-300 mb-4">
-                                Dirección de envío:{" "}
-                                <span className="text-fuchsia-400">📍</span>
-                                <span className="text-white font-medium">
-                                    {selectedOrder.address || "No provista"}
-                                </span>
-                            </p>
+
+                            {/* Título */}
+                            <h2 className="text-2xl font-bold mb-6 text-fuchsia-400 tracking-tight">
+                                Detalles de la Orden
+                            </h2>
+
+                            {/* Info del cliente */}
+                            <div className="mb-6 space-y-2 text-sm text-gray-300">
+                                <p>
+                                    👤 <span className="text-white font-medium">{selectedOrder.name || "Invitado"}</span>
+                                </p>
+                                <p>
+                                    📧 <span className="text-white font-medium">{selectedOrder.email || "No provisto"}</span>
+                                </p>
+                                <p>
+                                    📍 <span className="text-white font-medium">{selectedOrder.address || "No provista"}</span>
+                                </p>
+                            </div>
+
+                            {/* Lista de productos */}
                             <div className="space-y-4">
                                 {selectedOrder.products.map((item, idx) => (
-                                    <div key={idx} className="bg-zinc-800 p-4 rounded-lg flex gap-4 shadow">
+                                    <div key={idx} className="bg-zinc-800 p-4 rounded-xl flex gap-4 shadow border border-white/10">
                                         <img
                                             src={item.product?.coverImage || "/default.png"}
                                             alt={item.product?.name}
                                             className="w-14 h-14 object-cover rounded border border-fuchsia-500"
                                         />
                                         <div>
-                                            <p className="font-semibold">{item.product?.name || 'Producto eliminado'}</p>
+                                            <p className="font-semibold">{item.product?.name || "Producto eliminado"}</p>
                                             <p className="text-sm text-gray-400">Cantidad: {item.quantity}</p>
                                             {item.size && <p className="text-sm text-gray-400">Talla: {item.size}</p>}
                                         </div>
