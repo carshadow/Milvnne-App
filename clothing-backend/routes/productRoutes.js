@@ -122,6 +122,7 @@ router.put(
                 hasSizes,
                 discount,
                 originalPrice,
+                existingImages = [], // 👈 importante
             } = req.body;
 
             const parsed = productSchema.safeParse({
@@ -146,7 +147,10 @@ router.put(
 
             const coverImage = req.files["coverImage"]?.[0]?.path;
             const hoverImage = req.files["hoverImage"]?.[0]?.path;
-            const images = req.files["images"]?.map((img) => img.path) || [];
+            const newImages = req.files["images"]?.map((img) => img.path) || [];
+
+            // 🔥 combinas las que ya existen + las nuevas
+            const combinedImages = [...(Array.isArray(existingImages) ? existingImages : [existingImages]), ...newImages];
 
             const product = await Product.findById(req.params.id);
             if (!product) return res.status(404).json({ message: "Producto no encontrado" });
@@ -163,14 +167,12 @@ router.put(
                 originalPrice: originalPrice ?? parsed.data.price,
                 coverImage: coverImage || product.coverImage,
                 hoverImage: hoverImage || product.hoverImage,
-                images: images.length > 0 ? images : product.images,
+                images: combinedImages,
             };
 
-            const updatedProduct = await Product.findByIdAndUpdate(
-                req.params.id,
-                updatedFields,
-                { new: true }
-            );
+            const updatedProduct = await Product.findByIdAndUpdate(req.params.id, updatedFields, {
+                new: true,
+            });
 
             res.json({ message: "✅ Producto actualizado", product: updatedProduct });
         } catch (error) {
@@ -179,6 +181,7 @@ router.put(
         }
     }
 );
+
 
 
 // ✅ Eliminar producto (protegido)

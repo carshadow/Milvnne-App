@@ -5,6 +5,8 @@ import { z } from "zod";
 import { useContext } from "react";
 import { AuthContext } from "../context/authContext";
 import heic2any from "heic2any";
+import { toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 
 const AdminDashboard = () => {
@@ -483,6 +485,10 @@ const AdminDashboard = () => {
             formData.append("discount", validDiscount);
             formData.append("originalPrice", validOriginal);
 
+            (editingProduct.images || []).forEach((url) => {
+                formData.append("existingImages", url);
+            });
+
             if (editingProduct.newCoverImage) {
                 formData.append("coverImage", editingProduct.newCoverImage);
             }
@@ -494,6 +500,8 @@ const AdminDashboard = () => {
                     formData.append("images", file);
                 });
             }
+
+
 
             const res = await fetch(`https://clothing-backend.fly.dev/api/products/${editingProduct._id}`, {
                 method: "PUT",
@@ -1020,9 +1028,16 @@ const AdminDashboard = () => {
                                             return;
                                         }
 
-                                        setNewProduct({ ...newProduct, coverImage: file });
+                                        setEditingProduct({ ...editingProduct, newCoverImage: file });
                                     }}
                                 />
+                                {editingProduct.coverImage && (
+                                    <img
+                                        src={editingProduct.coverImage}
+                                        alt="Cover actual"
+                                        className="w-24 h-24 object-cover rounded-lg mt-2 border border-zinc-600"
+                                    />
+                                )}
 
                             </div>
 
@@ -1042,40 +1057,108 @@ const AdminDashboard = () => {
                                             return;
                                         }
 
-                                        setNewProduct({ ...newProduct, hoverImage: file });
+                                        setEditingProduct({ ...editingProduct, newHoverImage: file });
                                     }}
                                 />
+                                {editingProduct.hoverImage && (
+                                    <img
+                                        src={editingProduct.hoverImage}
+                                        alt="Hover actual"
+                                        className="w-24 h-24 object-cover rounded-lg mt-2 border border-zinc-600"
+                                    />
+                                )}
+
 
                             </div>
 
-                            {/* Adicionales */}
-                            <div className="space-y-1">
-                                <label className="text-sm text-gray-300">Imágenes Adicionales</label>
+                            {/* Imágenes adicionales */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-300">Imágenes Adicionales (máx. 4)</label>
                                 <input
                                     type="file"
                                     accept="image/*"
-                                    className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
+                                    multiple
+                                    className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600 w-full"
                                     onChange={(e) => {
-                                        const files = Array.from(e.target.files);
-                                        const hasHEIC = files.some(f =>
+                                        const newFiles = Array.from(e.target.files);
+
+                                        const hasHEIC = newFiles.some(f =>
                                             f.type === "image/heic" || f.name.endsWith(".heic") || f.name.endsWith(".HEIC")
                                         );
                                         if (hasHEIC) {
-                                            alert("❌ Una o más imágenes son HEIC. Usa JPG o PNG.");
+                                            toast.error("❌ Formato HEIC no soportado. Usa JPG o PNG.");
                                             return;
                                         }
 
-                                        const totalImages = newProduct.images.length + files.length;
-                                        if (totalImages > 4) {
-                                            alert("Máximo 4 imágenes adicionales");
+                                        const totalExisting = (editingProduct.images?.length || 0);
+                                        const totalNew = (editingProduct.newImages?.length || 0);
+                                        const totalSelected = newFiles.length;
+
+                                        const totalCombined = totalExisting + totalNew + totalSelected;
+
+                                        if (totalCombined > 4) {
+                                            toast.warning("🚫 Máximo 4 imágenes adicionales permitidas en total.");
                                             return;
                                         }
 
-                                        setNewProduct({ ...newProduct, images: [...newProduct.images, ...files] });
+                                        // Añadir las nuevas imágenes acumuladas
+                                        setEditingProduct({
+                                            ...editingProduct,
+                                            newImages: [...(editingProduct.newImages || []), ...newFiles],
+                                        });
                                     }}
                                 />
 
+                                {/* Vista previa */}
+                                <div className="flex flex-wrap gap-4 mt-3">
+                                    {/* Imágenes actuales */}
+                                    {editingProduct.images?.map((img, index) => (
+                                        <div key={`old-${index}`} className="relative group">
+                                            <img
+                                                src={img}
+                                                alt={`Actual ${index + 1}`}
+                                                className="w-24 h-24 object-cover rounded border border-zinc-600 shadow-md"
+                                            />
+                                            <button
+                                                onClick={() => {
+                                                    const updated = [...editingProduct.images];
+                                                    updated.splice(index, 1);
+                                                    setEditingProduct({ ...editingProduct, images: updated });
+                                                }}
+                                                className="absolute top-1 right-1 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full"
+                                                title="Eliminar"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                    ))}
+
+                                    {/* Imágenes nuevas */}
+                                    {editingProduct.newImages?.map((file, index) => (
+                                        <div key={`new-${index}`} className="relative group">
+                                            <img
+                                                src={URL.createObjectURL(file)}
+                                                alt={`Nueva ${index + 1}`}
+                                                className="w-24 h-24 object-cover rounded border border-purple-500 shadow-md"
+                                            />
+                                            <button
+                                                onClick={() => {
+                                                    const updated = [...editingProduct.newImages];
+                                                    updated.splice(index, 1);
+                                                    setEditingProduct({ ...editingProduct, newImages: updated });
+                                                }}
+                                                className="absolute top-1 right-1 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full"
+                                                title="Eliminar"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
+
+
+
 
                             {/* Nombre */}
                             <div>

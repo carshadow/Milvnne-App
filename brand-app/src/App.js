@@ -20,6 +20,7 @@ import EditUserProfile from './components/EditUserProfile';
 import AdminRoute from './components/AdminRoute';
 import ForgotPassword from './components/ForgotPassword';
 import ResetPassword from './components/ResetPassword';
+import { ToastContainer } from "react-toastify";
 
 
 
@@ -31,6 +32,7 @@ const App = () => {
       <AuthProvider> {/* Wrap with AuthProvider */}
 
         <CartProvider>
+          <ToastContainer />
           <Navbar />
           <Routes>
             <Route path="/" element={<Products />} />
@@ -73,6 +75,7 @@ const App = () => {
 
         </CartProvider>
       </AuthProvider>
+
     </Router>
   );
 };
