@@ -179,9 +179,14 @@ const ProfilePage = () => {
                                                     className="w-16 h-16 object-cover rounded-xl border border-fuchsia-500 shadow-md"
                                                 />
                                                 <div className="flex-1">
-                                                    <h4 className="text-sm font-semibold text-fuchsia-400">
-                                                        #{order._id.slice(-6).toUpperCase()}
-                                                    </h4>
+                                                    <p className="text-sm font-semibold text-white flex items-center gap-2">
+                                                        Orden #{order._id.slice(-6).toUpperCase()}
+                                                        {order.products.length > 1 && (
+                                                            <span className="text-xs flex items-center gap-1 bg-zinc-800 px-2 py-1 rounded-full text-gray-400">
+                                                                <FaShoppingBag className="text-fuchsia-400" /> +{order.products.length - 1}
+                                                            </span>
+                                                        )}
+                                                    </p>
                                                     <p className="text-sm text-gray-300 mt-1">Estado: <span className="text-white">{order.status}</span></p>
                                                     <p className="text-sm text-gray-400">Total: ${order.total.toFixed(2)}</p>
                                                     <p className="text-xs text-gray-500 mt-1">Fecha: {new Date(order.createdAt).toLocaleDateString()}</p>
@@ -346,9 +351,6 @@ const ProfilePage = () => {
                                             </div>
                                         )}
                                         <div className="flex-1">
-                                            <p className="text-sm font-semibold text-white">
-                                                Orden #{order._id.slice(-6).toUpperCase()}
-                                            </p>
                                             <p className="text-sm font-semibold text-white flex items-center gap-2">
                                                 Orden #{order._id.slice(-6).toUpperCase()}
                                                 {order.products.length > 1 && (
