@@ -14,6 +14,8 @@ const ProfilePage = () => {
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [showOrderModal, setShowOrderModal] = useState(false);
     const [loadingOrders, setLoadingOrders] = useState(true);
+    const [expandedOrderIds, setExpandedOrderIds] = useState([]);
+
 
     useEffect(() => {
         if (user && user._id) {
@@ -70,6 +72,14 @@ const ProfilePage = () => {
             </div>
         </div>
     );
+
+    const toggleOrderDetails = (orderId) => {
+        setExpandedOrderIds((prev) =>
+            prev.includes(orderId)
+                ? prev.filter((id) => id !== orderId)
+                : [...prev, orderId]
+        );
+    };
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-black to-slate-300 py-20 px-6">
@@ -169,9 +179,14 @@ const ProfilePage = () => {
                                                     className="w-16 h-16 object-cover rounded-xl border border-fuchsia-500 shadow-md"
                                                 />
                                                 <div className="flex-1">
-                                                    <h4 className="text-sm font-semibold text-fuchsia-400">
-                                                        #{order._id.slice(-6).toUpperCase()}
-                                                    </h4>
+                                                    <p className="text-sm font-semibold text-white flex items-center gap-2">
+                                                        Orden #{order._id.slice(-6).toUpperCase()}
+                                                        {order.products.length > 1 && (
+                                                            <span className="text-xs flex items-center gap-1 bg-zinc-800 px-2 py-1 rounded-full text-gray-400">
+                                                                <FaShoppingBag className="text-fuchsia-400" /> +{order.products.length - 1}
+                                                            </span>
+                                                        )}
+                                                    </p>
                                                     <p className="text-sm text-gray-300 mt-1">Estado: <span className="text-white">{order.status}</span></p>
                                                     <p className="text-sm text-gray-400">Total: ${order.total.toFixed(2)}</p>
                                                     <p className="text-xs text-gray-500 mt-1">Fecha: {new Date(order.createdAt).toLocaleDateString()}</p>
@@ -318,33 +333,61 @@ const ProfilePage = () => {
                             {olderOrders.map((order) => (
                                 <div
                                     key={order._id}
-                                    onClick={() => {
-                                        setSelectedOrder(order);
-                                        setShowOrderModal(true);
-                                    }}
-                                    className="pt-5 flex items-center gap-4 cursor-pointer hover:bg-white/5 px-3 py-2 rounded-xl transition"
+                                    className="pt-5 px-3 py-2 rounded-xl transition hover:bg-white/5"
                                 >
-                                    {order.products[0]?.product ? (
-                                        <img
-                                            src={order.products[0].product.coverImage}
-                                            alt={order.products[0].product.name}
-                                            className="w-16 h-16 object-cover rounded-xl border border-fuchsia-500 shadow"
-                                        />
-                                    ) : (
-                                        <div className="w-16 h-16 flex items-center justify-center bg-zinc-800 text-xs text-gray-400 italic border border-zinc-600 rounded-xl shadow">
-                                            Eliminado
+                                    <div
+                                        className="flex items-center gap-4 cursor-pointer"
+                                        onClick={() => toggleOrderDetails(order._id)}
+                                    >
+                                        {order.products[0]?.product ? (
+                                            <img
+                                                src={order.products[0].product.coverImage}
+                                                alt={order.products[0].product.name}
+                                                className="w-16 h-16 object-cover rounded-xl border border-fuchsia-500 shadow"
+                                            />
+                                        ) : (
+                                            <div className="w-16 h-16 flex items-center justify-center bg-zinc-800 text-xs text-gray-400 italic border border-zinc-600 rounded-xl shadow">
+                                                Eliminado
+                                            </div>
+                                        )}
+                                        <div className="flex-1">
+                                            <p className="text-sm font-semibold text-white flex items-center gap-2">
+                                                Orden #{order._id.slice(-6).toUpperCase()}
+                                                {order.products.length > 1 && (
+                                                    <span className="text-xs flex items-center gap-1 bg-zinc-800 px-2 py-1 rounded-full text-gray-400">
+                                                        <FaShoppingBag className="text-fuchsia-400" /> +{order.products.length - 1}
+                                                    </span>
+                                                )}
+                                            </p>
+                                            <p className="text-xs text-fuchsia-400 mt-1">Estado: {order.status}</p>
+                                            <p className="text-xs text-gray-300">Total: ${order.total.toFixed(2)}</p>
+                                            <p className="text-[11px] text-gray-500 mt-1">
+                                                Fecha: {new Date(order.createdAt).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    {expandedOrderIds.includes(order._id) && (
+                                        <div className="mt-4 ml-20 space-y-3">
+                                            {order.products.map((item, idx) => (
+                                                <div
+                                                    key={idx}
+                                                    className="flex items-center gap-4 bg-zinc-800 p-3 rounded-xl border border-white/10 shadow"
+                                                >
+                                                    <img
+                                                        src={item.product?.coverImage || "/default.png"}
+                                                        alt={item.product?.name}
+                                                        className="w-12 h-12 object-cover rounded border border-fuchsia-500"
+                                                    />
+                                                    <div>
+                                                        <p className="text-sm text-white font-semibold">{item.product?.name || "Producto eliminado"}</p>
+                                                        {item.size && <p className="text-xs text-gray-400">Talla: {item.size}</p>}
+                                                        <p className="text-xs text-gray-500">Cantidad: {item.quantity}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     )}
-                                    <div className="flex-1">
-                                        <p className="text-sm font-semibold text-white">
-                                            Orden #{order._id.slice(-6).toUpperCase()}
-                                        </p>
-                                        <p className="text-xs text-fuchsia-400 mt-1">Estado: {order.status}</p>
-                                        <p className="text-xs text-gray-300">Total: ${order.total.toFixed(2)}</p>
-                                        <p className="text-[11px] text-gray-500 mt-1">
-                                            Fecha: {new Date(order.createdAt).toLocaleDateString()}
-                                        </p>
-                                    </div>
+
                                 </div>
 
                             ))}
