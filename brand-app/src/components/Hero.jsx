@@ -347,8 +347,8 @@ const Hero = () => {
                 </div>
             </div>
             <div
-                className="relative w-full min-h-screen bg-fixed bg-center bg-cover flex items-center justify-center"
-                style={{ backgroundImage: `url('/images/UPRRC.png')` }}
+                className="relative w-full min-h-screen bg-center bg-cover flex items-center justify-center md:bg-fixed"
+                style={{ backgroundImage: `url(${process.env.PUBLIC_URL}/images/UPRRC.png)` }}
             >
                 {/* Overlay artístico */}
                 <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/90 z-0"></div>
