@@ -101,7 +101,21 @@ router.post('/', express.raw({ type: 'application/json' }), async (req, res) => 
                     Este correo fue enviado automáticamente. No respondas directamente.
                   </div>
                 </div>
+                `,
+                // 🆕 Texto alternativo
                 `
+              Gracias por tu compra en MILVNNE Studios 💖
+              
+              Hemos recibido tu orden y estamos preparándola para ti.
+              
+              🛍 Detalles de tu orden:
+              ${cleanItems.map(prod =>
+                    `- Producto: ${prod.product}, Cantidad: ${prod.quantity}${prod.size ? `, Talla: ${prod.size}` : ''}`
+                ).join("\n")}
+              
+              Recibirás actualizaciones cuando el estado de tu orden cambie (en camino, entregada, etc).
+              
+              Gracias por confiar en MILVNNE Studios.`
             );
             // 📦 Actualizar stock
             for (const item of cleanItems) {
