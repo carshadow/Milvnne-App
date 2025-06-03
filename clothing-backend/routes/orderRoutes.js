@@ -121,7 +121,7 @@ router.put("/:id/status", async (req, res) => {
 
             await sendOrderEmail(
                 updatedOrder.email,
-                `🛍 Tu orden ha sido actualizada - Estado: ${updatedOrder.status}`,
+                `🛍 Tu orden esta en ${updatedOrder.status}`,
                 `
                   <div style="font-family: 'Arial', sans-serif; max-width: 600px; margin: 0 auto; background-color: #111827; color: #ffffff; padding: 24px; border-radius: 12px;">
                     <h2 style="color: #f300b4; text-align: center;">🛍 Actualización de tu orden</h2>
