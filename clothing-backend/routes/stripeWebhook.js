@@ -69,16 +69,16 @@ router.post('/', express.raw({ type: 'application/json' }), async (req, res) => 
             console.log("✅ Orden guardada correctamente en MongoDB con ID:", newOrder._id);
             await sendOrderEmail(
                 session.customer_email,
-                "✅ Confirmación de tu orden en MILVNNE Studios",
+                "Confirmación de tu orden en MILVNNE Studios",
                 `
                 <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #111827; color: #ffffff; padding: 24px; border-radius: 12px; max-width: 600px; margin: auto;">
-                  <h2 style="color: #f300b4; text-align: center;">¡Gracias por tu compra, ${session.customer_details?.name || "cliente"}! 💖</h2>
+                  <h2 style="color: #f300b4; text-align: center;">¡Gracias por tu compra, ${session.customer_details?.name || "cliente"}!</h2>
               
-                  <p style="margin-top: 16px; font-size: 15px;">Hemos recibido tu orden en <strong>MILVNNE Studios</strong> y estamos preparando todo para ti.</p>
+                  <p style="margin-top: 16px; font-size: 15px;">Hemos recibido tu orden en <strong>MILVNNE Studios</strong> y ya la estamos procesando.</p>
               
                   <hr style="border: none; border-top: 1px solid #444; margin: 24px 0;" />
               
-                  <h3 style="color: #f300b4; font-size: 18px;">🛍 Detalles de tu orden:</h3>
+                  <h3 style="color: #f300b4; font-size: 18px;">Detalles de tu orden:</h3>
                   <ul style="list-style: none; padding: 0; margin: 16px 0;">
                     ${cleanItems.map(prod => `
                       <li style="margin-bottom: 16px; background-color: #1f2937; padding: 16px; border-radius: 12px; display: flex; gap: 16px; align-items: center;">
@@ -94,29 +94,30 @@ router.post('/', express.raw({ type: 'application/json' }), async (req, res) => 
               
                   <hr style="border: none; border-top: 1px solid #444; margin: 24px 0;" />
               
-                  <p style="font-size: 15px;">🕒 Recibirás actualizaciones por correo electrónico cuando el estado de tu orden cambie (por ejemplo: En camino, Entregada, etc).</p>
-                  <p style="margin-top: 20px;">Gracias por confiar en <strong style="color: #f300b4;">MILVNNE Studios</strong>. Si tienes preguntas, simplemente responde a este correo.</p>
+                  <p style="font-size: 15px;">Recibirás más correos con el estado de tu orden (por ejemplo: En camino, Entregada).</p>
+                  <p style="margin-top: 20px;">Gracias por confiar en <strong style="color: #f300b4;">MILVNNE Studios</strong>. Si tienes dudas, puedes responder a este correo o escribirnos desde nuestra página web.</p>
               
                   <div style="margin-top: 32px; font-size: 12px; color: #9ca3af; text-align: center;">
-                    Este correo fue enviado automáticamente. No respondas directamente.
+                    Este mensaje fue generado automáticamente por nuestro sistema de órdenes. Si necesitas ayuda, contáctanos en milvnne.com.
                   </div>
                 </div>
                 `,
-                // 🆕 Texto alternativo
+                // Texto alternativo (plain text)
                 `
-              Gracias por tu compra en MILVNNE Studios 💖
+              Gracias por tu compra en MILVNNE Studios.
               
-              Hemos recibido tu orden y estamos preparándola para ti.
+              Hemos recibido tu orden y estamos procesándola.
               
-              🛍 Detalles de tu orden:
+              Detalles de tu orden:
               ${cleanItems.map(prod =>
                     `- Producto: ${prod.product}, Cantidad: ${prod.quantity}${prod.size ? `, Talla: ${prod.size}` : ''}`
                 ).join("\n")}
               
-              Recibirás actualizaciones cuando el estado de tu orden cambie (en camino, entregada, etc).
+              Recibirás actualizaciones por correo cuando cambie el estado de tu orden.
               
               Gracias por confiar en MILVNNE Studios.`
             );
+
             // 📦 Actualizar stock
             for (const item of cleanItems) {
                 const dbProduct = await Product.findById(item.product);
