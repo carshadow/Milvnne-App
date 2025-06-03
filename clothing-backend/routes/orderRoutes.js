@@ -108,15 +108,16 @@ router.put("/:id/status", async (req, res) => {
             const orderDetailsHtml = updatedOrder.products.map((item) => {
                 const product = item.product;
                 return `
-                    <div style="margin-bottom: 16px; display: flex; gap: 12px; align-items: center;">
-                        <img src="${product.coverImage}" alt="${product.name}" style="width: 70px; height: 70px; border-radius: 8px; object-fit: cover;" />
-                        <div>
-                            <p style="margin: 0; font-size: 14px;"><strong>${product.name}</strong></p>
-                            <p style="margin: 0; font-size: 13px;">Cantidad: ${item.quantity}${item.size ? ` | Talla: ${item.size}` : ""}</p>
-                        </div>
+                  <div style="margin-bottom: 16px; display: flex; gap: 12px; align-items: center;">
+                    <img src="${product.coverImage}" alt="${product.name}" style="width: 70px; height: 70px; border-radius: 8px; object-fit: cover;" />
+                    <div>
+                      <p style="margin: 0; font-size: 14px;"><strong>${product.name}</strong></p>
+                      <p style="margin: 0; font-size: 13px;">Cantidad: ${item.quantity}${item.size ? ` | Talla: ${item.size}` : ""}</p>
                     </div>
+                  </div>
                 `;
             }).join("");
+
 
             await sendOrderEmail(
                 updatedOrder.email,
@@ -127,23 +128,24 @@ router.put("/:id/status", async (req, res) => {
                     <p>Hola <strong>${updatedOrder.name || "cliente"}</strong>,</p>
                     <p>Queremos informarte que el estado de tu orden ha cambiado a:</p>
                     <p style="font-size: 18px; color: #f300b4; font-weight: bold; margin: 16px 0;">${updatedOrder.status}</p>
-
+              
                     <hr style="border: none; border-top: 1px solid #444; margin: 24px 0;" />
-
+              
                     <h3 style="color: #f300b4; margin-bottom: 12px;">📦 Detalles de tu orden:</h3>
                     ${orderDetailsHtml}
-
+              
                     <hr style="border: none; border-top: 1px solid #444; margin: 24px 0;" />
-
+              
                     <p style="margin-top: 24px;">Si tienes alguna pregunta o necesitas asistencia, no dudes en responder a este correo.</p>
-                    <p style="margin-top: 12px;">Gracias por confiar en <strong>MILVNNE Studios</strong> 💖</p>
-
+                    <p style="margin-top: 12px;">Gracias por confiar en <strong style="color: #f300b4;">MILVNNE Studios</strong> 💖</p>
+              
                     <div style="margin-top: 32px; font-size: 12px; color: #aaaaaa; text-align: center;">
                       Este mensaje fue enviado automáticamente. No respondas directamente a este correo.
                     </div>
                   </div>
                 `
             );
+
         }
 
         res.json(updatedOrder);
