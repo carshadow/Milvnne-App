@@ -1,16 +1,13 @@
-# Etapa 1: Build
-FROM node:18 AS builder
-
+# --- Build stage ---
+FROM node:18-alpine AS build
 WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm install
+COPY package*.json ./
+RUN npm ci || npm install
 COPY . .
 RUN npm run build
 
-# Etapa 2: Servidor estático
+# --- Runtime stage ---
 FROM nginx:alpine
-COPY --from=builder /app/build /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
+COPY --from=build /app/build /usr/share/nginx/html
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
