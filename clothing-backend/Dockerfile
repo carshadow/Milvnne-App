@@ -1,39 +1,24 @@
-# syntax = docker/dockerfile:1
+FROM node:18-alpine
 
-# Adjust NODE_VERSION as desired
-ARG NODE_VERSION=18.17.0
-FROM node:${NODE_VERSION}-slim AS base
-
-LABEL fly_launch_runtime="Node.js"
-
-# Node.js app lives here
+# 1) Carpeta de trabajo
 WORKDIR /app
 
-# Set production environment
-ENV NODE_ENV="production"
+# 2) Copiar manifests primero para cachear deps
+COPY package*.json ./
 
+# 3) Instalar dependencias (sólo prod en la imagen final)
+# si usas dependencias dev para transpilar, quita --omit=dev
+RUN npm ci --omit=dev || npm install --omit=dev
 
-# Throw-away build stage to reduce size of final image
-FROM base AS build
-
-# Install packages needed to build node modules
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential node-gyp pkg-config python-is-python3
-
-# Install node modules
-COPY package-lock.json package.json ./
-RUN npm ci
-
-# Copy application code
+# 4) Copiar el resto del código
 COPY . .
 
+# 5) Variables y puerto
+ENV NODE_ENV=production
+ENV PORT=8080
 
-# Final stage for app image
-FROM base
-
-# Copy built application
-COPY --from=build /app /app
-
-# Start the server by default, this can be overwritten at runtime
+# 6) Exponer puerto
 EXPOSE 8080
-CMD [ "npm", "run", "start" ]
+
+# 7) Arrancar la app (usa tu script start)
+CMD ["npm", "start"]
