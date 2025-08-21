@@ -15,7 +15,7 @@ const __dirname = dirname(__filename);
 dotenv.config();
 const app = express();
 
-// ✅ Lista de dominios permitidos
+// ✅ Lista de dominios permitidos  
 const allowedOrigins = [
     "http://localhost:3000",
     "https://brand-app.fly.dev",
