@@ -120,7 +120,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/cart", cartRoutes);
-app.use("/api/Stripe", StripeRoutes); // si prefieres minúscula, cambia también en el frontend
+app.use("/api/Stripe", StripeRoutes); // si prefieres minúscula, cambia también en el 
+app.use("/api/stripe", stripeRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/users", userRoutes);
 
