@@ -8,7 +8,7 @@ import { FaShoppingBag } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 
 
-const stripePromise = loadStripe("pk_test_51QSkyUB3NdXOFdwIiRiSTs7BfhfFE1PoNYyz4UaFKmjPiVNd9kkwHxIs75odcmFNC8IbUICv3mJUoF9byI8Kul94005kmqRFii");
+const stripePromise = loadStripe("pk_live_51QSkyUB3NdXOFdwI4wiO965mtk6IHRXt5Dga4t3ahaGAaMyDLTAkaWvRFpJmRZt85H935tr0SaVOJa6pbAi7xlgp00d0zlJdIg");
 
 const CartPage = () => {
     const { cart, removeFromCart, updateQuantity } = useContext(CartContext);
