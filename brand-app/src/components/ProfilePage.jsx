@@ -5,6 +5,13 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 
+// 🔧 Helpers
+const API_URL = "https://clothing-backend.fly.dev";
+const safeMoney = (v) => Number(v ?? 0).toFixed(2);
+const getCover = (p) =>
+    p?.coverImage ||
+    "https://res.cloudinary.com/dkx4n6r0v/image/upload/v1710000000/milvnne-products/default.png";
+
 const ProfilePage = () => {
     const { user, logout } = useContext(AuthContext);
     const [orders, setOrders] = useState([]);
@@ -16,26 +23,53 @@ const ProfilePage = () => {
     const [loadingOrders, setLoadingOrders] = useState(true);
     const [expandedOrderIds, setExpandedOrderIds] = useState([]);
 
-
     useEffect(() => {
-        if (user && user._id) {
-            fetchOrders();
-            fetchSuggestedProducts();
+        const userId = user?._id || user?.id;
+
+        if (!user) {
+            // No hay sesión → quitamos loading para que no se quede pegado
+            setLoadingOrders(false);
+            return;
         }
+        if (!userId) {
+            console.warn("No user id en el objeto user");
+            setLoadingOrders(false);
+            return;
+        }
+
+        fetchOrders(userId);
+        fetchSuggestedProducts();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user]);
 
-    const fetchOrders = async () => {
+    const fetchOrders = async (userId) => {
         setLoadingOrders(true);
         try {
-            const res = await fetch(`https://clothing-backend.fly.dev/api/orders/user/${user._id}`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setOrders([]);
+                return;
+            }
+
+            const res = await fetch(`${API_URL}/api/orders/user/${userId}`, {
+                headers: { Authorization: `Bearer ${token}` },
             });
-            const data = await res.json();
+
+            if (!res.ok) {
+                const text = await res.text().catch(() => "");
+                console.error("[Orders] error:", res.status, text);
+                if (res.status === 401 || res.status === 403) {
+                    logout();
+                    navigate("/login");
+                }
+                setOrders([]);
+                return;
+            }
+
+            const data = await res.json().catch(() => []);
             setOrders(Array.isArray(data) ? data : []);
         } catch (error) {
-            console.error('Error fetching orders:', error);
+            console.error("Error fetching orders:", error);
             setOrders([]);
         } finally {
             setLoadingOrders(false);
@@ -44,9 +78,9 @@ const ProfilePage = () => {
 
     const fetchSuggestedProducts = async () => {
         try {
-            const res = await fetch('https://clothing-backend.fly.dev/api/products');
+            const res = await fetch(`${API_URL}/api/products`);
             const data = await res.json();
-            setSuggestedProducts(data.slice(0, 5));
+            setSuggestedProducts(Array.isArray(data) ? data.slice(0, 5) : []);
         } catch (error) {
             console.error('Error fetching suggested products:', error);
         }
@@ -56,8 +90,8 @@ const ProfilePage = () => {
     const olderOrders = orders.slice(3);
 
     const handleLogout = () => {
-        logout();        // Llama la función del contexto que hace el logout real
-        navigate('/');   // Te manda a la página principal
+        logout();
+        navigate('/');
     };
 
     const OrderSkeleton = () => (
@@ -113,7 +147,7 @@ const ProfilePage = () => {
                             </div>
                             <div className="flex items-center gap-3">
                                 <FaBoxOpen className="text-fuchsia-400" />
-                                <span>Miembro desde: <span className="text-white font-medium">{new Date(user?.createdAt).toLocaleDateString()}</span></span>
+                                <span>Miembro desde: <span className="text-white font-medium">{new Date(user?.createdAt ?? Date.now()).toLocaleDateString()}</span></span>
                             </div>
                             <div className="flex items-center gap-3">
                                 <FaShoppingBag className="text-fuchsia-400" />
@@ -140,8 +174,6 @@ const ProfilePage = () => {
                             Editar Perfil
                         </Link>
                     </div>
-
-
 
                     {/* Órdenes */}
                     <div className="bg-gradient-to-br from-zinc-800/60 via-black/70 to-black/90 backdrop-blur-xl p-10 rounded-3xl shadow-2xl text-white">
@@ -173,8 +205,7 @@ const ProfilePage = () => {
                                         >
                                             <div className="flex items-center gap-4">
                                                 <img
-                                                    src={order.products[0]?.product?.coverImage || "https://res.cloudinary.com/dkx4n6r0v/image/upload/v1710000000/milvnne-products/default.png"}
-
+                                                    src={getCover(order.products[0]?.product)}
                                                     alt="Producto"
                                                     className="w-16 h-16 object-cover rounded-xl border border-fuchsia-500 shadow-md"
                                                 />
@@ -188,7 +219,7 @@ const ProfilePage = () => {
                                                         )}
                                                     </p>
                                                     <p className="text-sm text-gray-300 mt-1">Estado: <span className="text-white">{order.status}</span></p>
-                                                    <p className="text-sm text-gray-400">Total: ${order.total.toFixed(2)}</p>
+                                                    <p className="text-sm text-gray-400">Total: ${safeMoney(order.total ?? order.totalAmount)}</p>
                                                     <p className="text-xs text-gray-500 mt-1">Fecha: {new Date(order.createdAt).toLocaleDateString()}</p>
                                                 </div>
                                             </div>
@@ -221,13 +252,12 @@ const ProfilePage = () => {
                                                             className="bg-zinc-800 p-4 rounded-xl flex items-center gap-4 shadow"
                                                         >
                                                             <img
-                                                                src={item.product?.coverImage || "https://res.cloudinary.com/dkx4n6r0v/image/upload/v1710000000/milvnne-products/default.png"}
-
-                                                                alt={item.product?.name}
+                                                                src={getCover(item.product)}
+                                                                alt={item.product?.name || "Producto"}
                                                                 className="w-12 h-12 object-cover rounded border border-fuchsia-500"
                                                             />
                                                             <div className="flex-1">
-                                                                <p className="text-sm font-semibold text-white">{item.product?.name}</p>
+                                                                <p className="text-sm font-semibold text-white">{item.product?.name || "Producto"}</p>
                                                                 {item.size && <p className="text-xs text-gray-400">Talla: {item.size}</p>}
                                                                 <p className="text-xs text-gray-500">Cantidad: {item.quantity}</p>
                                                             </div>
@@ -237,14 +267,12 @@ const ProfilePage = () => {
                                             </div>
                                         </div>
                                     )}
-
                                 </div>
                             </>
                         )}
                     </div>
-
-
                 </motion.div>
+
                 {/*  Recomendaciones */}
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
@@ -269,7 +297,7 @@ const ProfilePage = () => {
                                 >
                                     {/* Imagen */}
                                     <img
-                                        src={product.coverImage}
+                                        src={getCover(product)}
                                         alt={product.name}
                                         className="w-full h-60 object-cover group-hover:brightness-110 transition duration-500"
                                     />
@@ -289,15 +317,15 @@ const ProfilePage = () => {
                                         {product.discount > 0 ? (
                                             <div className="flex items-center gap-2 text-sm mt-1">
                                                 <span className="line-through text-gray-400 text-xs">
-                                                    ${Number(product.originalPrice).toFixed(2)}
+                                                    ${safeMoney(product.originalPrice)}
                                                 </span>
                                                 <span className="text-fuchsia-400 font-bold">
-                                                    ${Number(product.price).toFixed(2)}
+                                                    ${safeMoney(product.price)}
                                                 </span>
                                             </div>
                                         ) : (
                                             <p className="text-fuchsia-400 font-semibold text-sm mt-1">
-                                                ${Number(product.price).toFixed(2)}
+                                                ${safeMoney(product.price)}
                                             </p>
                                         )}
                                     </div>
@@ -307,10 +335,9 @@ const ProfilePage = () => {
                     </div>
                 </motion.div>
 
-
             </div>
-            {showAllOrders && (
 
+            {showAllOrders && (
                 <div className="fixed inset-0 z-50 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center px-4">
                     <div className="bg-gradient-to-br from-zinc-900 via-black to-zinc-950 text-white rounded-2xl w-full max-w-3xl max-h-[85vh] overflow-y-auto shadow-2xl p-8 relative border border-white/10">
 
@@ -341,8 +368,8 @@ const ProfilePage = () => {
                                     >
                                         {order.products[0]?.product ? (
                                             <img
-                                                src={order.products[0].product.coverImage}
-                                                alt={order.products[0].product.name}
+                                                src={getCover(order.products[0]?.product)}
+                                                alt={order.products[0]?.product?.name || "Producto"}
                                                 className="w-16 h-16 object-cover rounded-xl border border-fuchsia-500 shadow"
                                             />
                                         ) : (
@@ -360,7 +387,7 @@ const ProfilePage = () => {
                                                 )}
                                             </p>
                                             <p className="text-xs text-fuchsia-400 mt-1">Estado: {order.status}</p>
-                                            <p className="text-xs text-gray-300">Total: ${order.total.toFixed(2)}</p>
+                                            <p className="text-xs text-gray-300">Total: ${safeMoney(order.total ?? order.totalAmount)}</p>
                                             <p className="text-[11px] text-gray-500 mt-1">
                                                 Fecha: {new Date(order.createdAt).toLocaleDateString()}
                                             </p>
@@ -374,8 +401,8 @@ const ProfilePage = () => {
                                                     className="flex items-center gap-4 bg-zinc-800 p-3 rounded-xl border border-white/10 shadow"
                                                 >
                                                     <img
-                                                        src={item.product?.coverImage || "/default.png"}
-                                                        alt={item.product?.name}
+                                                        src={getCover(item.product)}
+                                                        alt={item.product?.name || "Producto"}
                                                         className="w-12 h-12 object-cover rounded border border-fuchsia-500"
                                                     />
                                                     <div>
@@ -389,7 +416,6 @@ const ProfilePage = () => {
                                     )}
 
                                 </div>
-
                             ))}
 
                         </div>
