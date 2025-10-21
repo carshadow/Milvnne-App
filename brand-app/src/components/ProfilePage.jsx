@@ -51,7 +51,7 @@ const ProfilePage = () => {
                 return;
             }
 
-            const res = await fetch(`${API_URL}/api/orders/user/${userId}`, {
+            const res = await fetch(`${API_URL}/api/orders/mine`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
