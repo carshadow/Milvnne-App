@@ -91,42 +91,67 @@ router.get("/", authenticateUser, verifyAdmin, async (req, res) => {
 });
 router.get("/mine", authenticateUser, async (req, res) => {
     try {
-        const userId = req.user.userId;   // ojo: tu auth pone userId (no _id)
-        const email = req.user.email;
+        const userId = req.user.userId;         // tu middleware pone userId
+        const emailRaw = req.user.email || "";
+        const emailNorm = emailRaw.trim().toLowerCase();
 
+        console.log("🧭 /mine userId:", userId, " email:", emailRaw);
+
+        // 1) Buscar por userId (si compró logueado)
         let orders = await Order.find({ user: userId })
             .sort({ createdAt: -1 })
+            .populate("products.product")
             .lean();
 
-        if (orders.length === 0 && email) {
-            orders = await Order.find({ email })
+        console.log("🔎 /mine por userId ->", orders.length);
+
+        // 2) Fallback por email (guest checkout, o userId nulo)
+        if (orders.length === 0 && emailNorm) {
+            orders = await Order.find({
+                email: { $regex: `^${emailNorm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: "i" }
+            })
                 .sort({ createdAt: -1 })
+                .populate("products.product")
                 .lean();
+
+            console.log("🔎 /mine por email (norm) ->", orders.length);
         }
 
         res.json(orders);
     } catch (e) {
+        console.error("❌ /mine error:", e);
         res.status(500).json({ message: "Error fetching my orders" });
     }
 });
+
 router.post("/claim", authenticateUser, async (req, res) => {
     try {
         const userId = req.user.userId;
-        const email = req.user.email;
-        if (!email) return res.status(400).json({ message: "No email on user" });
+        const emailRaw = req.user.email || "";
+        const emailNorm = emailRaw.trim().toLowerCase();
+        if (!emailNorm) return res.status(400).json({ message: "No email on user" });
+
+        console.log("🧷 /claim userId:", userId, " email:", emailRaw);
 
         const result = await Order.updateMany(
-            { user: null, email },
+            {
+                user: null,
+                email: { $regex: `^${emailNorm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: "i" }
+            },
             { $set: { user: userId } }
         );
 
         const matched = result.matchedCount ?? result.nMatched ?? 0;
         const modified = result.modifiedCount ?? result.nModified ?? 0;
+
+        console.log("🧷 /claim matched:", matched, " linked:", modified);
         res.json({ matched, linked: modified });
     } catch (e) {
+        console.error("❌ /claim error:", e);
         res.status(500).json({ message: "Error claiming guest orders" });
     }
 });
+
 
 
 // Actualizar estado de la orden
