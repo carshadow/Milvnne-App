@@ -54,6 +54,24 @@ router.post('/', express.raw({ type: 'application/json' }), async (req, res) => 
       console.log('🧠 Metadata recibida:', metadata);
 
       const userId = metadata.userId;
+      let userObjectId = null;
+
+      if (userId && userId !== "guest" && mongoose.Types.ObjectId.isValid(userId)) {
+        userObjectId = new mongoose.Types.ObjectId(userId);
+      } else {
+        // Fallback: si no vino userId, intenta enlazar por email del checkout
+        const email = session.customer_details?.email || session.customer_email || "";
+        if (email) {
+          try {
+            const User = (await import("../models/User.js")).default;
+            const u = await User.findOne({ email: new RegExp(`^${email}$`, "i") }).select("_id");
+            if (u?._id) userObjectId = u._id;
+          } catch (e) {
+            console.warn("⚠️ No se pudo buscar usuario por email en webhook:", e.message);
+          }
+        }
+      }
+
       const isValidUser = userId && userId !== 'guest' && mongoose.Types.ObjectId.isValid(userId);
 
       // Campos de Checkout
@@ -92,7 +110,7 @@ router.post('/', express.raw({ type: 'application/json' }), async (req, res) => 
       const newOrder = await Order.create({
         stripeSessionId: session.id,                       // 👈 clave para no duplicar
         paymentIntentId: session.payment_intent || null,
-        user: isValidUser ? new mongoose.Types.ObjectId(userId) : null,
+        user: userObjectId,
         products: cleanItems,
         total: totalAmount,                                // 👈 tu Admin lee "total"
         address,

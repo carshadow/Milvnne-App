@@ -21,7 +21,7 @@ const CartItemSchema = z.object({
     userId: z.string().optional(),
     email: z.string().email().optional(),
 });
-const BodySchema = z.object({ cartItems: z.array(CartItemSchema).min(1) });
+const BodySchema = z.object({ cartItems: z.array(CartItemSchema).min(1), userId: z.string().optional(), });
 
 // ✅ Helper para URLs de imagen
 const toAbs = (url) => {
@@ -90,7 +90,7 @@ router.post("/create-checkout-session", async (req, res) => {
             success_url: `${process.env.CLIENT_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${process.env.CLIENT_URL}/cart`,
             metadata: {
-                userId: cartItems[0]?.userId || "guest",
+                userId: (req.body.userId || cartItems[0]?.userId || "guest")?.trim(),
                 items: JSON.stringify(
                     cartItems.map((i) => ({
                         product: i.product,

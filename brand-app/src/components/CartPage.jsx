@@ -24,6 +24,7 @@ const CartPage = () => {
     const [suggestedProducts, setSuggestedProducts] = useState([]);
     const [orders, setOrders] = useState([]);
     const navigate = useNavigate();
+    const uid = user?._id || user?.userId || "guest";
 
 
     const handleRemove = (cartItemId) => {
@@ -74,7 +75,7 @@ const CartPage = () => {
                     product: item.product._id,
                     quantity: item.quantity,
                     size: item.size,
-                    userId: user?._id || "guest",
+                    userId: uid,
                     name: item.product.name,
                     price: Number(item.product.price.toFixed(2)),
                     image: item.product.coverImage,
@@ -106,9 +107,11 @@ const CartPage = () => {
             const response = await fetch("https://clothing-backend.fly.dev/api/stripe/create-checkout-session", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ cartItems }),
+                body: JSON.stringify({
+                    cartItems,
+                    userId: uid, // 👈 Añade esto
+                }),
             });
-
             const session = await response.json();
             if (session.id) {
                 localStorage.setItem("checkoutInProgress", "true");
