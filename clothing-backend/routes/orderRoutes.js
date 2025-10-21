@@ -49,6 +49,8 @@ router.post('/checkout', async (req, res) => {
             total: totalAmount,
             address,
             user: userId || null,
+            email: req.body.email || "",     // 👈 guarda el email
+            name: req.body.name || "",
         });
 
         await order.save();

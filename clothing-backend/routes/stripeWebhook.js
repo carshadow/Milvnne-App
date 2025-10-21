@@ -88,6 +88,7 @@ router.post('/', express.raw({ type: 'application/json' }), async (req, res) => 
       console.log('🧽 Productos limpios para guardar:', cleanItems);
 
       // 🧾 Crea orden (solo una vez gracias a idempotencia)
+      // 🧾 Crea orden (solo una vez gracias a idempotencia)
       const newOrder = await Order.create({
         stripeSessionId: session.id,                       // 👈 clave para no duplicar
         paymentIntentId: session.payment_intent || null,
@@ -96,10 +97,11 @@ router.post('/', express.raw({ type: 'application/json' }), async (req, res) => 
         total: totalAmount,                                // 👈 tu Admin lee "total"
         address,
         status: 'Paid',
-        email: session.customer_email || session.customer_details?.email || '',
-        name: session.customer_details?.name || 'Cliente anónimo',
+        email: session.customer_details?.email || session.customer_email || "",  // 👈 AÑADE ESTO
+        name: session.customer_details?.name || "Cliente anónimo",               // 👈 Y ESTO
         archived: false,
       });
+
 
       console.log('✅ Orden guardada en MongoDB:', newOrder._id);
 
