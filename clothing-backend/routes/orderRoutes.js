@@ -154,7 +154,14 @@ router.post("/claim", authenticateUser, async (req, res) => {
     }
 });
 
-
+router.get('/user/:userId', async (req, res) => {
+    try {
+        const orders = await Order.find({ user: req.params.userId }).sort({ createdAt: -1 });
+        res.json(orders);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 // Actualizar estado de la orden
 router.put("/:id/status", async (req, res) => {

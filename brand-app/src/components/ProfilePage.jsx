@@ -24,7 +24,7 @@ const ProfilePage = () => {
     const [expandedOrderIds, setExpandedOrderIds] = useState([]);
 
     useEffect(() => {
-        const userId = user?._id || user?.id;
+        const userId = user?._id;
 
         if (!user) {
             // No hay sesión → quitamos loading para que no se quede pegado
