@@ -1,6 +1,8 @@
 import express from 'express';
 import Order from '../models/Order.js';
 import { sendOrderEmail } from "../utils/mailer.js";
+import { authenticateUser, verifyAdmin } from "../middlewares/authMiddleware.js";
+
 import { z } from "zod";
 
 
@@ -57,7 +59,7 @@ router.post('/checkout', async (req, res) => {
 });
 
 
-router.get('/user/:userId', async (req, res) => {
+router.get('/user/:userId', authenticateUser, async (req, res) => {
     try {
         const userId = req.params.userId;
         const orders = await Order.find({ user: userId }).sort({ createdAt: -1 }).populate('products.product');
@@ -69,14 +71,63 @@ router.get('/user/:userId', async (req, res) => {
 });
 
 // Obtener todas las órdenes (solo para admin)
-router.get("/", async (req, res) => {
+router.get("/", authenticateUser, verifyAdmin, async (req, res) => {
     try {
-        const orders = await Order.find().populate("products.product").populate("user").sort({ createdAt: -1 });
+        const { email, userId, sessionId } = req.query;
+        const q = {};
+        if (email) q.email = email;
+        if (userId) q.user = userId;
+        if (sessionId) q.stripeSessionId = sessionId;
+
+        const orders = await Order.find(q)
+            .populate("products.product")
+            .populate("user")
+            .sort({ createdAt: -1 });
+
         res.json(orders);
     } catch (err) {
         res.status(500).json({ message: "Error al obtener órdenes", error: err.message });
     }
 });
+router.get("/mine", authenticateUser, async (req, res) => {
+    try {
+        const userId = req.user.userId;   // ojo: tu auth pone userId (no _id)
+        const email = req.user.email;
+
+        let orders = await Order.find({ user: userId })
+            .sort({ createdAt: -1 })
+            .lean();
+
+        if (orders.length === 0 && email) {
+            orders = await Order.find({ email })
+                .sort({ createdAt: -1 })
+                .lean();
+        }
+
+        res.json(orders);
+    } catch (e) {
+        res.status(500).json({ message: "Error fetching my orders" });
+    }
+});
+router.post("/claim", authenticateUser, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const email = req.user.email;
+        if (!email) return res.status(400).json({ message: "No email on user" });
+
+        const result = await Order.updateMany(
+            { user: null, email },
+            { $set: { user: userId } }
+        );
+
+        const matched = result.matchedCount ?? result.nMatched ?? 0;
+        const modified = result.modifiedCount ?? result.nModified ?? 0;
+        res.json({ matched, linked: modified });
+    } catch (e) {
+        res.status(500).json({ message: "Error claiming guest orders" });
+    }
+});
+
 
 // Actualizar estado de la orden
 router.put("/:id/status", async (req, res) => {
