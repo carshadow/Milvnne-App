@@ -79,7 +79,7 @@ const CartPage = () => {
                     name: item.product.name,
                     price: Number(Number(item.product.price).toFixed(2)), // asegura número
                     image: item.product.coverImage,
-                    email: user?.email || ""
+                    ...(user?.email ? { email: user.email } : {}),
                 })),
                 {
                     name: "Tarifa de servicio",

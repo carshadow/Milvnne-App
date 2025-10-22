@@ -9,7 +9,7 @@ const router = express.Router();
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY); // sk_live o sk_test
 
-// ✅ Valida lo que envías desde el frontend
+//  Valida lo que envías desde el frontend
 const CartItemSchema = z.object({
     name: z.string().min(1),
     price: z.union([z.number(), z.string()]), // acepta "1,00" o 1.00
@@ -25,14 +25,14 @@ const BodySchema = z.object({
     userId: z.string().optional(),
 });
 
-// ✅ Helper para URLs absolutas
+// Helper para URLs absolutas
 const toAbs = (url) => {
     if (!url) return undefined;
     if (url.startsWith("http")) return url;
     return `https://brand-app.fly.dev${url}`;
 };
 
-// ✅ Normaliza precios y asegura mínimo de $0.50
+// Normaliza precios y asegura mínimo de $0.50
 const normalizePrice = (item) => {
     let price =
         typeof item.price === "string"
@@ -57,9 +57,22 @@ router.post("/create-checkout-session", async (req, res) => {
                 ? req.headers.origin
                 : "https://brand-app.fly.dev");
 
-        console.log("🛒 body:", JSON.stringify(req.body));
+        // 🧼 SANITIZA: elimina emails vacíos ("" / null / undefined) de los items
+        const sanitizedBody = {
+            ...req.body,
+            cartItems: Array.isArray(req.body?.cartItems)
+                ? req.body.cartItems.map((i) => {
+                    const copy = { ...i };
+                    if (!copy.email || !String(copy.email).trim()) delete copy.email;
+                    return copy;
+                })
+                : [],
+        };
 
-        const parsed = BodySchema.safeParse(req.body);
+        console.log("🛒 body:", JSON.stringify(sanitizedBody));
+
+        // ✅ Valida usando el body sanitizado
+        const parsed = BodySchema.safeParse(sanitizedBody);
         if (!parsed.success) {
             console.error("❌ Payload inválido:", parsed.error.issues);
             return res
@@ -95,10 +108,12 @@ router.post("/create-checkout-session", async (req, res) => {
         // ⚙️ Configuración de la sesión
         const sessionData = {
             mode: "payment",
-            payment_method_types: ["card", "link"],
+            payment_method_types: ["card", "link"], // o usa: automatic_payment_methods: { enabled: true },
             line_items: lineItems,
             success_url: `${clientUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${clientUrl}/cart`,
+
+            // Forzar direcciones (también con Link)
             billing_address_collection: "required",
             shipping_address_collection: { allowed_countries: ["US", "PR"] },
             shipping_options: [
@@ -115,19 +130,23 @@ router.post("/create-checkout-session", async (req, res) => {
                 },
             ],
             phone_number_collection: { enabled: true },
-            customer_creation: "always",   // ✅ SOLO una vez
 
+            // ⚠️ NO uses customer_update si no pasas "customer"
+            customer_creation: "always",
+
+            // Metadata compacta (segura)
             metadata: {
-                userId: (req.body.userId || cartItems[0]?.userId || "guest")?.trim(),
+                userId: (sanitizedBody.userId || cartItems[0]?.userId || "guest")?.trim(),
                 email: (cartItems[0]?.email || "").trim(),
-                name: (req.body?.name || "").trim(),
+                name: (sanitizedBody?.name || "").trim(),
                 items: cartItems
-                    .map(i => `${i.product || "noID"}:${i.quantity}${i.size ? `:${i.size}` : ""}`)
+                    .map((i) => `${i.product || "noID"}:${i.quantity}${i.size ? `:${i.size}` : ""}`)
                     .join("|")
                     .slice(0, 480),
             },
         };
 
+        // Prefill de email (si existe)
         if (cartItems[0]?.email) {
             sessionData.customer_email = cartItems[0].email;
         }
