@@ -1544,9 +1544,9 @@ const AdminDashboard = () => {
                                     <td className="px-6 py-4">
                                         <span
                                             className={`px-3 py-1 text-xs font-bold rounded-full 
-                ${order.status === "Paid" ? "bg-blue-600/20 text-blue-400" : ""}
-                ${order.status === "En camino" ? "bg-yellow-600/20 text-yellow-400" : ""}
-                ${order.status === "Entregada" ? "bg-green-600/20 text-green-400" : ""}`}
+                    ${order.status === "Paid" ? "bg-blue-600/20 text-blue-400" : ""}
+                    ${order.status === "En camino" ? "bg-yellow-600/20 text-yellow-400" : ""}
+                    ${order.status === "Entregada" ? "bg-green-600/20 text-green-400" : ""}`}
                                         >
                                             {order.status}
                                         </span>

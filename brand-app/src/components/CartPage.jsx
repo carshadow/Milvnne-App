@@ -8,7 +8,15 @@ import { FaShoppingBag } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 
 
-const stripePromise = loadStripe("pk_test_51QSkyUB3NdXOFdwIiRiSTs7BfhfFE1PoNYyz4UaFKmjPiVNd9kkwHxIs75odcmFNC8IbUICv3mJUoF9byI8Kul94005kmqRFii");
+const stripePromise = loadStripe("pk_live_51QSkyUB3NdXOFdwI4wiO965mtk6IHRXt5Dga4t3ahaGAaMyDLTAkaWvRFpJmRZt85H935tr0SaVOJa6pbAi7xlgp00d0zlJdIg");
+
+// Helper: calcula fee (5% + 0.30) con mínimo $0.50
+const calcStripeFee = (subtotal) => {
+    if (subtotal <= 0) return 0;
+    const fee = subtotal * 0.05 + 0.30;
+    const minFee = Math.max(fee, 0.50);
+    return Number(minFee.toFixed(2));
+};
 
 const CartPage = () => {
     const { cart, removeFromCart, updateQuantity } = useContext(CartContext);
@@ -16,6 +24,7 @@ const CartPage = () => {
     const [suggestedProducts, setSuggestedProducts] = useState([]);
     const [orders, setOrders] = useState([]);
     const navigate = useNavigate();
+    const uid = user?._id || user?.userId || "guest";
 
 
     const handleRemove = (cartItemId) => {
@@ -59,23 +68,23 @@ const CartPage = () => {
 
         try {
             const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
-            const stripeFee = subtotal > 0 ? subtotal * 0.050 + 0.30 : 0;
+            const stripeFee = calcStripeFee(subtotal);
 
             const cartItems = [
                 ...cart.map(item => ({
                     product: item.product._id,
                     quantity: item.quantity,
                     size: item.size,
-                    userId: user?._id || "guest",
+                    userId: uid,
                     name: item.product.name,
-                    price: item.product.price,
+                    price: Number(item.product.price.toFixed(2)),
                     image: item.product.coverImage,
                     email: user?.email || "carlos.sanchez.castillo2003@gmail.com"
                 })),
                 {
                     name: "Tarifa de servicio",
                     quantity: 1,
-                    price: stripeFee,
+                    price: Number(stripeFee.toFixed(2)),
                     image: "https://brand-app.fly.dev/service-fee.png",
                     userId: user?._id || "guest"
                 }
@@ -98,9 +107,11 @@ const CartPage = () => {
             const response = await fetch("https://clothing-backend.fly.dev/api/stripe/create-checkout-session", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ cartItems }),
+                body: JSON.stringify({
+                    cartItems,
+                    userId: uid, // 👈 Añade esto
+                }),
             });
-
             const session = await response.json();
             if (session.id) {
                 localStorage.setItem("checkoutInProgress", "true");
@@ -119,7 +130,7 @@ const CartPage = () => {
     const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
 
     //  Tarifa de Stripe: 2.9% + $0.30
-    const stripeFee = subtotal > 0 ? subtotal * 0.050 + 0.30 : 0;
+    const stripeFee = calcStripeFee(subtotal);
 
     //  Total con tarifa incluida
     const totalWithFee = subtotal + stripeFee;

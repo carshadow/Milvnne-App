@@ -1,6 +1,6 @@
+// server.js
 import express from "express";
 import dotenv from "dotenv";
-import cors from "cors";
 import cookieParser from "cookie-parser";
 import mongoose from "mongoose";
 import fs from "fs";
@@ -8,108 +8,126 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 
+// Si prefieres, puedes usar el paquete cors en lugar del bloque manual:
+// import cors from "cors";
+
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-dotenv.config();
 const app = express();
 
-// ✅ Lista de dominios permitidos
+console.log("🔧 Boot: iniciando servidor...");
+
+// --- Health check (no depende de DB) ---
+app.get("/health", (req, res) => {
+    res.json({ ok: true, env: process.env.NODE_ENV || "dev" });
+});
+
+// --- CORS manual (para tu frontend en Fly) ---
 const allowedOrigins = [
     "http://localhost:3000",
     "https://brand-app.fly.dev",
-    "https://clothing-backend.fly.dev"
-
+    "https://clothing-backend.fly.dev",
 ];
 
-// ✅ Middleware CORS
+// Si quieres usar cors package:
+// app.use(cors({ origin: allowedOrigins, credentials: true }));
+
 app.use((req, res, next) => {
     const origin = req.headers.origin || "";
     if (allowedOrigins.includes(origin)) {
         res.setHeader("Access-Control-Allow-Origin", origin);
     }
     res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, CSRF-Token");
+    res.setHeader(
+        "Access-Control-Allow-Headers",
+        "Origin, X-Requested-With, Content-Type, Accept, Authorization, CSRF-Token"
+    );
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-
-    if (req.method === "OPTIONS") {
-        return res.sendStatus(200);
-    }
-
+    if (req.method === "OPTIONS") return res.sendStatus(200);
     next();
 });
 
-// ✅ Manejar preflight para todas las rutas
 app.options("*", (req, res) => {
     const origin = req.headers.origin || "";
     if (allowedOrigins.includes(origin)) {
         res.setHeader("Access-Control-Allow-Origin", origin);
     }
     res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, CSRF-Token");
+    res.setHeader(
+        "Access-Control-Allow-Headers",
+        "Origin, X-Requested-With, Content-Type, Accept, Authorization, CSRF-Token"
+    );
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
     return res.sendStatus(200);
 });
 
+// --- Stripe webhook ANTES de express.json() ---
+import stripeWebhookRoutes from "./routes/stripeWebhook.js";
+app.use("/api/stripe/webhook", stripeWebhookRoutes);
 
-
-// ✅ Stripe webhook debe ir antes del express.json()
-import stripeWebhookRoutes from './routes/stripeWebhook.js';
-app.use('/api/stripe/webhook', stripeWebhookRoutes);
-
-// ✅ Middlewares principales
+// --- Middlewares principales ---
 app.use(express.json());
 app.use(cookieParser(process.env.COOKIE_SECRET, { signed: true }));
 
-// ✅ CSRF Token route
-// app.get("/api/csrf-token", csrfProtection, (req, res) => {
-//     res.json({ csrfToken: req.csrfToken() });
-// });
-
-// ✅ Carpeta uploads
+// --- Static: uploads ---
 const uploadDir = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir);
-}
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 app.use("/uploads", express.static(uploadDir));
 
-// ✅ Conexión MongoDB
-mongoose
-    .connect(process.env.MONGO_URI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true
-    })
-    .then(() => console.log("✅ MongoDB connected"))
-    .catch((err) => {
-        console.error("❌ MongoDB connection error:", err.message);
-        process.exit(1);
-    });
+// --- Conexión MongoDB ---
+const mongoUri = process.env.MONGO_URI || "";
+const safeUri = mongoUri.replace(/\/\/.*:.*@/, "//<USER>:<PASS>@");
+console.log("🔎 MONGO_URI:", safeUri);
 
-// ✅ Rutas
+if (!mongoUri) {
+    console.warn("⚠️  MONGO_URI no está definido. Continuando sin DB (solo /health funcionará).");
+} else {
+    console.log("🔗 Conectando a Mongo...");
+    mongoose
+        .connect(mongoUri, {
+            serverSelectionTimeoutMS: 5000,
+            maxPoolSize: 10,
+        })
+        .then(() => console.log("✅ MongoDB connected"))
+        .catch((err) => {
+            console.error("❌ MongoDB connection error:", err.message);
+            // No cerramos el proceso para que /health siga respondiendo en Fly
+        });
+}
+
+// --- Rutas de la app ---
 import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
-import cartRoutes from './routes/cartRoutes.js';
-import StripeRoutes from "./routes/StripeRoutes.js";
-import categoryRoutes from './routes/categoryRoutes.js';
-import userRoutes from './routes/userRoutes.js';
+import cartRoutes from "./routes/cartRoutes.js";
+import StripeRoutes from "./routes/StripeRoutes.js"; // expone /create-checkout-session
+import categoryRoutes from "./routes/categoryRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+
+// Logger simple
+app.use((req, _res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+    next();
+});
 
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/cart", cartRoutes);
-app.use("/api/Stripe", StripeRoutes);
+app.use("/api/stripe", StripeRoutes); // 👈 en minúscula (coincide con el frontend)
 app.use("/api/categories", categoryRoutes);
 app.use("/api/users", userRoutes);
 
-// ✅ Ruta no encontrada
-app.use((req, res) => {
+// --- 404 ---
+app.use((_req, res) => {
     res.status(404).json({ message: "API route not found" });
 });
 
-// ✅ Iniciar servidor
-app.listen(8080, '0.0.0.0', () => {
-    console.log(`🚀 Server running on port 8080`);
+// --- Arranque ---
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
 });
-
