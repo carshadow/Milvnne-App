@@ -2,8 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/authContext';
 import { FaUserCircle, FaEnvelope, FaBoxOpen, FaShoppingBag, FaTimes, FaReceipt } from 'react-icons/fa';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 // 🔧 Helpers
 const API_URL = "https://clothing-backend.fly.dev";
@@ -37,37 +36,52 @@ const ProfilePage = () => {
             return;
         }
 
-        fetchOrders(userId);
+        fetchOrders();
         fetchSuggestedProducts();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user]);
 
-    const fetchOrders = async (userId) => {
+    const fetchOrders = async () => {
         setLoadingOrders(true);
         try {
             const token = localStorage.getItem('token');
             if (!token) {
                 setOrders([]);
+                setLoadingOrders(false);
                 return;
             }
 
-            const res = await fetch(`${API_URL}/api/orders/mine`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            const url = `${API_URL}/api/orders/mine`;
+            console.log("[ProfilePage] GET", url);
+            let res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
 
-            if (!res.ok) {
-                const text = await res.text().catch(() => "");
-                console.error("[Orders] error:", res.status, text);
-                if (res.status === 401 || res.status === 403) {
-                    logout();
-                    navigate("/login");
-                }
+            if (res.status === 401 || res.status === 403) {
+                console.error("[Orders] auth error:", res.status);
                 setOrders([]);
+                setLoadingOrders(false);
                 return;
             }
 
-            const data = await res.json().catch(() => []);
-            setOrders(Array.isArray(data) ? data : []);
+            let data = await res.json().catch(() => []);
+            if (!Array.isArray(data)) data = [];
+
+            // Fallback: si no hay órdenes, intenta reclamar por email las guest
+            if (data.length === 0) {
+                console.log("[ProfilePage] 0 órdenes -> intentando /orders/claim …");
+                const claim = await fetch(`${API_URL}/api/orders/claim`, {
+                    method: "POST",
+                    headers: { Authorization: `Bearer ${token}` },
+                }).then(r => r.json()).catch(() => null);
+
+                console.log("[ProfilePage] claim result:", claim);
+
+                // vuelve a pedir /mine
+                res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+                data = await res.json().catch(() => []);
+                if (!Array.isArray(data)) data = [];
+            }
+
+            setOrders(data);
         } catch (error) {
             console.error("Error fetching orders:", error);
             setOrders([]);
@@ -193,38 +207,41 @@ const ProfilePage = () => {
                         ) : (
                             <>
                                 <div className="space-y-6">
-                                    {recentOrders.map((order) => (
-                                        <motion.div
-                                            key={order._id}
-                                            onClick={() => {
-                                                setSelectedOrder(order);
-                                                setShowOrderModal(true);
-                                            }}
-                                            className="cursor-pointer relative rounded-2xl bg-zinc-900 border border-white/10 hover:border-fuchsia-400/40 p-5 shadow-xl hover:shadow-fuchsia-500/10 transition-all group"
-                                            whileHover={{ scale: 1.015 }}
-                                        >
-                                            <div className="flex items-center gap-4">
-                                                <img
-                                                    src={getCover(order.products[0]?.product)}
-                                                    alt="Producto"
-                                                    className="w-16 h-16 object-cover rounded-xl border border-fuchsia-500 shadow-md"
-                                                />
-                                                <div className="flex-1">
-                                                    <p className="text-sm font-semibold text-white flex items-center gap-2">
-                                                        Orden #{order._id.slice(-6).toUpperCase()}
-                                                        {order.products.length > 1 && (
-                                                            <span className="text-xs flex items-center gap-1 bg-zinc-800 px-2 py-1 rounded-full text-gray-400">
-                                                                <FaShoppingBag className="text-fuchsia-400" /> +{order.products.length - 1}
-                                                            </span>
-                                                        )}
-                                                    </p>
-                                                    <p className="text-sm text-gray-300 mt-1">Estado: <span className="text-white">{order.status}</span></p>
-                                                    <p className="text-sm text-gray-400">Total: ${safeMoney(order.total ?? order.totalAmount)}</p>
-                                                    <p className="text-xs text-gray-500 mt-1">Fecha: {new Date(order.createdAt).toLocaleDateString()}</p>
+                                    {recentOrders.map((order) => {
+                                        const first = order.products?.[0]; // 👈 definido aquí
+                                        return (
+                                            <motion.div
+                                                key={order._id}
+                                                onClick={() => {
+                                                    setSelectedOrder(order);
+                                                    setShowOrderModal(true);
+                                                }}
+                                                className="cursor-pointer relative rounded-2xl bg-zinc-900 border border-white/10 hover:border-fuchsia-400/40 p-5 shadow-xl hover:shadow-fuchsia-500/10 transition-all group"
+                                                whileHover={{ scale: 1.015 }}
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <img
+                                                        src={getCover(first?.product) || first?.coverImage}
+                                                        alt="Producto"
+                                                        className="w-16 h-16 object-cover rounded-xl border border-fuchsia-500 shadow-md"
+                                                    />
+                                                    <div className="flex-1">
+                                                        <p className="text-sm font-semibold text-white flex items-center gap-2">
+                                                            Orden #{order._id.slice(-6).toUpperCase()}
+                                                            {order.products.length > 1 && (
+                                                                <span className="text-xs flex items-center gap-1 bg-zinc-800 px-2 py-1 rounded-full text-gray-400">
+                                                                    <FaShoppingBag className="text-fuchsia-400" /> +{order.products.length - 1}
+                                                                </span>
+                                                            )}
+                                                        </p>
+                                                        <p className="text-sm text-gray-300 mt-1">Estado: <span className="text-white">{order.status}</span></p>
+                                                        <p className="text-sm text-gray-400">Total: ${safeMoney(order.total ?? order.totalAmount)}</p>
+                                                        <p className="text-xs text-gray-500 mt-1">Fecha: {new Date(order.createdAt).toLocaleDateString()}</p>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </motion.div>
-                                    ))}
+                                            </motion.div>
+                                        );
+                                    })}
                                     {orders.length > 3 && (
                                         <div className="mt-6 text-center">
                                             <button
@@ -246,13 +263,13 @@ const ProfilePage = () => {
                                                 </button>
                                                 <h2 className="text-xl font-bold mb-6">Detalles de Orden</h2>
                                                 <div className="space-y-4">
-                                                    {selectedOrder.products.map((item, idx) => (
+                                                    {selectedOrder?.products?.map((item, idx) => (
                                                         <div
                                                             key={idx}
                                                             className="bg-zinc-800 p-4 rounded-xl flex items-center gap-4 shadow"
                                                         >
                                                             <img
-                                                                src={getCover(item.product)}
+                                                                src={getCover(item.product) || item.coverImage}
                                                                 alt={item.product?.name || "Producto"}
                                                                 className="w-12 h-12 object-cover rounded border border-fuchsia-500"
                                                             />
@@ -357,66 +374,69 @@ const ProfilePage = () => {
 
                         {/* Lista de Órdenes */}
                         <div className="space-y-5 divide-y divide-white/10">
-                            {olderOrders.map((order) => (
-                                <div
-                                    key={order._id}
-                                    className="pt-5 px-3 py-2 rounded-xl transition hover:bg-white/5"
-                                >
+                            {olderOrders.map((order) => {
+                                const first = order.products?.[0]; // 👈 definido aquí también
+                                return (
                                     <div
-                                        className="flex items-center gap-4 cursor-pointer"
-                                        onClick={() => toggleOrderDetails(order._id)}
+                                        key={order._id}
+                                        className="pt-5 px-3 py-2 rounded-xl transition hover:bg-white/5"
                                     >
-                                        {order.products[0]?.product ? (
-                                            <img
-                                                src={getCover(order.products[0]?.product)}
-                                                alt={order.products[0]?.product?.name || "Producto"}
-                                                className="w-16 h-16 object-cover rounded-xl border border-fuchsia-500 shadow"
-                                            />
-                                        ) : (
-                                            <div className="w-16 h-16 flex items-center justify-center bg-zinc-800 text-xs text-gray-400 italic border border-zinc-600 rounded-xl shadow">
-                                                Eliminado
+                                        <div
+                                            className="flex items-center gap-4 cursor-pointer"
+                                            onClick={() => toggleOrderDetails(order._id)}
+                                        >
+                                            {first?.product ? (
+                                                <img
+                                                    src={getCover(first.product) || first.coverImage}
+                                                    alt={first.product?.name || "Producto"}
+                                                    className="w-16 h-16 object-cover rounded-xl border border-fuchsia-500 shadow"
+                                                />
+                                            ) : (
+                                                <div className="w-16 h-16 flex items-center justify-center bg-zinc-800 text-xs text-gray-400 italic border border-zinc-600 rounded-xl shadow">
+                                                    Eliminado
+                                                </div>
+                                            )}
+                                            <div className="flex-1">
+                                                <p className="text-sm font-semibold text-white flex items-center gap-2">
+                                                    Orden #{order._id.slice(-6).toUpperCase()}
+                                                    {order.products.length > 1 && (
+                                                        <span className="text-xs flex items-center gap-1 bg-zinc-800 px-2 py-1 rounded-full text-gray-400">
+                                                            <FaShoppingBag className="text-fuchsia-400" /> +{order.products.length - 1}
+                                                        </span>
+                                                    )}
+                                                </p>
+                                                <p className="text-xs text-fuchsia-400 mt-1">Estado: {order.status}</p>
+                                                <p className="text-xs text-gray-300">Total: ${safeMoney(order.total ?? order.totalAmount)}</p>
+                                                <p className="text-[11px] text-gray-500 mt-1">
+                                                    Fecha: {new Date(order.createdAt).toLocaleDateString()}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        {expandedOrderIds.includes(order._id) && (
+                                            <div className="mt-4 ml-20 space-y-3">
+                                                {order.products.map((item, idx) => (
+                                                    <div key={idx} className="flex items-center gap-4 bg-zinc-800 p-3 rounded-xl border border-white/10 shadow">
+                                                        <img
+                                                            src={getCover(item.product) || item.coverImage}
+                                                            alt={item.product?.name || "Producto"}
+                                                            className="w-12 h-12 object-cover rounded border border-fuchsia-500"
+                                                        />
+                                                        <div>
+                                                            <p className="text-sm text-white font-semibold">
+                                                                {item.product?.name || "Producto eliminado"}
+                                                            </p>
+                                                            {item.size && <p className="text-xs text-gray-400">Talla: {item.size}</p>}
+                                                            <p className="text-xs text-gray-500">Cantidad: {item.quantity}</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+
                                             </div>
                                         )}
-                                        <div className="flex-1">
-                                            <p className="text-sm font-semibold text-white flex items-center gap-2">
-                                                Orden #{order._id.slice(-6).toUpperCase()}
-                                                {order.products.length > 1 && (
-                                                    <span className="text-xs flex items-center gap-1 bg-zinc-800 px-2 py-1 rounded-full text-gray-400">
-                                                        <FaShoppingBag className="text-fuchsia-400" /> +{order.products.length - 1}
-                                                    </span>
-                                                )}
-                                            </p>
-                                            <p className="text-xs text-fuchsia-400 mt-1">Estado: {order.status}</p>
-                                            <p className="text-xs text-gray-300">Total: ${safeMoney(order.total ?? order.totalAmount)}</p>
-                                            <p className="text-[11px] text-gray-500 mt-1">
-                                                Fecha: {new Date(order.createdAt).toLocaleDateString()}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    {expandedOrderIds.includes(order._id) && (
-                                        <div className="mt-4 ml-20 space-y-3">
-                                            {order.products.map((item, idx) => (
-                                                <div
-                                                    key={idx}
-                                                    className="flex items-center gap-4 bg-zinc-800 p-3 rounded-xl border border-white/10 shadow"
-                                                >
-                                                    <img
-                                                        src={getCover(item.product)}
-                                                        alt={item.product?.name || "Producto"}
-                                                        className="w-12 h-12 object-cover rounded border border-fuchsia-500"
-                                                    />
-                                                    <div>
-                                                        <p className="text-sm text-white font-semibold">{item.product?.name || "Producto eliminado"}</p>
-                                                        {item.size && <p className="text-xs text-gray-400">Talla: {item.size}</p>}
-                                                        <p className="text-xs text-gray-500">Cantidad: {item.quantity}</p>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
 
-                                </div>
-                            ))}
+                                    </div>
+                                );
+                            })}
 
                         </div>
                     </div>
