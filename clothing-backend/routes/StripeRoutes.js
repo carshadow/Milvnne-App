@@ -95,7 +95,6 @@ router.post("/create-checkout-session", async (req, res) => {
         // ⚙️ Configuración de la sesión
         const sessionData = {
             mode: "payment",
-            // Puedes usar esto también: automatic_payment_methods: { enabled: true },
             payment_method_types: ["card", "link"],
             line_items: lineItems,
             success_url: `${clientUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
@@ -116,21 +115,14 @@ router.post("/create-checkout-session", async (req, res) => {
                 },
             ],
             phone_number_collection: { enabled: true },
-            customer_creation: "always",
-            customer_update: { shipping: "auto", address: "auto" },
-            customer_creation: "always",
+            customer_creation: "always",   // ✅ SOLO una vez
 
-            // 🧩 Metadata compacta (sin imágenes ni JSON largo)
             metadata: {
                 userId: (req.body.userId || cartItems[0]?.userId || "guest")?.trim(),
                 email: (cartItems[0]?.email || "").trim(),
                 name: (req.body?.name || "").trim(),
                 items: cartItems
-                    .map(
-                        (i) =>
-                            `${i.product || "noID"}:${i.quantity}${i.size ? `:${i.size}` : ""
-                            }`
-                    )
+                    .map(i => `${i.product || "noID"}:${i.quantity}${i.size ? `:${i.size}` : ""}`)
                     .join("|")
                     .slice(0, 480),
             },
