@@ -7,30 +7,32 @@ import { z } from "zod";
 dotenv.config();
 const router = express.Router();
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY); // sk_...
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY); // sk_live o sk_test
 
-// ✅ Valida exactamente lo que envías desde el frontend
+// ✅ Valida lo que envías desde el frontend
 const CartItemSchema = z.object({
     name: z.string().min(1),
     price: z.union([z.number(), z.string()]), // acepta "1,00" o 1.00
     quantity: z.coerce.number().int().min(1),
     image: z.string().optional().nullable(),
-    // opcionales a metadata
     product: z.string().optional(),
     size: z.string().optional(),
     userId: z.string().optional(),
     email: z.string().email().optional(),
 });
-const BodySchema = z.object({ cartItems: z.array(CartItemSchema).min(1), userId: z.string().optional(), });
+const BodySchema = z.object({
+    cartItems: z.array(CartItemSchema).min(1),
+    userId: z.string().optional(),
+});
 
-// ✅ Helper para URLs de imagen
+// ✅ Helper para URLs absolutas
 const toAbs = (url) => {
     if (!url) return undefined;
     if (url.startsWith("http")) return url;
     return `https://brand-app.fly.dev${url}`;
 };
 
-// ✅ Normaliza price: soporta "1,00" y fuerza mínimo $0.50 SOLO a la tarifa
+// ✅ Normaliza precios y asegura mínimo de $0.50
 const normalizePrice = (item) => {
     let price =
         typeof item.price === "string"
@@ -39,7 +41,6 @@ const normalizePrice = (item) => {
 
     if (!Number.isFinite(price)) price = 0;
 
-    // Si es la línea "Tarifa de servicio" y es > 0 pero < 0.50, súbela a 0.50
     if (item.name?.toLowerCase().includes("tarifa") && price > 0 && price < 0.5) {
         price = 0.5;
     }
@@ -49,6 +50,13 @@ const normalizePrice = (item) => {
 
 router.post("/create-checkout-session", async (req, res) => {
     try {
+        // 🔎 fallback si CLIENT_URL no está definido
+        const clientUrl =
+            process.env.CLIENT_URL ||
+            (req.headers.origin && req.headers.origin.startsWith("http")
+                ? req.headers.origin
+                : "https://brand-app.fly.dev");
+
         console.log("🛒 body:", JSON.stringify(req.body));
 
         const parsed = BodySchema.safeParse(req.body);
@@ -58,14 +66,15 @@ router.post("/create-checkout-session", async (req, res) => {
                 .status(400)
                 .json({ message: "Payload inválido", issues: parsed.error.issues });
         }
+
         const { cartItems } = parsed.data;
 
-        // ✅ Construye line_items con normalización y validación de mínimo $0.50 por línea
+        // 🧾 Construye line_items con validación
         const lineItems = cartItems.map((item) => {
             const price = normalizePrice(item);
-            const unit = Math.round(price * 100); // centavos
+            const unit = Math.round(price * 100);
+            console.log(`🧾 item="${item.name}" price=${price} unit=${unit}`);
 
-            // Stripe exige >= $0.50 por cada línea
             if (!Number.isInteger(unit) || unit < 50) {
                 throw new Error(`unit_amount inválido para "${item.name}": ${unit}`);
             }
@@ -83,12 +92,14 @@ router.post("/create-checkout-session", async (req, res) => {
             };
         });
 
+        // ⚙️ Configuración de la sesión
         const sessionData = {
             mode: "payment",
+            // Puedes usar esto también: automatic_payment_methods: { enabled: true },
             payment_method_types: ["card", "link"],
             line_items: lineItems,
-            success_url: `${process.env.CLIENT_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${process.env.CLIENT_URL}/cart`,
+            success_url: `${clientUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${clientUrl}/cart`,
             billing_address_collection: "required",
             shipping_address_collection: { allowed_countries: ["US", "PR"] },
             shipping_options: [
@@ -107,16 +118,20 @@ router.post("/create-checkout-session", async (req, res) => {
             phone_number_collection: { enabled: true },
             customer_creation: "always",
             customer_update: { shipping: "auto", address: "auto" },
+
+            // 🧩 Metadata compacta (sin imágenes ni JSON largo)
             metadata: {
                 userId: (req.body.userId || cartItems[0]?.userId || "guest")?.trim(),
-                items: JSON.stringify(
-                    cartItems.map((i) => ({
-                        product: i.product,
-                        quantity: i.quantity,
-                        size: i.size,
-                        coverImage: i.image,
-                    }))
-                ),
+                email: (cartItems[0]?.email || "").trim(),
+                name: (req.body?.name || "").trim(),
+                items: cartItems
+                    .map(
+                        (i) =>
+                            `${i.product || "noID"}:${i.quantity}${i.size ? `:${i.size}` : ""
+                            }`
+                    )
+                    .join("|")
+                    .slice(0, 480),
             },
         };
 
@@ -127,10 +142,16 @@ router.post("/create-checkout-session", async (req, res) => {
         const session = await stripe.checkout.sessions.create(sessionData);
         return res.json({ id: session.id, url: session.url });
     } catch (error) {
-        console.error("💥 Stripe Checkout Error:", error?.type || "", error?.message || error);
+        console.error("💥 Stripe Checkout Error:", {
+            type: error?.type,
+            code: error?.code,
+            message: error?.message,
+            raw: error?.raw?.message,
+        });
         return res.status(500).json({
             message: "Error creating checkout session",
-            detail: error?.message,
+            code: error?.code || null,
+            detail: error?.raw?.message || error?.message || "unknown_error",
         });
     }
 });
