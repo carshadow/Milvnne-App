@@ -118,6 +118,7 @@ router.post("/create-checkout-session", async (req, res) => {
             phone_number_collection: { enabled: true },
             customer_creation: "always",
             customer_update: { shipping: "auto", address: "auto" },
+            customer_creation: "always",
 
             // 🧩 Metadata compacta (sin imágenes ni JSON largo)
             metadata: {
