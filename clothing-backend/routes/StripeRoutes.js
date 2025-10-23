@@ -9,30 +9,36 @@ const router = express.Router();
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY); // sk_live o sk_test
 
-//  Valida lo que envías desde el frontend
+// =======================
+// Zod: valida payload
+// =======================
 const CartItemSchema = z.object({
     name: z.string().min(1),
     price: z.union([z.number(), z.string()]), // acepta "1,00" o 1.00
     quantity: z.coerce.number().int().min(1),
     image: z.string().optional().nullable(),
-    product: z.string().optional(),
+
+    // opcionales (para metadata y backoffice)
+    product: z.string().optional(), // ID de producto en tu DB
     size: z.string().optional(),
     userId: z.string().optional(),
     email: z.string().email().optional(),
 });
+
 const BodySchema = z.object({
     cartItems: z.array(CartItemSchema).min(1),
     userId: z.string().optional(),
 });
 
-// Helper para URLs absolutas
+// =======================
+// Helpers
+// =======================
 const toAbs = (url) => {
     if (!url) return undefined;
     if (url.startsWith("http")) return url;
     return `https://brand-app.fly.dev${url}`;
 };
 
-// Normaliza precios y asegura mínimo de $0.50
 const normalizePrice = (item) => {
     let price =
         typeof item.price === "string"
@@ -41,6 +47,7 @@ const normalizePrice = (item) => {
 
     if (!Number.isFinite(price)) price = 0;
 
+    // Mínimo $0.50 solo aplica a líneas tipo "Tarifa"
     if (item.name?.toLowerCase().includes("tarifa") && price > 0 && price < 0.5) {
         price = 0.5;
     }
@@ -48,31 +55,18 @@ const normalizePrice = (item) => {
     return price;
 };
 
+// =======================
+// POST /create-checkout-session
+// =======================
 router.post("/create-checkout-session", async (req, res) => {
     try {
-        // 🔎 fallback si CLIENT_URL no está definido
+        // Fallback sensato si no tienes CLIENT_URL en env
         const clientUrl =
             process.env.CLIENT_URL ||
-            (req.headers.origin && req.headers.origin.startsWith("http")
-                ? req.headers.origin
-                : "https://brand-app.fly.dev");
+            (req.headers.origin?.startsWith("http") ? req.headers.origin : "https://brand-app.fly.dev");
 
-        // 🧼 SANITIZA: elimina emails vacíos ("" / null / undefined) de los items
-        const sanitizedBody = {
-            ...req.body,
-            cartItems: Array.isArray(req.body?.cartItems)
-                ? req.body.cartItems.map((i) => {
-                    const copy = { ...i };
-                    if (!copy.email || !String(copy.email).trim()) delete copy.email;
-                    return copy;
-                })
-                : [],
-        };
-
-        console.log("🛒 body:", JSON.stringify(sanitizedBody));
-
-        // ✅ Valida usando el body sanitizado
-        const parsed = BodySchema.safeParse(sanitizedBody);
+        // Valida entrada
+        const parsed = BodySchema.safeParse(req.body);
         if (!parsed.success) {
             console.error("❌ Payload inválido:", parsed.error.issues);
             return res
@@ -80,18 +74,20 @@ router.post("/create-checkout-session", async (req, res) => {
                 .json({ message: "Payload inválido", issues: parsed.error.issues });
         }
 
-        const { cartItems } = parsed.data;
+        const { cartItems, userId } = parsed.data;
 
-        // 🧾 Construye line_items con validación
+        // Debug útil (dejar temporalmente)
+        console.log("[Checkout] cartItems:", cartItems.map(i => ({
+            product: i.product, name: i.name, qty: i.quantity, price: i.price
+        })));
+
+        // Construye line_items para Stripe (y valida mínimos)
         const lineItems = cartItems.map((item) => {
             const price = normalizePrice(item);
             const unit = Math.round(price * 100);
-            console.log(`🧾 item="${item.name}" price=${price} unit=${unit}`);
-
             if (!Number.isInteger(unit) || unit < 50) {
                 throw new Error(`unit_amount inválido para "${item.name}": ${unit}`);
             }
-
             return {
                 price_data: {
                     currency: "usd",
@@ -105,15 +101,15 @@ router.post("/create-checkout-session", async (req, res) => {
             };
         });
 
-        // ⚙️ Configuración de la sesión
+        // Crea sesión de Checkout
         const sessionData = {
             mode: "payment",
-            payment_method_types: ["card", "link"], // o usa: automatic_payment_methods: { enabled: true },
+            payment_method_types: ["card", "link"], // Link + tarjeta
             line_items: lineItems,
             success_url: `${clientUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${clientUrl}/cart`,
 
-            // Forzar direcciones (también con Link)
+            // 🔒 Fuerza dirección aunque usen Link
             billing_address_collection: "required",
             shipping_address_collection: { allowed_countries: ["US", "PR"] },
             shipping_options: [
@@ -131,25 +127,33 @@ router.post("/create-checkout-session", async (req, res) => {
             ],
             phone_number_collection: { enabled: true },
 
-            // ⚠️ NO uses customer_update si no pasas "customer"
+            // ⚠️ NO usar customer_update sin 'customer' explícito
             customer_creation: "always",
+            // customer_update: { shipping: "auto", address: "auto" }, // <- Dejar comentado si NO pasas `customer`
 
-            // Metadata compacta (segura)
+            // 🧩 Metadata compacta: SOLO productos reales (sin tarifa)
             metadata: {
-                userId: (sanitizedBody.userId || cartItems[0]?.userId || "guest")?.trim(),
+                userId: (userId || cartItems[0]?.userId || "guest")?.trim(),
                 email: (cartItems[0]?.email || "").trim(),
-                name: (sanitizedBody?.name || "").trim(),
+                name: (req.body?.name || "").trim(),
                 items: cartItems
-                    .map((i) => `${i.product || "noID"}:${i.quantity}${i.size ? `:${i.size}` : ""}`)
+                    .filter(i => !!i.product)
+                    .map(i => `${i.product}:${i.quantity}${i.size ? `:${i.size}` : ""}`)
                     .join("|")
                     .slice(0, 480),
             },
         };
 
-        // Prefill de email (si existe)
         if (cartItems[0]?.email) {
             sessionData.customer_email = cartItems[0].email;
         }
+
+        // Debug flags
+        console.log("[Checkout] flags:", {
+            billing_address_collection: sessionData.billing_address_collection,
+            hasShippingAddressCollection: !!sessionData.shipping_address_collection,
+            hasShippingOptions: !!sessionData.shipping_options?.length,
+        });
 
         const session = await stripe.checkout.sessions.create(sessionData);
         return res.json({ id: session.id, url: session.url });
