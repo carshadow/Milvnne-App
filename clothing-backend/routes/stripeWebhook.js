@@ -52,6 +52,18 @@ router.post('/', express.raw({ type: 'application/json' }), async (req, res) => 
 
       const metadata = session.metadata || {};
       console.log('🧠 Metadata recibida:', metadata);
+      const email = session.customer_details?.email || session.customer_email || "";
+      const name = session.customer_details?.name || "Cliente anónimo";
+      const phone = session.customer_details?.phone || null;
+
+      // 📦 Dirección: usa shipping; si no hay, usa billing como fallback
+      const shipping = session.shipping_details;             // { name, address:{ line1, line2, city, state, postal_code, country } }
+      const billing = session.customer_details?.address;    // fallback
+      const addr = shipping?.address || billing || null;
+
+      const address = addr
+        ? [addr.line1, addr.line2, addr.city, addr.state, addr.postal_code, addr.country].filter(Boolean).join(", ")
+        : "No address";
 
       const userId = metadata.userId;
       let userObjectId = null;
@@ -75,17 +87,24 @@ router.post('/', express.raw({ type: 'application/json' }), async (req, res) => 
       const isValidUser = userId && userId !== 'guest' && mongoose.Types.ObjectId.isValid(userId);
 
       // Campos de Checkout
-      const addressField = session.custom_fields?.find((f) => f.key === 'address');
-      const address = addressField?.text?.value || 'No address';
+      // const addressField = session.custom_fields?.find((f) => f.key === 'address');
+      // const address = addressField?.text?.value || 'No address';
 
       // ✅ Parseo seguro de items desde metadata
+      // 🧩 Parsear items compactos de metadata: "id:qty(:size)|id:qty"
+      const itemsStr = (metadata?.items || "").trim();
       let rawItems = [];
-      try {
-        rawItems = JSON.parse(metadata?.items ?? '[]');
-      } catch (e) {
-        console.warn('⚠️ metadata.items malformado, usando []');
-        rawItems = [];
+      if (itemsStr) {
+        rawItems = itemsStr.split("|").map(t => {
+          const [product, qtyStr, size] = t.split(":");
+          return {
+            product,
+            quantity: Number(qtyStr || 0),
+            size: size || undefined,
+          };
+        }).filter(i => i.product && Number.isFinite(i.quantity) && i.quantity > 0);
       }
+
 
       console.log('📦 Productos recibidos:', rawItems);
       console.log('👤 userId:', userId);
@@ -94,14 +113,11 @@ router.post('/', express.raw({ type: 'application/json' }), async (req, res) => 
       const totalAmount = (session.amount_total ?? 0) / 100;
 
       // Normaliza productos
-      const cleanItems = rawItems
-        .filter((item) => item.product)
-        .map((item) => ({
-          product: item.product,
-          quantity: Number(item.quantity || 0),
-          size: item.size,
-          coverImage: item.coverImage,
-        }));
+      const cleanItems = rawItems.map((item) => ({
+        product: item.product,
+        quantity: Number(item.quantity || 0),
+        size: item.size,
+      }));
 
       console.log('🧽 Productos limpios para guardar:', cleanItems);
 
