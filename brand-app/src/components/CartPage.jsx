@@ -77,45 +77,41 @@ const CartPage = () => {
                     size: item.size,
                     userId: uid,
                     name: item.product.name,
-                    price: Number(item.product.price.toFixed(2)),
+                    price: Number(Number(item.product.price).toFixed(2)), // asegura número
                     image: item.product.coverImage,
-                    email: user?.email || "carlos.sanchez.castillo2003@gmail.com"
+                    ...(user?.email ? { email: user.email } : {}),
                 })),
                 {
                     name: "Tarifa de servicio",
                     quantity: 1,
                     price: Number(stripeFee.toFixed(2)),
                     image: "https://brand-app.fly.dev/service-fee.png",
-                    userId: user?._id || "guest"
+                    userId: uid
                 }
             ];
-            for (let item of cart) {
-                if (item.product.hasSizes && item.size) {
-                    const available = item.product.sizes[item.size];
-                    if (item.quantity > available) {
-                        toast.error(`🚫 Solo quedan ${available} unidad(es) disponibles para la talla ${item.size} de "${item.product.name}"`);
-                        return;
-                    }
-                } else if (!item.product.hasSizes) {
-                    if (item.quantity > item.product.stock) {
-                        toast.error(`🚫 Solo quedan ${item.product.stock} unidad(es) disponibles de "${item.product.name}"`);
-                        return;
-                    }
-                }
-            }
+
+            // 👀 Debug del payload
+            console.log("[Checkout] payload →", { cartItems, userId: uid });
 
             const response = await fetch("https://clothing-backend.fly.dev/api/stripe/create-checkout-session", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    cartItems,
-                    userId: uid, // 👈 Añade esto
-                }),
+                body: JSON.stringify({ cartItems, userId: uid }),
             });
+
+            // ⚠️ Lee el cuerpo de error si no es ok (para ver “detail” del backend)
+            if (!response.ok) {
+                let err = {};
+                try { err = await response.json(); } catch { }
+                console.error("❌ Stripe session error:", err);
+                alert(`❌ Error creando sesión: ${err.detail || err.message || `HTTP ${response.status}`}`);
+                return;
+            }
+
             const session = await response.json();
             if (session.id) {
                 localStorage.setItem("checkoutInProgress", "true");
-                stripe.redirectToCheckout({ sessionId: session.id });
+                await stripe.redirectToCheckout({ sessionId: session.id });
             } else {
                 alert(`❌ Error: ${session.message || "No session ID returned"}`);
             }
@@ -124,6 +120,7 @@ const CartPage = () => {
             alert("❌ Error processing payment");
         }
     };
+
 
 
     //  Cálculo del subtotal
