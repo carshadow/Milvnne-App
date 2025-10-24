@@ -31,21 +31,23 @@ router.put("/update-profile", authenticateUser, async (req, res) => {
             return res.status(400).json({ message: validatedData.error.errors[0].message });
         }
 
-        const user = await User.findById(req.user._id).select("+password");
+        // 🔧 Acepta cualquiera de las 3 claves
+        const userId = req.user._id || req.user.userId || req.user.id;
+
+        const user = await User.findById(userId).select("+password");
         if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
 
         const { name, email, password } = validatedData.data;
 
         if (name) user.name = name;
         if (email) user.email = email;
-        if (password) {
-            const hashed = await bcrypt.hash(password, 10);
-            user.password = hashed;
+        if (password?.trim()) {
+            user.password = await bcrypt.hash(password, 10);
         }
 
         await user.save();
 
-        res.json({
+        return res.json({
             message: "Perfil actualizado correctamente",
             updatedUser: {
                 _id: user._id,
@@ -54,10 +56,9 @@ router.put("/update-profile", authenticateUser, async (req, res) => {
                 isAdmin: user.isAdmin,
             },
         });
-
     } catch (err) {
         console.error("❌ Error al actualizar perfil:", err);
-        res.status(500).json({ message: "Error del servidor" });
+        return res.status(500).json({ message: "Error del servidor" });
     }
 });
 
