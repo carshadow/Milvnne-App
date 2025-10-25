@@ -65,7 +65,9 @@ const AdminDashboard = () => {
         try {
             const res = await fetch("https://clothing-backend.fly.dev/api/categories");
             const data = await res.json();
-            setCategories(data.sort((a, b) => a.order - b.order));
+            const sorted = data.sort((a, b) => a.order - b.order);
+            setCategories(sorted);
+            setNewProduct(p => ({ ...p, category: p.category || (sorted[0]?.name || "") }));
         } catch (err) {
             console.error("Error fetching categories:", err);
         }
@@ -138,7 +140,25 @@ const AdminDashboard = () => {
         }
     };
 
+    const ensureJpeg = async (file) => {
+        if (!file) return null;
+        const name = (file.name || "").toLowerCase();
+        const isHeic =
+            file.type === "image/heic" ||
+            file.type === "" ||                 // iOS a veces no pone el mime
+            name.endsWith(".heic") ||
+            name.endsWith(".heif");
 
+        if (!isHeic) return file;
+
+        try {
+            const blob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 });
+            return new File([blob], name.replace(/\.(heic|heif)$/i, ".jpg"), { type: "image/jpeg" });
+        } catch (err) {
+            console.error("Error convirtiendo HEIC:", err);
+            return null;
+        }
+    };
 
 
     const updateCategoryImage = async (id, file) => {
@@ -812,16 +832,12 @@ const AdminDashboard = () => {
                             type="file"
                             accept="image/*"
                             className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
-                            onChange={(e) => {
-                                const file = e.target.files[0];
+                            onChange={async (e) => {
+                                const file = e.target.files?.[0];
                                 if (!file) return;
-
-                                if (file.type === "image/heic" || file.name.endsWith(".heic") || file.name.endsWith(".HEIC")) {
-                                    alert("❌ Formato HEIC no soportado. Usa JPG o PNG.");
-                                    return;
-                                }
-
-                                setNewProduct({ ...newProduct, coverImage: file });
+                                const safe = await ensureJpeg(file);
+                                if (!safe) return; // conversión fallida
+                                setNewProduct(prev => ({ ...prev, coverImage: safe }));
                             }}
                         />
 
@@ -833,18 +849,15 @@ const AdminDashboard = () => {
                             type="file"
                             accept="image/*"
                             className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
-                            onChange={(e) => {
-                                const file = e.target.files[0];
+                            onChange={async (e) => {
+                                const file = e.target.files?.[0];
                                 if (!file) return;
-
-                                if (file.type === "image/heic" || file.name.endsWith(".heic") || file.name.endsWith(".HEIC")) {
-                                    alert("❌ Formato HEIC no soportado. Usa JPG o PNG.");
-                                    return;
-                                }
-
-                                setNewProduct({ ...newProduct, hoverImage: file });
+                                const safe = await ensureJpeg(file);
+                                if (!safe) return;
+                                setNewProduct(prev => ({ ...prev, hoverImage: safe }));
                             }}
                         />
+
 
                     </div>
 
@@ -857,25 +870,28 @@ const AdminDashboard = () => {
                             type="file"
                             accept="image/*"
                             className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
-                            onChange={(e) => {
-                                const files = Array.from(e.target.files);
-                                const hasHEIC = files.some(f =>
-                                    f.type === "image/heic" || f.name.endsWith(".heic") || f.name.endsWith(".HEIC")
-                                );
-                                if (hasHEIC) {
-                                    alert("❌ Una o más imágenes son HEIC. Usa JPG o PNG.");
-                                    return;
+                            multiple
+                            onChange={async (e) => {
+                                const selected = Array.from(e.target.files || []);
+                                if (!selected.length) return;
+
+                                // convertir cada archivo si hace falta
+                                const converted = [];
+                                for (const f of selected) {
+                                    const safe = await ensureJpeg(f);
+                                    if (safe) converted.push(safe);
                                 }
 
-                                const totalImages = newProduct.images.length + files.length;
-                                if (totalImages > 4) {
+                                const total = newProduct.images.length + converted.length;
+                                if (total > 4) {
                                     alert("Máximo 4 imágenes adicionales");
                                     return;
                                 }
 
-                                setNewProduct({ ...newProduct, images: [...newProduct.images, ...files] });
+                                setNewProduct(prev => ({ ...prev, images: [...prev.images, ...converted] }));
                             }}
                         />
+
 
 
                         {/* Vista previa */}
@@ -1019,18 +1035,15 @@ const AdminDashboard = () => {
                                     type="file"
                                     accept="image/*"
                                     className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
-                                    onChange={(e) => {
-                                        const file = e.target.files[0];
+                                    onChange={async (e) => {
+                                        const file = e.target.files?.[0];
                                         if (!file) return;
-
-                                        if (file.type === "image/heic" || file.name.endsWith(".heic") || file.name.endsWith(".HEIC")) {
-                                            alert("❌ Formato HEIC no soportado. Usa JPG o PNG.");
-                                            return;
-                                        }
-
-                                        setEditingProduct({ ...editingProduct, newCoverImage: file });
+                                        const safe = await ensureJpeg(file);
+                                        if (!safe) return;
+                                        setEditingProduct(prev => ({ ...prev, newCoverImage: safe }));
                                     }}
                                 />
+
                                 {editingProduct.coverImage && (
                                     <img
                                         src={editingProduct.coverImage}
@@ -1048,18 +1061,15 @@ const AdminDashboard = () => {
                                     type="file"
                                     accept="image/*"
                                     className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
-                                    onChange={(e) => {
-                                        const file = e.target.files[0];
+                                    onChange={async (e) => {
+                                        const file = e.target.files?.[0];
                                         if (!file) return;
-
-                                        if (file.type === "image/heic" || file.name.endsWith(".heic") || file.name.endsWith(".HEIC")) {
-                                            alert("❌ Formato HEIC no soportado. Usa JPG o PNG.");
-                                            return;
-                                        }
-
-                                        setEditingProduct({ ...editingProduct, newHoverImage: file });
+                                        const safe = await ensureJpeg(file);
+                                        if (!safe) return;
+                                        setEditingProduct(prev => ({ ...prev, newHoverImage: safe }));
                                     }}
                                 />
+
                                 {editingProduct.hoverImage && (
                                     <img
                                         src={editingProduct.hoverImage}
@@ -1079,35 +1089,30 @@ const AdminDashboard = () => {
                                     accept="image/*"
                                     multiple
                                     className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600 w-full"
-                                    onChange={(e) => {
-                                        const newFiles = Array.from(e.target.files);
+                                    onChange={async (e) => {
+                                        const selected = Array.from(e.target.files || []);
+                                        if (!selected.length) return;
 
-                                        const hasHEIC = newFiles.some(f =>
-                                            f.type === "image/heic" || f.name.endsWith(".heic") || f.name.endsWith(".HEIC")
-                                        );
-                                        if (hasHEIC) {
-                                            toast.error("❌ Formato HEIC no soportado. Usa JPG o PNG.");
-                                            return;
+                                        const converted = [];
+                                        for (const f of selected) {
+                                            const safe = await ensureJpeg(f);
+                                            if (safe) converted.push(safe);
                                         }
 
-                                        const totalExisting = (editingProduct.images?.length || 0);
-                                        const totalNew = (editingProduct.newImages?.length || 0);
-                                        const totalSelected = newFiles.length;
-
-                                        const totalCombined = totalExisting + totalNew + totalSelected;
-
-                                        if (totalCombined > 4) {
+                                        const totalExisting = editingProduct.images?.length || 0;
+                                        const totalNew = (editingProduct.newImages?.length || 0) + converted.length;
+                                        if (totalExisting + totalNew > 4) {
                                             toast.warning("🚫 Máximo 4 imágenes adicionales permitidas en total.");
                                             return;
                                         }
 
-                                        // Añadir las nuevas imágenes acumuladas
-                                        setEditingProduct({
-                                            ...editingProduct,
-                                            newImages: [...(editingProduct.newImages || []), ...newFiles],
-                                        });
+                                        setEditingProduct(prev => ({
+                                            ...prev,
+                                            newImages: [...(prev.newImages || []), ...converted],
+                                        }));
                                     }}
                                 />
+
 
                                 {/* Vista previa */}
                                 <div className="flex flex-wrap gap-4 mt-3">
@@ -1354,57 +1359,30 @@ const AdminDashboard = () => {
                                         <input
                                             type="file"
                                             accept="image/*"
-                                            onChange={(e) => {
-                                                const file = e.target.files[0];
+                                            onChange={async (e) => {
+                                                const file = e.target.files?.[0];
                                                 if (!file) return;
-
-                                                if (file.type === "image/heic" || file.name.endsWith(".heic") || file.name.endsWith(".HEIC")) {
-                                                    alert("❌ Formato HEIC no soportado. Usa JPG o PNG.");
-                                                    return;
-                                                }
-
-                                                updateCategoryImage(cat._id, file);
+                                                const safe = await ensureJpeg(file);
+                                                if (!safe) return;
+                                                updateCategoryImage(cat._id, safe);
                                             }}
                                             className="w-full text-sm text-gray-300 file:bg-fuchsia-600 file:border-none file:px-3 file:py-1 file:rounded file:text-white file:cursor-pointer"
                                         />
+
 
                                         <input
                                             type="file"
                                             accept="image/*"
                                             onChange={async (e) => {
-                                                const file = e.target.files[0];
+                                                const file = e.target.files?.[0];
                                                 if (!file) return;
-
-                                                const isHeic = file.name.toLowerCase().endsWith(".heic") ||
-                                                    file.name.toLowerCase().endsWith(".heif") ||
-                                                    file.type === "image/heic" ||
-                                                    file.type === "";
-
-                                                if (isHeic) {
-                                                    try {
-                                                        const convertedBlob = await heic2any({
-                                                            blob: file,
-                                                            toType: "image/jpeg",
-                                                            quality: 0.9,
-                                                        });
-
-                                                        const convertedFile = new File(
-                                                            [convertedBlob],
-                                                            file.name.replace(/\.(heic|heif)$/i, ".jpg"),
-                                                            { type: "image/jpeg" }
-                                                        );
-
-                                                        await updateCategoryMobileImage(cat._id, convertedFile); // ✅ se sube la imagen convertida
-                                                    } catch (err) {
-                                                        console.error("❌ Error convirtiendo HEIC:", err);
-                                                        alert("❌ No se pudo convertir la imagen HEIC. Usa otra imagen.");
-                                                    }
-                                                } else {
-                                                    await updateCategoryMobileImage(cat._id, file); // ✅ imagen normal
-                                                }
+                                                const safe = await ensureJpeg(file);
+                                                if (!safe) return;
+                                                await updateCategoryMobileImage(cat._id, safe);
                                             }}
                                             className="w-full text-sm text-gray-300 file:bg-purple-600 file:border-none file:px-3 file:py-1 file:rounded file:text-white file:cursor-pointer mt-2"
                                         />
+
 
 
 
@@ -1463,18 +1441,16 @@ const AdminDashboard = () => {
                         <input
                             type="file"
                             accept="image/*"
-                            onChange={(e) => {
-                                const file = e.target.files[0];
+                            onChange={async (e) => {
+                                const file = e.target.files?.[0];
                                 if (!file) return;
-                                if (file.type === "image/heic" || file.name.endsWith(".heic") || file.name.endsWith(".HEIC")) {
-                                    alert("❌ Formato HEIC no soportado. Usa JPG o PNG desde tu galería.");
-                                    return;
-                                }
-
-                                setNewCategoryImage(file); // ✅ usamos el setter para guardar la imagen nueva
+                                const safe = await ensureJpeg(file);   // ← te faltaba el await
+                                if (!safe) return;
+                                setNewCategoryImage(safe);
                             }}
                             className="w-full lg:w-1/3 text-sm file:bg-purple-600 file:border-none file:px-4 file:py-2 file:rounded-lg file:text-white file:cursor-pointer"
                         />
+
 
 
 
