@@ -76,32 +76,22 @@ export const AuthProvider = ({ children }) => {
 
     const updateUser = async (updatedData) => {
         try {
-            // 1. Obtener el CSRF token
-            const csrfRes = await fetch("https://clothing-backend.fly.dev/api/csrf-token", {
-                credentials: "include",
-            });
-            const csrfData = await csrfRes.json();
-            const csrfToken = csrfData.csrfToken;
+            const token = localStorage.getItem("token");
+            if (!token) throw new Error("No hay token. Inicia sesión.");
 
-            // 2. Obtener el JWT del localStorage
-            const token = localStorage.getItem("token"); //  Asegúrate que se guarda en el login
-
-            // 3. Hacer la solicitud protegida
             const res = await fetch("https://clothing-backend.fly.dev/api/users/update-profile", {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
-                    "CSRF-Token": csrfToken,
-                    "Authorization": `Bearer ${token}`, //  NECESARIO para pasar el middleware
+                    Authorization: `Bearer ${token}`, // ✅ solo Bearer
                 },
-                credentials: "include",
                 body: JSON.stringify(updatedData),
             });
 
             const data = await res.json();
 
             if (!res.ok) {
-                throw new Error(data.message || "Error al actualizar el perfil");
+                throw new Error(data.message || `Error ${res.status}`);
             }
 
             setUser((prev) => ({
