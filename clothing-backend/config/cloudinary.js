@@ -14,7 +14,8 @@ const storage = new CloudinaryStorage({
     cloudinary,
     params: {
         folder: 'milvnne-products',
-        allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'heic'],
+        resource_type: 'auto',
+        allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif', 'avif'],
         transformation: [
             {
                 quality: "auto:best",  // 👈 compresión inteligente
