@@ -227,6 +227,7 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
       }
     }
 
+    // sends MIlan a email
 
 
     // Pagos async (boleto, etc.)
