@@ -6,7 +6,7 @@ import mongoose from "mongoose";
 
 import Order from "../models/Order.js";
 import Product from "../models/product.js";
-import { sendOrderEmail } from "../utils/mailer.js";
+import { sendOrderEmail, sendAdminNotificationEmail } from "../utils/mailer.js";
 
 dotenv.config();
 
@@ -215,7 +215,19 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
           console.warn("⚠️ Error enviando email:", e.message);
         }
       }
+      try {
+        const enrichedOrder = {
+          ...newOrder.toObject(),
+          products: itemsForEmail, // agrega nombres e imágenes
+        };
+
+        await sendAdminNotificationEmail("milvnne@gmail.com", enrichedOrder);
+      } catch (e) {
+        console.warn("⚠️ Error enviando notificación al admin:", e.message);
+      }
     }
+
+
 
     // Pagos async (boleto, etc.)
     if (event.type === "checkout.session.async_payment_succeeded") {
