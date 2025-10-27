@@ -34,7 +34,7 @@ const App = () => {
         <CartProvider>
           <ToastContainer
             limit={3}
-            position="bottom-center"
+            position="top-center"
             autoClose={3000}
             hideProgressBar={true}
             newestOnTop={true}
