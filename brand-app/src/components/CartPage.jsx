@@ -13,7 +13,7 @@ const stripePromise = loadStripe("pk_live_51QSkyUB3NdXOFdwI4wiO965mtk6IHRXt5Dga4
 // Helper: calcula fee (5% + 0.30) con mínimo $0.50
 const calcStripeFee = (subtotal) => {
     if (subtotal <= 0) return 0;
-    const fee = subtotal * 0.05 + 0.30;
+    const fee = subtotal * 0.08 + 0.30;
     const minFee = Math.max(fee, 0.50);
     return Number(minFee.toFixed(2));
 };
