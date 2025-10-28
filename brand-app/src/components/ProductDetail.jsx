@@ -266,22 +266,17 @@ export default function ProductDetail() {
                         <Accordion title="Shipping & Returns">
                             <ul className="list-disc list-inside text-gray-300 space-y-1">
                                 <li>Standard shipping 3–7 business days.</li>
-                                <li>Free returns within 30 days.</li>
                                 <li>Tracking provided via email.</li>
                             </ul>
                         </Accordion>
-                        <Accordion title="Care">
-                            <p className="text-gray-300">Cold wash, do not bleach, tumble dry low.</p>
-                        </Accordion>
-                        <Accordion title="Materials">
-                            <p className="text-gray-300">100% cotton (soft-touch)</p>
-                        </Accordion>
+
+
                     </div>
                 </div>
             </div>
 
             {/* Sticky mobile bar */}
-            <div className="fixed bottom-0 left-0 right-0 md:hidden backdrop-blur bg-black/70 border-t border-zinc-800 px-4 py-3 flex items-center justify-between">
+            {/* <div className="fixed bottom-0 left-0 right-0 md:hidden backdrop-blur bg-black/70 border-t border-zinc-800 px-4 py-3 flex items-center justify-between">
                 {priceBlock}
                 <button
                     onClick={handleAdd}
@@ -290,7 +285,7 @@ export default function ProductDetail() {
                 >
                     Add
                 </button>
-            </div>
+            </div> */}
         </div>
     );
 }
