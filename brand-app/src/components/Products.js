@@ -199,7 +199,7 @@ const Products = () => {
                         </div>
 
                         {/* Sort */}
-                        <div className="relative">
+                        {/* <div className="relative">
                             <FaSortAmountDown className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                             <select
                                 value={sortBy}
@@ -213,7 +213,7 @@ const Products = () => {
                                 <option value="price-desc">Precio: alto a bajo</option>
                                 <option value="discount">Mayor descuento</option>
                             </select>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
 
@@ -227,8 +227,8 @@ const Products = () => {
                             key={cat}
                             onClick={() => setSelectedCategory(cat)}
                             className={`px-3 py-1.5 rounded-full border text-sm whitespace-nowrap ${selectedCategory === cat
-                                    ? 'bg-fuchsia-600 border-fuchsia-600'
-                                    : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700'
+                                ? 'bg-fuchsia-600 border-fuchsia-600'
+                                : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700'
                                 }`}
                         >
                             {cat}
@@ -358,8 +358,8 @@ const Products = () => {
                                                                         key={idx}
                                                                         type="button"
                                                                         className={`pointer-events-auto text-xs px-3 py-1.5 rounded-full border ${chip.available
-                                                                                ? 'bg-zinc-900 border-zinc-700 hover:border-fuchsia-600'
-                                                                                : 'bg-zinc-800 border-zinc-700 opacity-50 cursor-not-allowed'
+                                                                            ? 'bg-zinc-900 border-zinc-700 hover:border-fuchsia-600'
+                                                                            : 'bg-zinc-800 border-zinc-700 opacity-50 cursor-not-allowed'
                                                                             }`}
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
