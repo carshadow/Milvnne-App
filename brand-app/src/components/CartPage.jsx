@@ -6,24 +6,25 @@ import { toast } from "react-toastify";
 import { CartContext } from "../context/CartContext";
 
 export default function CartPage() {
+    const ctx = useContext(CartContext) || {};
     const {
-        cartItems,            // [{ _id, name, coverImage, price, originalPrice, discount, size, quantity, stock }]
-        updateQty,            // (productId, size, newQty)
-        removeFromCart,       // (productId, size)
-        clearCart,            // () => void
-    } = useContext(CartContext);
-
+        cartItems = [],
+        updateQty = () => { },
+        removeFromCart = () => { },
+        clearCart = () => { },
+    } = ctx;
     const navigate = useNavigate();
 
     // Helpers de precio
     const linePrice = (item) => Number(item.price || 0); // asume price ya aplicado (descuento)
     const lineSubtotal = (item) => Number((linePrice(item) * item.quantity).toFixed(2));
 
-    const subtotal = useMemo(
-        () => Number(cartItems.reduce((sum, it) => sum + lineSubtotal(it), 0).toFixed(2)),
-        [cartItems]
-    );
+    const safeItems = Array.isArray(cartItems) ? cartItems : [];
 
+    const subtotal = useMemo(
+        () => Number(safeItems.reduce((sum, it) => sum + lineSubtotal(it), 0).toFixed(2)),
+        [safeItems]
+    );
     // Si manejas cupones/discount global, cámbialo aquí:
     const discount = 0;
 
