@@ -1,288 +1,350 @@
-import React, { useState, useEffect } from 'react';
-import ProductCard from './ProductCard';
-import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { FaSearch } from 'react-icons/fa';
-import { debounce } from 'lodash';
-import { useCallback } from 'react';
-import Skeleton from 'react-loading-skeleton';
-import 'react-loading-skeleton/dist/skeleton.css';
-const Products = () => {
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { FaSearch, FaFilter, FaSortAmountDown } from "react-icons/fa";
+import { debounce } from "lodash";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
+
+const PAGE_SIZE = 12;
+
+export default function Products() {
     const [products, setProducts] = useState([]);
     const [categoryOrder, setCategoryOrder] = useState([]);
     const [categoryImages, setCategoryImages] = useState({});
-    const [searchQuery, setSearchQuery] = useState('');
-    const [debouncedSearch, setDebouncedSearch] = useState('');
     const [loading, setLoading] = useState(true);
+
+    // Filtros / UI
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
+    const [debouncedSearch, setDebouncedSearch] = useState(searchParams.get("q") || "");
+    const [selectedCategory, setSelectedCategory] = useState(searchParams.get("cat") || "All");
+    const [selectedSize, setSelectedSize] = useState(searchParams.get("size") || "All");
+    const [sortBy, setSortBy] = useState(searchParams.get("sort") || "featured");
+    const [visible, setVisible] = useState(PAGE_SIZE);
 
     // Fetch products
     useEffect(() => {
-        setLoading(true); // Asegura que comienza como true
-        fetch('https://clothing-backend.fly.dev/api/products')
-            .then(res => res.json())
-            .then(data => setProducts(data))
-
-            .catch(err => console.error('Error fetching products:', err))
+        setLoading(true);
+        fetch("https://clothing-backend.fly.dev/api/products")
+            .then((res) => res.json())
+            .then((data) => setProducts(Array.isArray(data) ? data : []))
+            .catch((err) => console.error("Error fetching products:", err))
             .finally(() => setLoading(false));
     }, []);
 
-    // Fetch categories (order + image)
+    // Fetch categories (order + images)
     useEffect(() => {
-        setLoading(true);
-        fetch('https://clothing-backend.fly.dev/api/categories')
-            .then(res => res.json())
-            .then(data => {
-                const order = data.map(c => c.name);
+        fetch("https://clothing-backend.fly.dev/api/categories")
+            .then((res) => res.json())
+            .then((data) => {
+                if (!Array.isArray(data)) return;
+                const order = data.map((c) => c.name);
                 const imageMap = {};
-                data.forEach(c => {
+                data.forEach((c) => {
                     imageMap[c.name] = {
-                        imageUrl: c.imageUrl,       // versión desktop
-                        imageMobile: c.imageMobile  // versión móvil
+                        imageUrl: c.imageUrl,
+                        imageMobile: c.imageMobile,
                     };
                 });
                 setCategoryOrder(order);
-                setCategoryImages(imageMap); //  Guarda el objeto completo
+                setCategoryImages(imageMap);
             })
-            .catch(err => console.error('Error fetching categories:', err))
-            .finally(() => setLoading(false));
+            .catch((err) => console.error("Error fetching categories:", err));
     }, []);
 
-    const categoriesInProducts = [...new Set(products.map(p => p.category))];
-
-    // Ordena basado en el orden guardado
-    const filteredProducts = products.filter((product) =>
-        product.name.toLowerCase().includes(debouncedSearch.toLowerCase())
-    );
-    const debounceSearch = useCallback(
-        debounce((value) => {
-            setDebouncedSearch(value);
-        }, 500),
+    // Debounce search
+    const debouncer = useCallback(
+        debounce((v) => setDebouncedSearch(v), 500),
         []
     );
-
-    // Actualiza el valor del input al escribir
     const handleSearchChange = (e) => {
-        const value = e.target.value;
-        setSearchQuery(value);      // se ve en UI
-        debounceSearch(value);      // se usa para buscar
+        const v = e.target.value;
+        setSearchQuery(v);
+        debouncer(v);
     };
-    // Ordena basado en el orden guardado
-    const groupedProducts = categoryOrder
-        .map((category) => ({
-            type: category,
-            products: filteredProducts.filter((product) => product.category === category),
-        }))
-        .filter((group) => group.products.length > 0);
 
-    // Añade categorías que no estén en el orden
-    const remainingGroups = categoriesInProducts
-        .filter((cat) => !categoryOrder.includes(cat))
-        .map((type) => ({
-            type,
-            products: filteredProducts.filter((product) => product.category === type),
-        }));
+    // Build chips (categorías presentes en productos)
+    const categoriesInProducts = useMemo(() => {
+        const setCat = new Set(products.map((p) => p.category).filter(Boolean));
+        return ["All", ...categoryOrder.filter((c) => setCat.has(c)), ...[...setCat].filter((c) => !categoryOrder.includes(c))];
+    }, [products, categoryOrder]);
 
-    groupedProducts.push(...remainingGroups);
+    // Aplicar filtros
+    const filtered = useMemo(() => {
+        const byText = (p) =>
+            (p.name || "").toLowerCase().includes((debouncedSearch || "").toLowerCase());
+        const byCat = (p) => selectedCategory === "All" || p.category === selectedCategory;
+        const bySize = (p) => {
+            if (selectedSize === "All") return true;
+            if (!p.hasSizes) return false;
+            const qty = p.sizes?.[selectedSize] ?? 0;
+            return qty > 0;
+        };
+        return (products || []).filter((p) => byText(p) && byCat(p) && bySize(p));
+    }, [products, debouncedSearch, selectedCategory, selectedSize]);
+
+    // Sort
+    const sorted = useMemo(() => {
+        const arr = [...filtered];
+        switch (sortBy) {
+            case "price-asc":
+                arr.sort((a, b) => Number(a.price) - Number(b.price));
+                break;
+            case "price-desc":
+                arr.sort((a, b) => Number(b.price) - Number(a.price));
+                break;
+            case "newest":
+                arr.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                break;
+            case "discount":
+                arr.sort((a, b) => Number(b.discount || 0) - Number(a.discount || 0));
+                break;
+            default: // featured
+                // puedes implementar tu propia lógica de “destacados”
+                break;
+        }
+        return arr;
+    }, [filtered, sortBy]);
+
+    // URL sync
+    useEffect(() => {
+        const params = {};
+        if (debouncedSearch) params.q = debouncedSearch;
+        if (selectedCategory && selectedCategory !== "All") params.cat = selectedCategory;
+        if (selectedSize && selectedSize !== "All") params.size = selectedSize;
+        if (sortBy && sortBy !== "featured") params.sort = sortBy;
+        setSearchParams(params, { replace: true });
+    }, [debouncedSearch, selectedCategory, selectedSize, sortBy, setSearchParams]);
+
+    // Reset paginación si cambian filtros
+    useEffect(() => setVisible(PAGE_SIZE), [debouncedSearch, selectedCategory, selectedSize, sortBy]);
+
+    // Banner de categoría (si no es “All”)
+    const activeBanner = selectedCategory !== "All" ? categoryImages[selectedCategory] : null;
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-black to-slate-400 text-white font-sans">
-            {/* HERO SECTION */}
-            <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 1 }}
-                className="relative h-screen w-full overflow-hidden"
-            >
-                {/* Imagen de fondo */}
-                <div
-                    className="absolute inset-0 bg-cover bg-center"
-                    style={{ backgroundImage: 'url("/images/shop2.jpg")' }}
-                />
+        <div className="min-h-screen bg-black text-white">
+            {/* HERO compacto */}
+            <div className="pt-24 px-4 md:px-8 max-w-7xl mx-auto">
+                <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+                    <div>
+                        <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">
+                            Shop <span className="text-fuchsia-500">MILVNNE</span>
+                        </h1>
+                        <p className="text-sm text-gray-400 mt-1">
+                            {sorted.length} producto(s){selectedCategory !== "All" ? ` · ${selectedCategory}` : ""}
+                            {selectedSize !== "All" ? ` · Talla ${selectedSize}` : ""}
+                        </p>
+                    </div>
 
-                {/* Capa oscura y blur */}
-                <div className="absolute inset-0 bg-black/60" />
+                    {/* Search + Sort */}
+                    <div className="flex items-center gap-3 w-full md:w-auto">
+                        <div className="relative flex-1 md:w-80">
+                            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input
+                                value={searchQuery}
+                                onChange={handleSearchChange}
+                                placeholder="Buscar productos…"
+                                className="w-full pl-10 pr-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 outline-none focus:border-fuchsia-600"
+                            />
+                        </div>
 
-                {/* Contenido */}
-                <div className="relative z-10 flex flex-col items-center justify-center text-center h-full px-6">
-                    <motion.h1
-                        className="text-4xl sm:text-6xl md:text-7xl font-extrabold uppercase tracking-tight text-white leading-tight drop-shadow-xl"
-                        initial={{ opacity: 0, y: 40 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 1, delay: 0.3 }}
-                    >
-                        Bienvenidos a<br />
-                        <span className="text-fuchsia-500">MILVNNE STUDIOS</span>
-                    </motion.h1>
-
-                    {/* <motion.p
-                            className="mt-6 text-lg sm:text-xl text-gray-300 max-w-xl"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 1, delay: 0.5 }}
-                        >
-                            Moda deportiva. Urbana. Sin límites. Encuentra tu próxima pieza favorita hoy.
-                        </motion.p> */}
-
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 1, delay: 0.7 }}
-                        className="mt-10"
-                    >
-                        {/* <Link
-                                to="/products"
-                                className="px-8 py-4 bg-fuchsia-500 text-white rounded-full text-lg font-bold shadow-lg hover:bg-fuchsia-600 transition-all"
+                        <div className="relative">
+                            <FaSortAmountDown className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                            <select
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
+                                className="appearance-none pl-9 pr-8 py-2 rounded-xl bg-zinc-900 border border-zinc-800 focus:border-fuchsia-600"
+                                title="Sort"
                             >
-                                Explorar Productos
-                            </Link> */}
-                    </motion.div>
+                                <option value="featured">Destacados</option>
+                                <option value="newest">Más nuevos</option>
+                                <option value="price-asc">Precio: bajo a alto</option>
+                                <option value="price-desc">Precio: alto a bajo</option>
+                                <option value="discount">Mayor descuento</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
-            </motion.div>
 
-            <div className="px-6 md:px-16 mt-12">
-                <div className="flex justify-center md:justify-end">
-                    <div className="relative w-full md:w-1/2">
-                        <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Buscar productos..."
-                            value={searchQuery}
-                            onChange={handleSearchChange}
-                            className="w-full pl-12 pr-6 py-3 rounded-full bg-neutral-900 text-white placeholder-gray-400 border border-fuchsia-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-400 transition"
-                        />
+                {/* Chips de categorías */}
+                <div className="mt-5 flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+                    <span className="text-xs text-gray-400 flex items-center gap-2"><FaFilter /> Categorías:</span>
+                    {categoriesInProducts.map((cat) => (
+                        <button
+                            key={cat}
+                            onClick={() => setSelectedCategory(cat)}
+                            className={`px-3 py-1.5 rounded-full border text-sm whitespace-nowrap ${selectedCategory === cat
+                                    ? "bg-fuchsia-600 border-fuchsia-600"
+                                    : "bg-zinc-900 border-zinc-800 hover:border-zinc-700"
+                                }`}
+                        >
+                            {cat}
+                        </button>
+                    ))}
+
+                    {/* Filtro por talla (si aplica a tus productos) */}
+                    <div className="ml-auto flex items-center gap-2">
+                        <span className="text-xs text-gray-400">Talla:</span>
+                        {["All", "S", "M", "L", "XL"].map((s) => (
+                            <button
+                                key={s}
+                                onClick={() => setSelectedSize(s)}
+                                className={`px-3 py-1.5 rounded-full border text-sm ${selectedSize === s
+                                        ? "bg-fuchsia-600 border-fuchsia-600"
+                                        : "bg-zinc-900 border-zinc-800 hover:border-zinc-700"
+                                    }`}
+                            >
+                                {s}
+                            </button>
+                        ))}
                     </div>
                 </div>
             </div>
 
-
-            {/* PRODUCTS SECTION */}
-            <div className="px-6 md:px-16 py-16">
-                <h2 className="text-4xl font-bold text-center text-fuchsia-500 mb-16 uppercase tracking-wider">
-                    Productos
-                </h2>
-
-                {groupedProducts.map((group, index) => (
-                    <React.Fragment key={group.type}>
-                        {/* Imagen de fondo */}
-                        {loading ? (
-                            // 💀 Loader mientras se cargan las categorías
-                            <div className="w-full h-[60vh] sm:h-[70vh] md:h-[80vh] xl:h-[90vh] my-16 rounded-xl overflow-hidden">
-                                <Skeleton
-                                    height="100%"
-                                    width="100%"
-                                    baseColor="#27272a"
-                                    highlightColor="#3f3f46"
-                                    className="rounded-xl"
+            {/* Banner por categoría seleccionada */}
+            <AnimatePresence mode="wait">
+                {activeBanner && (
+                    <motion.div
+                        key={selectedCategory}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="mt-6 px-4 md:px-8"
+                    >
+                        <div className="max-w-7xl mx-auto relative h-[38vh] md:h-[44vh] overflow-hidden rounded-2xl border border-zinc-800">
+                            <picture>
+                                {activeBanner.imageMobile && (
+                                    <source media="(max-width: 768px)" srcSet={activeBanner.imageMobile} />
+                                )}
+                                <img
+                                    src={activeBanner.imageUrl}
+                                    alt={`${selectedCategory} banner`}
+                                    className="h-full w-full object-cover"
+                                    loading="lazy"
                                 />
-                            </div>
-                        ) : categoryImages[group.type] && (
-                            <motion.div
-                                initial={{ opacity: 0, filter: "grayscale(100%)" }}
-                                whileInView={{ opacity: 1, filter: "grayscale(0%)" }}
-                                transition={{ duration: 1, ease: "easeOut" }}
-                                className="relative w-full h-[60vh] sm:h-[70vh] md:h-[80vh] xl:h-[90vh] overflow-hidden rounded-xl shadow-2xl my-16"
-                            >
-
-                                <picture>
-                                    {categoryImages[group.type]?.imageMobile && (
-                                        <source
-                                            media="(max-width: 768px)"
-                                            srcSet={categoryImages[group.type].imageMobile}
-                                        />
-                                    )}
-
-                                    <img
-                                        src={categoryImages[group.type].imageUrl}
-                                        alt={`${group.type} Collection`}
-                                        className="relative inset-0 w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-                                    />
-                                </picture>
-
-
-
-                                <div className="absolute inset-0 bg-black/40 flex flex-col justify-center items-center text-center px-4 md:px-8">
-                                    <h2 className="text-3xl sm:text-4xl md:text-5xl xl:text-6xl font-extrabold uppercase text-white drop-shadow-xl tracking-wide">
-                                        {group.type}
-                                        <span className="block text-fuchsia-400">Collection</span>
-                                    </h2>
-                                </div>
-                            </motion.div>
-
-
-                        )}
-
-                        {/* Productos de esa categoría */}
-                        <div className="mb-24">
-                            <motion.h3
-                                initial={{ opacity: 0, x: -100 }}
-                                whileInView={{ opacity: 1, x: 0 }}
-                                transition={{ duration: 0.6 }}
-                                className="text-2xl md:text-3xl font-semibold uppercase text-white mb-4 tracking-widest"
-                            >
-                                {group.type}
-                                <span className="block w-24 h-1 mt-2 bg-gradient-to-r from-fuchsia-600 to-pink-400 rounded-full" />
-                            </motion.h3>
-
-                            {/* Carrusel */}
-                            <div className="flex overflow-x-auto gap-8 py-6 scroll-smooth scrollbar-thin scrollbar-thumb-fuchsia-500 scrollbar-track-transparent">
-                                {loading
-                                    ? Array(4).fill().map((_, i) => (
-                                        <div
-                                            key={i}
-                                            className="flex-shrink-0 w-[280px] h-[460px] bg-neutral-800 rounded-xl overflow-hidden relative group shadow-lg p-4"
-                                        >
-                                            <Skeleton height={300} className="rounded" />
-                                            <Skeleton height={20} className="mt-4" />
-                                            <Skeleton width={100} height={16} />
-                                        </div>
-                                    ))
-                                    : group.products.map((product, i) => (
-                                        <motion.div
-                                            key={product._id}
-                                            initial={{ opacity: 0, y: 50 }}
-                                            whileInView={{ opacity: 1, y: 0 }}
-                                            transition={{ duration: 0.5, delay: i * 0.1 }}
-                                            viewport={{ once: true }}
-                                            className="flex-shrink-0 w-[280px] h-[460px] bg-neutral-800 rounded-xl overflow-hidden relative group shadow-lg hover:shadow-2xl transition duration-300"
-                                        >
-                                            <Link to={`/product/${product._id}`} onClick={() => window.scrollTo(0, 0)}>
-                                                <img
-                                                    src={product.coverImage}
-                                                    alt={product.name}
-                                                    className="w-full h-full object-cover transition-opacity duration-500 group-hover:opacity-0"
-                                                />
-                                                <img
-                                                    className="absolute top-0 left-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10"
-                                                    src={product.hoverImage}
-                                                />
-                                                <div className="absolute bottom-4 left-4 right-4 z-20 bg-black/70 text-white p-4 rounded-lg shadow-md">
-                                                    <h4 className="font-bold text-lg truncate">{product.name}</h4>
-
-                                                    {product.discount > 0 ? (
-                                                        <div className="mt-1">
-                                                            <span className="text-xs bg-red-500 text-white font-semibold px-2 py-1 rounded-full mr-2">
-                                                                -{product.discount}% OFF
-                                                            </span>
-                                                            <div className="flex items-baseline gap-2">
-                                                                <span className="text-sm line-through text-gray-400">${Number(product.originalPrice).toFixed(2)}</span>
-                                                                <span className="text-pink-400 font-bold text-lg">${Number(product.price).toFixed(2)}</span>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <p className="text-sm text-pink-300">${Number(product.price).toFixed(2)}</p>
-                                                    )}
-                                                </div>
-                                            </Link>
-                                        </motion.div>
-                                    ))}
-
+                            </picture>
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                            <div className="absolute bottom-4 left-4 md:bottom-6 md:left-6">
+                                <h2 className="text-2xl md:text-4xl font-extrabold tracking-tight">
+                                    {selectedCategory} <span className="text-fuchsia-500">Collection</span>
+                                </h2>
                             </div>
                         </div>
-                    </React.Fragment>
-                ))}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* GRID */}
+            <div className="max-w-7xl mx-auto px-4 md:px-8 py-10">
+                {loading ? (
+                    <SkeletonGrid />
+                ) : sorted.length === 0 ? (
+                    <EmptyState />
+                ) : (
+                    <>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+                            {sorted.slice(0, visible).map((p, idx) => (
+                                <motion.article
+                                    key={p._id}
+                                    initial={{ opacity: 0, y: 12 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ duration: 0.25, delay: idx * 0.02 }}
+                                    className="group relative rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-950"
+                                >
+                                    <Link to={`/product/${p._id}`} onClick={() => window.scrollTo(0, 0)}>
+                                        <div className="relative aspect-[3/4] overflow-hidden">
+                                            <img
+                                                src={p.coverImage}
+                                                alt={p.name}
+                                                className="h-full w-full object-cover transition-opacity duration-300 group-hover:opacity-0"
+                                                loading="lazy"
+                                            />
+                                            {p.hoverImage && (
+                                                <img
+                                                    src={p.hoverImage}
+                                                    alt={`${p.name} alt`}
+                                                    className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                                                    loading="lazy"
+                                                />
+                                            )}
+
+                                            {/* Badges */}
+                                            <div className="absolute top-2 left-2 flex gap-2">
+                                                {Number(p.discount) > 0 && (
+                                                    <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-red-600">-{p.discount}%</span>
+                                                )}
+                                                {p.hasSizes && (
+                                                    <span className="px-2 py-1 rounded-full text-[10px] bg-black/60 border border-zinc-800">
+                                                        S • M • L • XL
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="p-3">
+                                            <h3 className="font-semibold line-clamp-1">{p.name}</h3>
+                                            <div className="mt-1 flex items-center gap-2">
+                                                {Number(p.discount) > 0 && p.originalPrice ? (
+                                                    <>
+                                                        <span className="text-pink-400 font-bold">${Number(p.price).toFixed(2)}</span>
+                                                        <span className="text-xs text-gray-400 line-through">
+                                                            ${Number(p.originalPrice).toFixed(2)}
+                                                        </span>
+                                                    </>
+                                                ) : (
+                                                    <span className="text-white font-semibold">${Number(p.price).toFixed(2)}</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </Link>
+                                </motion.article>
+                            ))}
+                        </div>
+
+                        {/* Load more */}
+                        {visible < sorted.length && (
+                            <div className="flex justify-center mt-8">
+                                <button
+                                    onClick={() => setVisible((v) => v + PAGE_SIZE)}
+                                    className="px-6 py-2 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-fuchsia-600"
+                                >
+                                    Mostrar más
+                                </button>
+                            </div>
+                        )}
+                    </>
+                )}
             </div>
         </div>
     );
-};
+}
 
-export default Products;
+/* ==== Subcomponentes ==== */
+
+function SkeletonGrid() {
+    return (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+            {Array.from({ length: 12 }).map((_, i) => (
+                <div key={i} className="rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-950 p-3">
+                    <Skeleton height={240} baseColor="#18181b" highlightColor="#27272a" />
+                    <Skeleton height={16} className="mt-3" baseColor="#18181b" highlightColor="#27272a" />
+                    <Skeleton height={14} width={80} baseColor="#18181b" highlightColor="#27272a" />
+                </div>
+            ))}
+        </div>
+    );
+}
+
+function EmptyState() {
+    return (
+        <div className="text-center py-24">
+            <div className="mx-auto h-24 w-24 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center">
+                🛒
+            </div>
+            <h2 className="mt-6 text-2xl md:text-3xl font-extrabold">Sin resultados</h2>
+            <p className="mt-2 text-gray-400">Prueba con otro término, categoría o talla.</p>
+        </div>
+    );
+}
