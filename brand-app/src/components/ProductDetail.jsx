@@ -170,13 +170,13 @@ export default function ProductDetail() {
                         <div role="radiogroup" aria-label="Select size">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-sm font-semibold text-gray-200">Select Size</h3>
-                                <button
+                                {/* <button
                                     type="button"
                                     className="text-sm text-fuchsia-400 hover:underline"
                                     onClick={() => toast.info("Open your size guide modal here")}
                                 >
                                     Size Guide
-                                </button>
+                                </button> */}
                             </div>
 
                             <div className="mt-3 grid grid-cols-4 gap-2 sm:gap-3">
