@@ -277,7 +277,8 @@ const Navbar = () => {
                 {isMenuOpen && (
                     <motion.aside
                         key="sheet"
-                        className="fixed top-0 right-0 z-[70] h-full w-11/12 max-w-sm bg-zinc-900 text-gray-200 border-l border-zinc-700 shadow-2xl md:hidden"
+                        className="fixed top-0 right-0 z-[70] h-full w-11/12 max-w-sm bg-zinc-900 bg-opacity-100 text-gray-200 border-l border-zinc-700 shadow-2xl md:hidden"
+
 
                         initial={{ x: "100%" }}
                         animate={{ x: 0 }}
