@@ -61,6 +61,9 @@ const Navbar = () => {
 
     // Estilo del contenedor según ruta/scroll
     const shellClasses = useMemo(() => {
+        if (isMenuOpen) {
+            return "bg-zinc-900/95 text-white shadow-lg backdrop-blur supports-[backdrop-filter]:backdrop-blur";
+        }
         if (isAdminPage) {
             return "bg-zinc-900/95 text-white shadow-lg backdrop-blur supports-[backdrop-filter]:backdrop-blur";
         }
@@ -68,7 +71,7 @@ const Navbar = () => {
             return "bg-white/90 text-black shadow-md backdrop-blur supports-[backdrop-filter]:backdrop-blur";
         }
         return "bg-transparent text-white";
-    }, [isScrolled, isAdminPage]);
+    }, [isMenuOpen, isScrolled, isAdminPage]);
 
     const linkIsActive = (path) => location.pathname === path;
 
@@ -260,7 +263,7 @@ const Navbar = () => {
                 {isMenuOpen && (
                     <motion.div
                         key="overlay"
-                        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
+                        className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm md:hidden"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
@@ -274,7 +277,7 @@ const Navbar = () => {
                 {isMenuOpen && (
                     <motion.aside
                         key="sheet"
-                        className="fixed top-0 right-0 z-50 h-full w-11/12 max-w-sm bg-zinc-900 text-gray-200 border-l border-zinc-700 shadow-2xl md:hidden"
+                        className="fixed top-0 right-0 z-[70] h-full w-11/12 max-w-sm bg-zinc-900 text-gray-200 border-l border-zinc-700 shadow-2xl md:hidden"
 
                         initial={{ x: "100%" }}
                         animate={{ x: 0 }}
