@@ -19,10 +19,10 @@ export default function CartPage() {
     const linePrice = (item) => Number(item.price || 0); // asume price ya aplicado (descuento)
     const lineSubtotal = (item) => Number((linePrice(item) * item.quantity).toFixed(2));
 
-    // const subtotal = useMemo(
-    //     () => Number(cartItems.reduce((sum, it) => sum + lineSubtotal(it), 0).toFixed(2)),
-    //     [cartItems]
-    // );
+    const subtotal = useMemo(
+        () => Number(cartItems.reduce((sum, it) => sum + lineSubtotal(it), 0).toFixed(2)),
+        [cartItems]
+    );
 
     // Si manejas cupones/discount global, cámbialo aquí:
     const discount = 0;
