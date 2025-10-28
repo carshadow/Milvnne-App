@@ -317,10 +317,6 @@ const CartPage = () => {
                                     >
                                         Proceder al pago
                                     </motion.button>
-
-                                    <p className="text-xs text-gray-400 mt-3">
-                                        Pagos seguros con Stripe. Devoluciones gratis dentro de 30 días.
-                                    </p>
                                 </div>
                             </div>
                         </div>

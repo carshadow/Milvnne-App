@@ -258,7 +258,7 @@ const Products = () => {
                                     initial={{ opacity: 0, filter: 'grayscale(100%)' }}
                                     whileInView={{ opacity: 1, filter: 'grayscale(0%)' }}
                                     transition={{ duration: 1, ease: 'easeOut' }}
-                                    className="relative w-full h-[60vh] sm:h-[70vh] md:h-[80vh] xl:h-[90vh] overflow-hidden rounded-xl shadow-2xl my-16"
+                                    className="relative w-full h-[75vh] sm:h-[70vh] md:h-[80vh] xl:h-[90vh] overflow-hidden rounded-xl shadow-2xl my-16"
                                 >
                                     <picture>
                                         {categoryImages[group.type]?.imageMobile && (
