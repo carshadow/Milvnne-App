@@ -1,35 +1,35 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaSearch, FaFilter, FaSortAmountDown } from 'react-icons/fa';
+import { FaSearch, FaFilter, FaSortAmountDown, FaTag } from 'react-icons/fa';
 import { debounce } from 'lodash';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 
 const Products = () => {
+    const navigate = useNavigate();
+
+    // Data
     const [products, setProducts] = useState([]);
     const [categoryOrder, setCategoryOrder] = useState([]);
     const [categoryImages, setCategoryImages] = useState({});
     const [loading, setLoading] = useState(true);
 
-    // ====== MENÚ (Search + Sort + Chips) ======
+    // UI menu
     const [searchQuery, setSearchQuery] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [sortBy, setSortBy] = useState('featured');
 
-    const debouncer = useCallback(
-        debounce((v) => setDebouncedSearch(v), 400),
-        []
-    );
-
+    // Debounce search
+    const debouncer = useCallback(debounce((v) => setDebouncedSearch(v), 400), []);
     const handleSearchChange = (e) => {
         const v = e.target.value;
         setSearchQuery(v);
         debouncer(v);
     };
 
-    // ====== FETCH PRODUCTS ======
+    // Fetch products
     useEffect(() => {
         setLoading(true);
         fetch('https://clothing-backend.fly.dev/api/products')
@@ -39,7 +39,7 @@ const Products = () => {
             .finally(() => setLoading(false));
     }, []);
 
-    // ====== FETCH CATEGORIES (order + images) ======
+    // Fetch categories (order + images)
     useEffect(() => {
         setLoading(true);
         fetch('https://clothing-backend.fly.dev/api/categories')
@@ -50,7 +50,7 @@ const Products = () => {
                 const imageMap = {};
                 data.forEach((c) => {
                     imageMap[c.name] = {
-                        imageUrl: c.imageUrl, // desktop
+                        imageUrl: c.imageUrl,       // desktop
                         imageMobile: c.imageMobile, // mobile
                     };
                 });
@@ -61,7 +61,7 @@ const Products = () => {
             .finally(() => setLoading(false));
     }, []);
 
-    // ====== CATEGORÍAS PRESENTES (para chips) ======
+    // Chips: categorías presentes
     const categoriesInProducts = useMemo(() => {
         const setCat = new Set((products || []).map((p) => p.category).filter(Boolean));
         return [
@@ -71,17 +71,15 @@ const Products = () => {
         ];
     }, [products, categoryOrder]);
 
-    // ====== FILTRADO (texto + categoría) ======
+    // Filtrado por texto + categoría
     const filtered = useMemo(() => {
         const byText = (p) =>
-            (p.name || '')
-                .toLowerCase()
-                .includes((debouncedSearch || '').toLowerCase());
+            (p.name || '').toLowerCase().includes((debouncedSearch || '').toLowerCase());
         const byCat = (p) => selectedCategory === 'All' || p.category === selectedCategory;
         return (products || []).filter((p) => byText(p) && byCat(p));
     }, [products, debouncedSearch, selectedCategory]);
 
-    // ====== ORDEN ======
+    // Orden
     const sortFn = useCallback(
         (a, b) => {
             switch (sortBy) {
@@ -100,7 +98,7 @@ const Products = () => {
         [sortBy]
     );
 
-    // ====== AGRUPACIÓN (respeta tu order y agrega faltantes) ======
+    // Agrupar (respeta order y agrega faltantes)
     const groupedFiltered = useMemo(() => {
         const base = categoryOrder
             .map((cat) => ({
@@ -120,16 +118,35 @@ const Products = () => {
         return [...base, ...remaining];
     }, [filtered, categoryOrder, sortFn]);
 
-    // ====== QUÉ RENDERIZAR (All = todas; o solo la seleccionada) ======
+    // Qué renderizar
     const groupsToRender = useMemo(() => {
         return selectedCategory === 'All'
             ? groupedFiltered
             : groupedFiltered.filter((g) => g.type === selectedCategory);
     }, [groupedFiltered, selectedCategory]);
 
+    // Helpers UI
+    const getSizeChips = (product) => {
+        if (product?.hasSizes && product?.sizes && typeof product.sizes === 'object') {
+            // Orden común de tallas si existen
+            const commonOrder = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+            const keys = Object.keys(product.sizes);
+            const ordered = [
+                ...commonOrder.filter((k) => keys.includes(k)),
+                ...keys.filter((k) => !commonOrder.includes(k)),
+            ];
+            return ordered.map((size) => ({
+                label: size,
+                available: Number(product.sizes[size]) > 0,
+            }));
+        }
+        // Sin tallas: mostrar stock general
+        return [{ label: `Stock: ${Number(product.stock ?? 0)}`, available: Number(product.stock ?? 0) > 0 }];
+    };
+
     return (
-        <div className="min-h-screen bg-gradient-to-b from-black to-slate-400 text-white font-sans">
-            {/* ================= HERO (SIN CAMBIOS) ================= */}
+        <div className="min-h-screen bg-gradient-to-b from-black via-zinc-900 to-black text-white font-sans">
+            {/* ================= HERO ================= */}
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -141,10 +158,8 @@ const Products = () => {
                     className="absolute inset-0 bg-cover bg-center"
                     style={{ backgroundImage: 'url("/images/shop2.jpg")' }}
                 />
-
                 {/* Capa oscura */}
                 <div className="absolute inset-0 bg-black/60" />
-
                 {/* Contenido */}
                 <div className="relative z-10 flex flex-col items-center justify-center text-center h-full px-6">
                     <motion.h1
@@ -159,7 +174,7 @@ const Products = () => {
                 </div>
             </motion.div>
 
-            {/* ================= MENÚ (Search + Sort + Chips) ================= */}
+            {/* ================= MENÚ ================= */}
             <div className="px-6 md:px-16 mt-12">
                 <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
                     <div>
@@ -222,11 +237,11 @@ const Products = () => {
                 </div>
             </div>
 
-            {/* ================= CONTENIDO PRINCIPAL (MISMO FLOW) ================= */}
+            {/* ================= CONTENIDO (banner + carrusel) ================= */}
             <div className="px-6 md:px-16 py-16">
                 {groupsToRender.map((group) => (
                     <React.Fragment key={group.type}>
-                        {/* Banner de categoría (MISMAS ALTURAS Y LOOK) */}
+                        {/* Banner categoría */}
                         {loading ? (
                             <div className="w-full h-[60vh] sm:h-[70vh] md:h-[80vh] xl:h-[90vh] my-16 rounded-xl overflow-hidden">
                                 <Skeleton
@@ -270,7 +285,7 @@ const Products = () => {
                             )
                         )}
 
-                        {/* Carrusel (usa group.products ya filtrados/ordenados) */}
+                        {/* Carrusel */}
                         <div className="mb-24">
                             <motion.h3
                                 initial={{ opacity: 0, x: -100 }}
@@ -296,32 +311,81 @@ const Products = () => {
                                                 <Skeleton width={100} height={16} />
                                             </div>
                                         ))
-                                    : group.products.map((product, i) => (
-                                        <motion.div
-                                            key={product._id}
-                                            initial={{ opacity: 0, y: 50 }}
-                                            whileInView={{ opacity: 1, y: 0 }}
-                                            transition={{ duration: 0.5, delay: i * 0.1 }}
-                                            viewport={{ once: true }}
-                                            className="flex-shrink-0 w-[280px] h-[460px] bg-neutral-800 rounded-xl overflow-hidden relative group shadow-lg hover:shadow-2xl transition duration-300"
-                                        >
-                                            <Link to={`/product/${product._id}`} onClick={() => window.scrollTo(0, 0)}>
-                                                <img
-                                                    src={product.coverImage}
-                                                    alt={product.name}
-                                                    className="w-full h-full object-cover transition-opacity duration-500 group-hover:opacity-0"
-                                                />
-                                                {product.hoverImage && (
-                                                    <img
-                                                        className="absolute top-0 left-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10"
-                                                        src={product.hoverImage}
-                                                        alt={`${product.name} alt`}
-                                                    />
-                                                )}
-                                                <div className="absolute bottom-4 left-4 right-4 z-20 bg-black/70 text-white p-4 rounded-lg shadow-md">
-                                                    <h4 className="font-bold text-lg truncate">{product.name}</h4>
+                                    : group.products.map((product, i) => {
+                                        const sizeChips = getSizeChips(product);
+                                        const hasDiscount = Number(product.discount) > 0 && product.originalPrice;
 
-                                                    {Number(product.discount) > 0 && product.originalPrice ? (
+                                        return (
+                                            <motion.div
+                                                key={product._id}
+                                                initial={{ opacity: 0, y: 50 }}
+                                                whileInView={{ opacity: 1, y: 0 }}
+                                                transition={{ duration: 0.5, delay: i * 0.08 }}
+                                                viewport={{ once: true }}
+                                                className="relative flex-shrink-0 w-[280px] h-[460px] bg-neutral-800 rounded-xl overflow-hidden group shadow-lg hover:shadow-2xl transition duration-300"
+                                            >
+                                                {/* Imagen principal + hover */}
+                                                <Link
+                                                    to={`/product/${product._id}`}
+                                                    onClick={() => window.scrollTo(0, 0)}
+                                                    className="block w-full h-full"
+                                                >
+                                                    <img
+                                                        src={product.coverImage}
+                                                        alt={product.name}
+                                                        className="w-full h-full object-cover transition-opacity duration-500 group-hover:opacity-0"
+                                                    />
+                                                    {product.hoverImage && (
+                                                        <img
+                                                            className="absolute top-0 left-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10"
+                                                            src={product.hoverImage}
+                                                            alt={`${product.name} alt`}
+                                                        />
+                                                    )}
+                                                </Link>
+
+                                                {/* Reveal de tallas / stock (aparece al hover o tap) */}
+                                                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-4">
+                                                    <div className="translate-y-5 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                                                        <div className="bg-black/70 backdrop-blur-md border border-zinc-700 rounded-xl p-3">
+                                                            <div className="flex items-center gap-2 mb-2">
+                                                                <FaTag className="text-fuchsia-400" />
+                                                                <span className="text-sm text-gray-300">Disponibilidad</span>
+                                                            </div>
+                                                            <div className="flex flex-wrap gap-2">
+                                                                {sizeChips.map((chip, idx) => (
+                                                                    <button
+                                                                        key={idx}
+                                                                        type="button"
+                                                                        className={`pointer-events-auto text-xs px-3 py-1.5 rounded-full border ${chip.available
+                                                                                ? 'bg-zinc-900 border-zinc-700 hover:border-fuchsia-600'
+                                                                                : 'bg-zinc-800 border-zinc-700 opacity-50 cursor-not-allowed'
+                                                                            }`}
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            e.preventDefault();
+                                                                            // Navegar al detalle, preselección vía query param (opcional)
+                                                                            if (product.hasSizes && chip.label !== undefined && chip.label !== null) {
+                                                                                navigate(`/product/${product._id}?size=${encodeURIComponent(chip.label)}`);
+                                                                            } else {
+                                                                                navigate(`/product/${product._id}`);
+                                                                            }
+                                                                        }}
+                                                                        disabled={!chip.available}
+                                                                        title={chip.available ? 'Ver detalle' : 'Agotado'}
+                                                                    >
+                                                                        {chip.label}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Info fija (nombre, precio, descuento) */}
+                                                <div className="absolute bottom-4 left-4 right-4 z-10 bg-black/70 text-white p-4 rounded-lg shadow-md">
+                                                    <h4 className="font-bold text-lg truncate">{product.name}</h4>
+                                                    {hasDiscount ? (
                                                         <div className="mt-1">
                                                             <span className="text-xs bg-red-500 text-white font-semibold px-2 py-1 rounded-full mr-2">
                                                                 -{product.discount}% OFF
@@ -339,9 +403,9 @@ const Products = () => {
                                                         <p className="text-sm text-pink-300">${Number(product.price).toFixed(2)}</p>
                                                     )}
                                                 </div>
-                                            </Link>
-                                        </motion.div>
-                                    ))}
+                                            </motion.div>
+                                        );
+                                    })}
                             </div>
                         </div>
                     </React.Fragment>
