@@ -1,6 +1,9 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/authContext';
-import { FaUserCircle, FaEnvelope, FaBoxOpen, FaShoppingBag, FaTimes, FaReceipt } from 'react-icons/fa';
+import {
+    FaUserCircle, FaEnvelope, FaBoxOpen, FaShoppingBag, FaTimes, FaReceipt,
+    FaChevronRight, FaChevronDown
+} from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 
@@ -9,6 +12,29 @@ const safeMoney = (v) => Number(v ?? 0).toFixed(2);
 const getCover = (p) =>
     p?.coverImage ||
     "https://res.cloudinary.com/dkx4n6r0v/image/upload/v1710000000/milvnne-products/default.png";
+
+/* ===== helpers UI para órdenes ===== */
+const chipStyle = (status = '') => {
+    const s = (status || '').toLowerCase();
+    if (s.includes('entregada')) return 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30';
+    if (s.includes('en camino')) return 'bg-amber-500/15 text-amber-300 ring-1 ring-amber-500/30';
+    if (s.includes('paid') || s.includes('pag')) return 'bg-fuchsia-500/15 text-fuchsia-300 ring-1 ring-fuchsia-500/30';
+    return 'bg-zinc-700/30 text-zinc-300 ring-1 ring-white/10';
+};
+
+const OrderSkeleton = () => (
+    <div className="animate-pulse rounded-2xl bg-zinc-900 border border-white/10 p-5 shadow-xl">
+        <div className="flex items-center gap-4">
+            <div className="w-16 h-16 bg-zinc-700 rounded-xl" />
+            <div className="flex-1 space-y-2">
+                <div className="h-4 bg-zinc-700 rounded w-3/4" />
+                <div className="h-3 bg-zinc-700 rounded w-1/2" />
+                <div className="h-3 bg-zinc-800 rounded w-1/3" />
+            </div>
+        </div>
+    </div>
+);
+/* =================================== */
 
 const ProfilePage = () => {
     const { user, logout } = useContext(AuthContext);
@@ -23,18 +49,16 @@ const ProfilePage = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // No bloqueamos por userId; /mine usa el token
         fetchOrders();
         fetchSuggestedProducts();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user]); // si cambia el usuario, reintenta
+    }, [user]);
 
     const fetchOrders = async () => {
         setLoadingOrders(true);
         setOrdersError("");
         try {
             const token = localStorage.getItem('token');
-            console.log("[ProfilePage] token?", token ? `sí (${token.slice(0, 10)}...)` : "NO");
             if (!token) {
                 setOrders([]);
                 setOrdersError("Necesitas iniciar sesión para ver tus órdenes.");
@@ -42,7 +66,6 @@ const ProfilePage = () => {
             }
 
             const url = `${API_URL}/api/orders/mine`;
-            console.log("[ProfilePage] GET", url);
             let res = await fetch(url, {
                 method: "GET",
                 headers: { Authorization: `Bearer ${token}` },
@@ -64,23 +87,18 @@ const ProfilePage = () => {
 
             let data = await res.json().catch(() => []);
             if (!Array.isArray(data)) data = [];
-            console.log("[/mine] órdenes:", data.length);
 
-            // Si no llegaron órdenes, intentamos enlazar guest por email y reintentar
+            // Reclamo de guest si viene vacío
             if (data.length === 0) {
-                console.log("[ProfilePage] 0 órdenes -> intento /orders/claim");
                 const claimRes = await fetch(`${API_URL}/api/orders/claim`, {
                     method: "POST",
                     headers: { Authorization: `Bearer ${token}` },
                     mode: "cors",
                 });
-                const claim = await claimRes.json().catch(() => ({}));
-                console.log("[ProfilePage] claim:", claim);
-
+                await claimRes.json().catch(() => ({}));
                 const res2 = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, mode: "cors" });
                 data = await res2.json().catch(() => []);
                 if (!Array.isArray(data)) data = [];
-                console.log("[/mine] after claim:", data.length);
             }
 
             setOrders(data);
@@ -111,29 +129,17 @@ const ProfilePage = () => {
         navigate('/');
     };
 
-    const OrderSkeleton = () => (
-        <div className="animate-pulse rounded-2xl bg-zinc-900 border border-white/10 p-5 shadow-xl">
-            <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-zinc-700 rounded-xl" />
-                <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-zinc-700 rounded w-3/4" />
-                    <div className="h-3 bg-zinc-700 rounded w-1/2" />
-                    <div className="h-3 bg-zinc-800 rounded w-1/3" />
-                </div>
-            </div>
-        </div>
-    );
-
     const toggleOrderDetails = (orderId) => {
         setExpandedOrderIds((prev) =>
             prev.includes(orderId) ? prev.filter((id) => id !== orderId) : [...prev, orderId]
         );
     };
 
+    /* ==================== UI ==================== */
     return (
         <div className="min-h-screen bg-gradient-to-b from-black to-slate-300 py-20 px-6">
             <div className="max-w-6xl mx-auto space-y-12">
-                {/* Perfil & Pedidos */}
+                {/* ====== TU CARD DE PERFIL ORIGINAL (sin cambios) ====== */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -194,7 +200,7 @@ const ProfilePage = () => {
                         </Link>
                     </div>
 
-                    {/* Órdenes */}
+                    {/* ====== ÓRDENES (UI MEJORADA) ====== */}
                     <div className="bg-gradient-to-br from-zinc-800/60 via-black/70 to-black/90 backdrop-blur-xl p-10 rounded-3xl shadow-2xl text-white">
                         <h3 className="text-2xl font-bold mb-8 flex items-center gap-3 text-white tracking-tight">
                             <FaReceipt className="text-fuchsia-400 text-xl" />
@@ -229,14 +235,14 @@ const ProfilePage = () => {
                                     {recentOrders.map((order) => {
                                         const first = order.products?.[0];
                                         return (
-                                            <motion.div
+                                            <motion.button
                                                 key={order._id}
                                                 onClick={() => {
                                                     setSelectedOrder(order);
                                                     setShowOrderModal(true);
                                                 }}
-                                                className="cursor-pointer relative rounded-2xl bg-zinc-900 border border-white/10 hover:border-fuchsia-400/40 p-5 shadow-xl hover:shadow-fuchsia-500/10 transition-all group"
-                                                whileHover={{ scale: 1.015 }}
+                                                whileHover={{ scale: 1.01 }}
+                                                className="group w-full text-left cursor-pointer relative rounded-2xl bg-zinc-900 border border-white/10 hover:border-fuchsia-400/40 p-5 shadow-xl hover:shadow-fuchsia-500/10 transition-all"
                                             >
                                                 <div className="flex items-center gap-4">
                                                     <img
@@ -253,18 +259,17 @@ const ProfilePage = () => {
                                                                 </span>
                                                             )}
                                                         </p>
-                                                        <p className="text-sm text-gray-300 mt-1">
-                                                            Estado: <span className="text-white">{order.status}</span>
-                                                        </p>
-                                                        <p className="text-sm text-gray-400">
-                                                            Total: ${safeMoney(order.total ?? order.totalAmount)}
-                                                        </p>
-                                                        <p className="text-xs text-gray-500 mt-1">
-                                                            Fecha: {new Date(order.createdAt).toLocaleDateString()}
-                                                        </p>
+                                                        <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
+                                                            <span className={`rounded-full px-2 py-0.5 ${chipStyle(order.status)}`}>
+                                                                {order.status}
+                                                            </span>
+                                                            <span className="text-gray-400">Total: ${safeMoney(order.total ?? order.totalAmount)}</span>
+                                                            <span className="text-gray-500 text-xs">Fecha: {new Date(order.createdAt).toLocaleDateString()}</span>
+                                                        </div>
                                                     </div>
+                                                    <FaChevronRight className="text-zinc-500 group-hover:text-fuchsia-400 transition" />
                                                 </div>
-                                            </motion.div>
+                                            </motion.button>
                                         );
                                     })}
 
@@ -278,45 +283,73 @@ const ProfilePage = () => {
                                             </button>
                                         </div>
                                     )}
+                                </div>
 
-                                    {showOrderModal && selectedOrder && (
-                                        <div className="fixed inset-0 z-50 bg-black bg-opacity-60 flex items-center justify-center">
-                                            <div className="bg-zinc-900 text-white rounded-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto relative">
-                                                <button
-                                                    onClick={() => setShowOrderModal(false)}
-                                                    className="absolute top-3 right-3 text-gray-400 hover:text-white"
-                                                >
-                                                    <FaTimes />
-                                                </button>
-                                                <h2 className="text-xl font-bold mb-6">Detalles de Orden</h2>
-                                                <div className="space-y-4">
-                                                    {selectedOrder?.products?.map((item, idx) => (
-                                                        <div key={idx} className="bg-zinc-800 p-4 rounded-xl flex items-center gap-4 shadow">
-                                                            <img
-                                                                src={getCover(item.product) || item.coverImage}
-                                                                alt={item.product?.name || "Producto"}
-                                                                className="w-12 h-12 object-cover rounded border border-fuchsia-500"
-                                                            />
-                                                            <div className="flex-1">
-                                                                <p className="text-sm font-semibold text-white">
-                                                                    {item.product?.name || "Producto"}
-                                                                </p>
-                                                                {item.size && <p className="text-xs text-gray-400">Talla: {item.size}</p>}
-                                                                <p className="text-xs text-gray-500">Cantidad: {item.quantity}</p>
+                                {/* Modal: Detalles de orden */}
+                                {showOrderModal && selectedOrder && (
+                                    <div
+                                        className="fixed inset-0 z-50 bg-black bg-opacity-60 flex items-center justify-center p-4"
+                                        onClick={() => setShowOrderModal(false)}
+                                    >
+                                        <div
+                                            className="bg-zinc-900 text-white rounded-xl p-6 w-full max-w-2xl max-h-[85vh] overflow-y-auto relative border border-white/10 shadow-2xl"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <button
+                                                onClick={() => setShowOrderModal(false)}
+                                                className="absolute top-3 right-3 text-gray-400 hover:text-white"
+                                                aria-label="Cerrar"
+                                            >
+                                                <FaTimes />
+                                            </button>
+                                            <h2 className="text-xl font-bold mb-2">
+                                                Detalles de Orden #{selectedOrder._id.slice(-6).toUpperCase()}
+                                            </h2>
+                                            <div className="mb-4 flex items-center gap-2 text-sm">
+                                                <span className={`rounded-full px-2 py-0.5 ${chipStyle(selectedOrder.status)}`}>
+                                                    {selectedOrder.status}
+                                                </span>
+                                                <span className="text-gray-400">
+                                                    {new Date(selectedOrder.createdAt).toLocaleString()}
+                                                </span>
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                {selectedOrder?.products?.map((item, idx) => (
+                                                    <div key={idx} className="bg-zinc-800 p-4 rounded-xl flex items-center gap-4 shadow border border-white/10">
+                                                        <img
+                                                            src={getCover(item.product) || item.coverImage}
+                                                            alt={item.product?.name || "Producto"}
+                                                            className="w-12 h-12 object-cover rounded border border-fuchsia-500/60"
+                                                        />
+                                                        <div className="flex-1">
+                                                            <p className="text-sm font-semibold text-white">
+                                                                {item.product?.name || "Producto"}
+                                                            </p>
+                                                            <div className="text-xs text-gray-400 flex gap-4 mt-0.5">
+                                                                {item.size && <span>Talla: {item.size}</span>}
+                                                                <span>Cantidad: {item.quantity}</span>
                                                             </div>
                                                         </div>
-                                                    ))}
-                                                </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            <div className="mt-6 flex items-center justify-between text-sm border-t border-white/10 pt-4">
+                                                <span className="text-gray-400">Total</span>
+                                                <span className="text-white font-semibold">
+                                                    ${safeMoney(selectedOrder.total ?? selectedOrder.totalAmount)}
+                                                </span>
                                             </div>
                                         </div>
-                                    )}
-                                </div>
+                                    </div>
+                                )}
                             </>
                         )}
                     </div>
                 </motion.div>
 
-                {/* Recomendaciones */}
+                {/* ====== Recomendaciones (sin cambios) ====== */}
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -372,9 +405,14 @@ const ProfilePage = () => {
                 </motion.div>
             </div>
 
+            {/* ====== Historial completo (sin tocar tu layout global) ====== */}
             {showAllOrders && (
-                <div className="fixed inset-0 z-50 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center px-4">
-                    <div className="bg-gradient-to-br from-zinc-900 via-black to-zinc-950 text-white rounded-2xl w-full max-w-3xl max-h-[85vh] overflow-y-auto shadow-2xl p-8 relative border border-white/10">
+                <div className="fixed inset-0 z-50 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center px-4"
+                    onClick={() => setShowAllOrders(false)}>
+                    <div
+                        className="bg-gradient-to-br from-zinc-900 via-black to-zinc-950 text-white rounded-2xl w-full max-w-3xl max-h-[85vh] overflow-y-auto shadow-2xl p-8 relative border border-white/10"
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <button
                             onClick={() => setShowAllOrders(false)}
                             className="absolute top-4 right-4 text-gray-400 hover:text-fuchsia-400 transition text-xl"
@@ -388,9 +426,13 @@ const ProfilePage = () => {
                         <div className="space-y-5 divide-y divide-white/10">
                             {olderOrders.map((order) => {
                                 const first = order.products?.[0];
+                                const isOpen = expandedOrderIds.includes(order._id);
                                 return (
                                     <div key={order._id} className="pt-5 px-3 py-2 rounded-xl transition hover:bg-white/5">
-                                        <div className="flex items-center gap-4 cursor-pointer" onClick={() => toggleOrderDetails(order._id)}>
+                                        <button
+                                            className="flex items-center gap-4 w-full text-left"
+                                            onClick={() => toggleOrderDetails(order._id)}
+                                        >
                                             {first?.product ? (
                                                 <img
                                                     src={getCover(first.product) || first.coverImage}
@@ -411,13 +453,20 @@ const ProfilePage = () => {
                                                         </span>
                                                     )}
                                                 </p>
-                                                <p className="text-xs text-fuchsia-400 mt-1">Estado: {order.status}</p>
-                                                <p className="text-xs text-gray-300">Total: ${safeMoney(order.total ?? order.totalAmount)}</p>
-                                                <p className="text-[11px] text-gray-500 mt-1">Fecha: {new Date(order.createdAt).toLocaleDateString()}</p>
+                                                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+                                                    <span className={`rounded-full px-2 py-0.5 ${chipStyle(order.status)}`}>{order.status}</span>
+                                                    <span className="text-gray-400">Total: ${safeMoney(order.total ?? order.totalAmount)}</span>
+                                                    <span className="text-gray-500">Fecha: {new Date(order.createdAt).toLocaleDateString()}</span>
+                                                </div>
                                             </div>
-                                        </div>
+                                            {isOpen ? (
+                                                <FaChevronDown className="text-zinc-500" />
+                                            ) : (
+                                                <FaChevronRight className="text-zinc-500" />
+                                            )}
+                                        </button>
 
-                                        {expandedOrderIds.includes(order._id) && (
+                                        {isOpen && (
                                             <div className="mt-4 ml-20 space-y-3">
                                                 {order.products.map((item, idx) => (
                                                     <div key={idx} className="flex items-center gap-4 bg-zinc-800 p-3 rounded-xl border border-white/10 shadow">
@@ -428,8 +477,10 @@ const ProfilePage = () => {
                                                         />
                                                         <div>
                                                             <p className="text-sm text-white font-semibold">{item.product?.name || "Producto eliminado"}</p>
-                                                            {item.size && <p className="text-xs text-gray-400">Talla: {item.size}</p>}
-                                                            <p className="text-xs text-gray-500">Cantidad: {item.quantity}</p>
+                                                            <div className="text-xs text-gray-400 mt-0.5 flex gap-4">
+                                                                {item.size && <span>Talla: {item.size}</span>}
+                                                                <span>Cantidad: {item.quantity}</span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 ))}

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { FaTimes } from 'react-icons/fa';
+import { FaTimes, FaArrowUp, FaArrowDown, FaTrash, FaMobileAlt, FaDesktop, FaImage } from 'react-icons/fa';
 import { z } from "zod";
 import { useContext } from "react";
 import { AuthContext } from "../context/authContext";
@@ -1024,269 +1024,363 @@ const AdminDashboard = () => {
 
                 {/* MODAL DE EDICIÓN */}
                 {showEditModal && editingProduct && (
-                    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center px-4 sm:px-6">
-                        <div className="w-full max-w-3xl bg-zinc-900 border border-zinc-700 text-white p-8 sm:p-10 rounded-3xl shadow-2xl overflow-y-auto max-h-[95vh] space-y-6">
-                            <h2 className="text-3xl font-bold text-fuchsia-400 text-center mb-4">Editar Producto</h2>
-
-                            {/* Imagen principal */}
-                            <div className="space-y-1">
-                                <label className="text-sm text-gray-300">Imagen Principal (Cover)</label>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
-                                    onChange={async (e) => {
-                                        const file = e.target.files?.[0];
-                                        if (!file) return;
-                                        const safe = await ensureJpeg(file);
-                                        if (!safe) return;
-                                        setEditingProduct(prev => ({ ...prev, newCoverImage: safe }));
-                                    }}
-                                />
-
-                                {editingProduct.coverImage && (
-                                    <img
-                                        src={editingProduct.coverImage}
-                                        alt="Cover actual"
-                                        className="w-24 h-24 object-cover rounded-lg mt-2 border border-zinc-600"
-                                    />
-                                )}
-
-                            </div>
-
-                            {/* Hover image */}
-                            <div className="space-y-1">
-                                <label className="text-sm text-gray-300">Imagen Hover</label>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
-                                    onChange={async (e) => {
-                                        const file = e.target.files?.[0];
-                                        if (!file) return;
-                                        const safe = await ensureJpeg(file);
-                                        if (!safe) return;
-                                        setEditingProduct(prev => ({ ...prev, newHoverImage: safe }));
-                                    }}
-                                />
-
-                                {editingProduct.hoverImage && (
-                                    <img
-                                        src={editingProduct.hoverImage}
-                                        alt="Hover actual"
-                                        className="w-24 h-24 object-cover rounded-lg mt-2 border border-zinc-600"
-                                    />
-                                )}
-
-
-                            </div>
-
-                            {/* Imágenes adicionales */}
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-300">Imágenes Adicionales (máx. 4)</label>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    multiple
-                                    className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600 w-full"
-                                    onChange={async (e) => {
-                                        const selected = Array.from(e.target.files || []);
-                                        if (!selected.length) return;
-
-                                        const converted = [];
-                                        for (const f of selected) {
-                                            const safe = await ensureJpeg(f);
-                                            if (safe) converted.push(safe);
-                                        }
-
-                                        const totalExisting = editingProduct.images?.length || 0;
-                                        const totalNew = (editingProduct.newImages?.length || 0) + converted.length;
-                                        if (totalExisting + totalNew > 4) {
-                                            toast.warning("🚫 Máximo 4 imágenes adicionales permitidas en total.");
-                                            return;
-                                        }
-
-                                        setEditingProduct(prev => ({
-                                            ...prev,
-                                            newImages: [...(prev.newImages || []), ...converted],
-                                        }));
-                                    }}
-                                />
-
-
-                                {/* Vista previa */}
-                                <div className="flex flex-wrap gap-4 mt-3">
-                                    {/* Imágenes actuales */}
-                                    {editingProduct.images?.map((img, index) => (
-                                        <div key={`old-${index}`} className="relative group">
-                                            <img
-                                                src={img}
-                                                alt={`Actual ${index + 1}`}
-                                                className="w-24 h-24 object-cover rounded border border-zinc-600 shadow-md"
-                                            />
-                                            <button
-                                                onClick={() => {
-                                                    const updated = [...editingProduct.images];
-                                                    updated.splice(index, 1);
-                                                    setEditingProduct({ ...editingProduct, images: updated });
-                                                }}
-                                                className="absolute top-1 right-1 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full"
-                                                title="Eliminar"
-                                            >
-                                                ✕
-                                            </button>
-                                        </div>
-                                    ))}
-
-                                    {/* Imágenes nuevas */}
-                                    {editingProduct.newImages?.map((file, index) => (
-                                        <div key={`new-${index}`} className="relative group">
-                                            <img
-                                                src={URL.createObjectURL(file)}
-                                                alt={`Nueva ${index + 1}`}
-                                                className="w-24 h-24 object-cover rounded border border-purple-500 shadow-md"
-                                            />
-                                            <button
-                                                onClick={() => {
-                                                    const updated = [...editingProduct.newImages];
-                                                    updated.splice(index, 1);
-                                                    setEditingProduct({ ...editingProduct, newImages: updated });
-                                                }}
-                                                className="absolute top-1 right-1 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full"
-                                                title="Eliminar"
-                                            >
-                                                ✕
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-
-
-
-                            {/* Nombre */}
-                            <div>
-                                <label className="text-sm text-gray-300">Nombre</label>
-                                <input
-                                    className="w-full bg-zinc-800 border border-zinc-600 p-3 rounded mt-1"
-                                    type="text"
-                                    value={editingProduct.name}
-                                    onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
-                                />
-                                {editingErrors.name && (
-                                    <motion.div className="text-red-500">
-                                        {editingErrors.name}
-                                    </motion.div>
-                                )}
-                            </div>
-
-                            {/* Precio y Descuento */}
-                            <div className="grid sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="text-sm text-gray-300">Precio</label>
-                                    <input
-                                        className="w-full bg-zinc-800 border border-zinc-600 p-3 rounded mt-1"
-                                        type="number"
-                                        value={editingProduct.price}
-                                        onChange={(e) => setEditingProduct({ ...editingProduct, price: e.target.value })}
-                                    />
-
-                                </div>
-
-                                <div>
-                                    <label className="text-sm text-gray-300">Precio Original</label>
-                                    <input
-                                        className="w-full bg-zinc-800 border border-zinc-600 p-3 rounded mt-1"
-                                        type="number"
-                                        value={editingProduct.originalPrice || ""}
-                                        onChange={(e) => {
-                                            const original = parseFloat(e.target.value);
-                                            const discount = parseFloat(editingProduct.discount || 0);
-                                            const discounted = original * (1 - discount / 100);
-                                            setEditingProduct((prev) => ({
-                                                ...prev,
-                                                originalPrice: original,
-                                                price: discounted.toFixed(2),
-                                            }));
-                                        }}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Descuento */}
-                            <div>
-                                <label className="text-sm text-gray-300">Descuento (%)</label>
-                                <input
-                                    className="w-full bg-zinc-800 border border-zinc-600 p-3 rounded mt-1"
-                                    type="number"
-                                    value={editingProduct.discount || ""}
-                                    onChange={(e) => {
-                                        const discount = parseFloat(e.target.value);
-                                        const original = parseFloat(editingProduct.originalPrice || 0);
-                                        const discounted = original * (1 - (discount || 0) / 100);
-                                        setEditingProduct((prev) => ({
-                                            ...prev,
-                                            discount: discount || 0,
-                                            price: discounted.toFixed(2),
-                                        }));
-                                    }}
-                                />
-                            </div>
-
-                            {/* Descripción */}
-                            <div>
-                                <label className="text-sm text-gray-300">Descripción</label>
-                                <textarea
-                                    className="w-full bg-zinc-800 border border-zinc-600 p-3 rounded mt-1 resize-none"
-                                    rows="4"
-                                    value={editingProduct.description}
-                                    onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
-                                />
-                            </div>
-
-                            {/* Tallas */}
-                            <div>
-                                <label className="text-sm text-gray-300">Tallas</label>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-2">
-                                    {["S", "M", "L", "XL"].map((size) => (
-                                        <div key={size} className="flex flex-col">
-                                            <span className="text-xs text-gray-400 mb-1">{size}</span>
-                                            <input
-                                                type="number"
-                                                className="bg-zinc-800 border border-zinc-600 p-2 rounded"
-                                                value={editingProduct.sizes[size] || 0}
-                                                onChange={(e) =>
-                                                    setEditingProduct({
-                                                        ...editingProduct,
-                                                        sizes: { ...editingProduct.sizes, [size]: e.target.value },
-                                                    })
-                                                }
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Botones */}
-                            <div className="flex flex-col sm:flex-row justify-between gap-4 pt-6">
+                    <div
+                        className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center px-4 sm:px-6"
+                        onClick={(e) => {
+                            if (e.target === e.currentTarget) setShowEditModal(false);
+                        }}
+                    >
+                        <div className="w-full max-w-4xl bg-zinc-900/95 border border-zinc-700 text-white rounded-3xl shadow-2xl overflow-hidden">
+                            {/* Header sticky */}
+                            <div className="sticky top-0 z-10 bg-zinc-900/95 border-b border-zinc-800 px-6 sm:px-8 py-4 flex items-center justify-between">
+                                <h2 className="text-xl sm:text-2xl font-bold">
+                                    Editar producto
+                                    <span className="ml-2 text-fuchsia-400 font-semibold">#{String(editingProduct._id || "").slice(-6).toUpperCase()}</span>
+                                </h2>
                                 <button
-                                    className="bg-green-600 w-full sm:w-auto px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition"
-                                    onClick={handleEditProduct}
-                                >
-                                    Guardar
-                                </button>
-                                <button
-                                    className="bg-gray-600 w-full sm:w-auto px-6 py-3 rounded-lg font-semibold hover:bg-gray-700 transition"
                                     onClick={() => setShowEditModal(false)}
+                                    className="rounded-full p-2 hover:bg-zinc-800 transition text-gray-300 hover:text-white"
+                                    aria-label="Cerrar"
+                                    title="Cerrar"
                                 >
-                                    Cancelar
+                                    ✕
                                 </button>
+                            </div>
+
+                            {/* Contenido scrollable */}
+                            <div className="overflow-y-auto max-h-[80vh] p-6 sm:p-8 space-y-8">
+                                {/* Sección: Imágenes */}
+                                <div className="grid lg:grid-cols-2 gap-6">
+                                    {/* Card: Cover */}
+                                    <div className="bg-zinc-950/60 border border-zinc-800 rounded-2xl p-5 space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <h3 className="font-semibold">Imagen principal (Cover)</h3>
+                                            <span className="text-[11px] text-gray-400">Recomendado: 1200×1500</span>
+                                        </div>
+
+                                        {/* Dropzone simple */}
+                                        <label className="block border border-dashed border-zinc-700 rounded-xl p-4 text-center cursor-pointer hover:border-fuchsia-500/40 transition">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                className="hidden"
+                                                onChange={async (e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (!file) return;
+                                                    const safe = await ensureJpeg(file);
+                                                    if (!safe) return;
+                                                    setEditingProduct(prev => ({ ...prev, newCoverImage: safe }));
+                                                }}
+                                            />
+                                            <div className="text-sm text-gray-300">
+                                                <span className="underline">Click</span> o arrastra tu imagen aquí
+                                            </div>
+                                        </label>
+
+                                        {/* Preview */}
+                                        {editingProduct.coverImage && (
+                                            <div className="relative inline-block">
+                                                <img
+                                                    src={editingProduct.coverImage}
+                                                    alt="Cover actual"
+                                                    className="w-24 h-24 object-cover rounded-lg border border-zinc-600 shadow-md"
+                                                />
+                                                <span className="absolute -top-2 -right-2 text-[10px] bg-zinc-800 border border-zinc-700 text-gray-300 px-2 py-0.5 rounded-full">
+                                                    Actual
+                                                </span>
+                                            </div>
+                                        )}
+                                        {editingProduct.newCoverImage && (
+                                            <div className="relative inline-block">
+                                                <img
+                                                    src={URL.createObjectURL(editingProduct.newCoverImage)}
+                                                    alt="Cover nuevo"
+                                                    className="w-24 h-24 object-cover rounded-lg border border-fuchsia-600/50 shadow-md"
+                                                />
+                                                <button
+                                                    onClick={() => setEditingProduct(prev => ({ ...prev, newCoverImage: undefined }))}
+                                                    className="absolute -top-2 -right-2 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full"
+                                                    title="Quitar"
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Card: Hover */}
+                                    <div className="bg-zinc-950/60 border border-zinc-800 rounded-2xl p-5 space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <h3 className="font-semibold">Imagen hover</h3>
+                                            <span className="text-[11px] text-gray-400">Opcional</span>
+                                        </div>
+
+                                        <label className="block border border-dashed border-zinc-700 rounded-xl p-4 text-center cursor-pointer hover:border-fuchsia-500/40 transition">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                className="hidden"
+                                                onChange={async (e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (!file) return;
+                                                    const safe = await ensureJpeg(file);
+                                                    if (!safe) return;
+                                                    setEditingProduct(prev => ({ ...prev, newHoverImage: safe }));
+                                                }}
+                                            />
+                                            <div className="text-sm text-gray-300">
+                                                <span className="underline">Click</span> o arrastra tu imagen aquí
+                                            </div>
+                                        </label>
+
+                                        {/* Previews */}
+                                        <div className="flex items-center gap-4">
+                                            {editingProduct.hoverImage && (
+                                                <div className="relative">
+                                                    <img
+                                                        src={editingProduct.hoverImage}
+                                                        alt="Hover actual"
+                                                        className="w-20 h-20 object-cover rounded-lg border border-zinc-600 shadow"
+                                                    />
+                                                    <span className="absolute -top-2 -right-2 text-[10px] bg-zinc-800 border border-zinc-700 text-gray-300 px-2 py-0.5 rounded-full">
+                                                        Actual
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {editingProduct.newHoverImage && (
+                                                <div className="relative">
+                                                    <img
+                                                        src={URL.createObjectURL(editingProduct.newHoverImage)}
+                                                        alt="Hover nuevo"
+                                                        className="w-20 h-20 object-cover rounded-lg border border-fuchsia-600/50 shadow"
+                                                    />
+                                                    <button
+                                                        onClick={() => setEditingProduct(prev => ({ ...prev, newHoverImage: undefined }))}
+                                                        className="absolute -top-2 -right-2 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full"
+                                                        title="Quitar"
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Card: Imágenes adicionales */}
+                                <div className="bg-zinc-950/60 border border-zinc-800 rounded-2xl p-5">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h3 className="font-semibold">Imágenes adicionales</h3>
+                                        <span className="text-[11px] text-gray-400">
+                                            Máximo 4 (incluye las actuales y nuevas)
+                                        </span>
+                                    </div>
+
+                                    <label className="block border border-dashed border-zinc-700 rounded-xl p-4 text-center cursor-pointer hover:border-fuchsia-500/40 transition">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            multiple
+                                            className="hidden"
+                                            onChange={async (e) => {
+                                                const selected = Array.from(e.target.files || []);
+                                                if (!selected.length) return;
+
+                                                const converted = [];
+                                                for (const f of selected) {
+                                                    const safe = await ensureJpeg(f);
+                                                    if (safe) converted.push(safe);
+                                                }
+
+                                                const totalExisting = editingProduct.images?.length || 0;
+                                                const totalNew = (editingProduct.newImages?.length || 0) + converted.length;
+                                                if (totalExisting + totalNew > 4) {
+                                                    toast.warning("🚫 Máximo 4 imágenes adicionales permitidas en total.");
+                                                    return;
+                                                }
+
+                                                setEditingProduct(prev => ({
+                                                    ...prev,
+                                                    newImages: [...(prev.newImages || []), ...converted],
+                                                }));
+                                            }}
+                                        />
+                                        <div className="text-sm text-gray-300">
+                                            <span className="underline">Click</span> o arrastra varias imágenes
+                                        </div>
+                                    </label>
+
+                                    {/* Grid de previews pequeño y consistente */}
+                                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-4 mt-4">
+                                        {/* Actuales */}
+                                        {editingProduct.images?.map((img, index) => (
+                                            <div key={`old-${index}`} className="relative group">
+                                                <img
+                                                    src={img}
+                                                    alt={`Actual ${index + 1}`}
+                                                    className="w-24 h-24 object-cover rounded-lg border border-zinc-600 shadow-md"
+                                                />
+                                                <button
+                                                    onClick={() => {
+                                                        const updated = [...editingProduct.images];
+                                                        updated.splice(index, 1);
+                                                        setEditingProduct({ ...editingProduct, images: updated });
+                                                    }}
+                                                    className="absolute -top-2 -right-2 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full opacity-90 hover:opacity-100"
+                                                    title="Eliminar"
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        ))}
+
+                                        {/* Nuevas */}
+                                        {editingProduct.newImages?.map((file, index) => (
+                                            <div key={`new-${index}`} className="relative group">
+                                                <img
+                                                    src={URL.createObjectURL(file)}
+                                                    alt={`Nueva ${index + 1}`}
+                                                    className="w-24 h-24 object-cover rounded-lg border border-fuchsia-600/50 shadow-md"
+                                                />
+                                                <button
+                                                    onClick={() => {
+                                                        const updated = [...editingProduct.newImages];
+                                                        updated.splice(index, 1);
+                                                        setEditingProduct({ ...editingProduct, newImages: updated });
+                                                    }}
+                                                    className="absolute -top-2 -right-2 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full opacity-90 hover:opacity-100"
+                                                    title="Eliminar"
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Card: Datos del producto */}
+                                <div className="bg-zinc-950/60 border border-zinc-800 rounded-2xl p-5 space-y-5">
+                                    {/* Nombre */}
+                                    <div>
+                                        <label className="text-sm text-gray-300">Nombre</label>
+                                        <input
+                                            className="w-full bg-zinc-900 border border-zinc-700 p-3 rounded-lg mt-1 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/40"
+                                            type="text"
+                                            value={editingProduct.name}
+                                            onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                                        />
+                                        {editingErrors.name && (
+                                            <motion.div className="text-red-500 text-sm mt-1">
+                                                {editingErrors.name}
+                                            </motion.div>
+                                        )}
+                                    </div>
+
+                                    {/* Precio / Original / Descuento */}
+                                    <div className="grid sm:grid-cols-3 gap-4">
+                                        <div>
+                                            <label className="text-sm text-gray-300">Precio</label>
+                                            <input
+                                                className="w-full bg-zinc-900 border border-zinc-700 p-3 rounded-lg mt-1 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/40"
+                                                type="number"
+                                                value={editingProduct.price}
+                                                onChange={(e) => setEditingProduct({ ...editingProduct, price: e.target.value })}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="text-sm text-gray-300">Precio original</label>
+                                            <input
+                                                className="w-full bg-zinc-900 border border-zinc-700 p-3 rounded-lg mt-1 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/40"
+                                                type="number"
+                                                value={editingProduct.originalPrice || ""}
+                                                onChange={(e) => {
+                                                    const original = parseFloat(e.target.value);
+                                                    const discount = parseFloat(editingProduct.discount || 0);
+                                                    const discounted = original * (1 - (isNaN(discount) ? 0 : discount) / 100);
+                                                    setEditingProduct((prev) => ({
+                                                        ...prev,
+                                                        originalPrice: isNaN(original) ? "" : original,
+                                                        price: isNaN(discounted) ? prev.price : discounted.toFixed(2),
+                                                    }));
+                                                }}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="text-sm text-gray-300">Descuento (%)</label>
+                                            <input
+                                                className="w-full bg-zinc-900 border border-zinc-700 p-3 rounded-lg mt-1 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/40"
+                                                type="number"
+                                                value={editingProduct.discount || ""}
+                                                onChange={(e) => {
+                                                    const discount = parseFloat(e.target.value);
+                                                    const original = parseFloat(editingProduct.originalPrice || 0);
+                                                    const discounted = original * (1 - (isNaN(discount) ? 0 : discount) / 100);
+                                                    setEditingProduct((prev) => ({
+                                                        ...prev,
+                                                        discount: isNaN(discount) ? 0 : discount,
+                                                        price: isNaN(discounted) ? prev.price : discounted.toFixed(2),
+                                                    }));
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Descripción */}
+                                    <div>
+                                        <label className="text-sm text-gray-300">Descripción</label>
+                                        <textarea
+                                            className="w-full bg-zinc-900 border border-zinc-700 p-3 rounded-lg mt-1 resize-y min-h-[110px] focus:outline-none focus:ring-2 focus:ring-fuchsia-500/40"
+                                            value={editingProduct.description}
+                                            onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
+                                        />
+                                    </div>
+
+                                    {/* Tallas */}
+                                    <div>
+                                        <label className="text-sm text-gray-300">Tallas</label>
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-2">
+                                            {["S", "M", "L", "XL"].map((size) => (
+                                                <div key={size} className="bg-zinc-900 border border-zinc-700 rounded-lg p-3">
+                                                    <span className="text-xs text-gray-400">{size}</span>
+                                                    <input
+                                                        type="number"
+                                                        className="mt-1 w-full bg-zinc-950 border border-zinc-800 p-2 rounded focus:outline-none focus:ring-2 focus:ring-fuchsia-500/40"
+                                                        value={editingProduct.sizes?.[size] || 0}
+                                                        onChange={(e) =>
+                                                            setEditingProduct({
+                                                                ...editingProduct,
+                                                                sizes: { ...(editingProduct.sizes || {}), [size]: e.target.value },
+                                                            })
+                                                        }
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Footer acciones */}
+                                <div className="flex flex-col sm:flex-row justify-between gap-3 pt-2">
+                                    <button
+                                        className="bg-green-600 w-full sm:w-auto px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition"
+                                        onClick={handleEditProduct}
+                                    >
+                                        Guardar
+                                    </button>
+                                    <button
+                                        className="bg-zinc-700 w-full sm:w-auto px-6 py-3 rounded-lg font-semibold hover:bg-zinc-600 transition"
+                                        onClick={() => setShowEditModal(false)}
+                                    >
+                                        Cancelar
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-
                 )}
+
             </div>
 
             <motion.div
@@ -1300,62 +1394,58 @@ const AdminDashboard = () => {
                 </h2>
 
                 {/* Tabla de categorías */}
-                <div className="overflow-x-auto rounded-xl shadow-lg border border-zinc-700">
-                    <table className="min-w-full bg-zinc-800 border-separate border-spacing-y-2">
-                        <thead>
-                            <tr className="text-left text-sm text-gray-300 uppercase bg-zinc-900">
-                                <th className="p-4">Imagen</th>
-                                <th className="p-4">Nombre</th>
-                                <th className="p-4">Cambiar Imagen</th>
-                                <th className="p-4 text-center">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {categories.map((cat, index) => (
-                                <tr key={cat._id} className="bg-zinc-700/50 backdrop-blur-xl hover:bg-zinc-700 transition rounded-lg">
-                                    {/* Imagen preview */}
-                                    {/* Imagen preview (desktop + mobile si existe) */}
-                                    <td className="p-4 space-y-2">
-                                        {cat.imageUrl ? (
-                                            <div>
-                                                <p className="text-xs text-gray-400 mb-1">Desktop</p>
-                                                <img
-                                                    src={cat.imageUrl}
-                                                    alt={`${cat.name} desktop`}
-                                                    className="w-16 h-16 object-cover rounded-lg border border-zinc-600 shadow-md"
-                                                />
-                                            </div>
-                                        ) : (
-                                            <span className="text-gray-400">Sin imagen desktop</span>
-                                        )}
+                <div className="rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-br from-zinc-900 via-black to-zinc-950">
+                    {/* Header */}
+                    <div className="px-5 py-4 flex items-center justify-between border-b border-white/10">
+                        <h3 className="text-lg font-semibold text-white tracking-tight">Categorías</h3>
+                        <span className="text-xs text-gray-400">{categories?.length ?? 0} items</span>
+                    </div>
 
-                                        {cat.imageMobile ? (
-                                            <div>
-                                                <p className="text-xs text-purple-400 mt-2">Mobile</p>
-                                                <img
-                                                    src={cat.imageMobile}
-                                                    alt={`${cat.name} mobile`}
-                                                    className="w-16 h-16 object-cover rounded-lg border border-purple-500 shadow-md"
-                                                />
-                                            </div>
-                                        ) : (
-                                            <p className="text-xs text-gray-500 mt-2 italic">Sin imagen mobile</p>
-                                        )}
-                                    </td>
+                    {/* Mobile cards (sm-) */}
+                    {/* Mobile cards (sm-) — versión con imágenes pequeñas apiladas */}
+                    <div className="sm:hidden divide-y divide-white/5">
+                        {categories.map((cat, index) => (
+                            <div key={cat._id} className="p-4 space-y-5">
+                                {/* Nombre */}
+                                <input
+                                    type="text"
+                                    value={cat.name}
+                                    onChange={(e) => renameCategory(cat._id, e.target.value)}
+                                    className="w-full bg-zinc-900/60 ring-1 ring-white/10 focus:ring-fuchsia-500/40 outline-none text-sm text-white px-3 py-2 rounded-lg placeholder:text-gray-500"
+                                    placeholder="Nombre de categoría"
+                                />
 
-
-                                    {/* Nombre editable */}
-                                    <td className="p-4">
-                                        <input
-                                            type="text"
-                                            value={cat.name}
-                                            onChange={(e) => renameCategory(cat._id, e.target.value)}
-                                            className="bg-zinc-800 border border-zinc-600 p-2 rounded w-full text-sm focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
+                                {/* Imagen Desktop (cuadro pequeño arriba) */}
+                                <div className="flex flex-col items-center">
+                                    <div className="text-[11px] text-gray-300 mb-2 inline-flex items-center gap-1">
+                                        <FaDesktop className="opacity-70" /> Desktop
+                                    </div>
+                                    <div className="w-32 h-32 rounded-xl overflow-hidden ring-1 ring-white/10">
+                                        <img
+                                            src={
+                                                cat.imageUrl ||
+                                                "https://res.cloudinary.com/dkx4n6r0v/image/upload/v1710000000/milvnne-products/default.png"
+                                            }
+                                            alt={`${cat.name} desktop`}
+                                            className="w-full h-full object-cover"
                                         />
-                                    </td>
+                                    </div>
 
-                                    {/* Input para cambiar imagen */}
-                                    <td className="p-4">
+                                    {/* Chip Desktop */}
+                                    <span
+                                        className={`mt-2 inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] ring-1
+          ${cat.imageUrl
+                                                ? "bg-emerald-600/20 text-emerald-200 ring-emerald-400/40"
+                                                : "bg-zinc-800/80 text-zinc-300 ring-white/10"}`}
+                                    >
+                                        <FaDesktop /> {cat.imageUrl ? "Con imagen" : "Sin imagen"}
+                                    </span>
+
+                                    {/* Uploader Desktop */}
+                                    <label className="block mt-3 w-full">
+                                        <span className="text-[11px] text-gray-300 mb-1 inline-flex items-center gap-1">
+                                            <FaImage className="opacity-70" /> Cambiar imagen (Desktop)
+                                        </span>
                                         <input
                                             type="file"
                                             accept="image/*"
@@ -1366,10 +1456,43 @@ const AdminDashboard = () => {
                                                 if (!safe) return;
                                                 updateCategoryImage(cat._id, safe);
                                             }}
-                                            className="w-full text-sm text-gray-300 file:bg-fuchsia-600 file:border-none file:px-3 file:py-1 file:rounded file:text-white file:cursor-pointer"
+                                            className="block w-full text-xs text-gray-300 file:bg-zinc-800 file:ring-1 file:ring-white/10 file:px-3 file:py-1.5 file:rounded-md file:text-white file:cursor-pointer hover:file:bg-zinc-700 transition"
                                         />
+                                    </label>
+                                </div>
 
+                                {/* Imagen Mobile (cuadro pequeño abajo) */}
+                                <div className="flex flex-col items-center">
+                                    <div className="text-[11px] text-white mb-2 inline-flex items-center gap-1">
+                                        <FaMobileAlt className="opacity-90" /> Mobile
+                                    </div>
+                                    <div className="w-32 h-32 rounded-xl overflow-hidden ring-1 ring-fuchsia-400/40">
+                                        <img
+                                            src={
+                                                cat.imageMobile ||
+                                                cat.imageUrl ||
+                                                "https://res.cloudinary.com/dkx4n6r0v/image/upload/v1710000000/milvnne-products/default.png"
+                                            }
+                                            alt={`${cat.name} mobile`}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    </div>
 
+                                    {/* Chip Mobile (más contraste) */}
+                                    <span
+                                        className={`mt-2 inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] ring-1
+          ${cat.imageMobile
+                                                ? "bg-fuchsia-600 text-white ring-fuchsia-400/60"
+                                                : "bg-zinc-800/80 text-zinc-300 ring-white/10"}`}
+                                    >
+                                        <FaMobileAlt /> {cat.imageMobile ? "Con imagen (Mobile)" : "Sin imagen (Mobile)"}
+                                    </span>
+
+                                    {/* Uploader Mobile */}
+                                    <label className="block mt-3 w-full">
+                                        <span className="text-[11px] text-white mb-1 inline-flex items-center gap-1">
+                                            <FaImage className="opacity-90" /> Cambiar imagen (Mobile)
+                                        </span>
                                         <input
                                             type="file"
                                             accept="image/*"
@@ -1380,88 +1503,308 @@ const AdminDashboard = () => {
                                                 if (!safe) return;
                                                 await updateCategoryMobileImage(cat._id, safe);
                                             }}
-                                            className="w-full text-sm text-gray-300 file:bg-purple-600 file:border-none file:px-3 file:py-1 file:rounded file:text-white file:cursor-pointer mt-2"
+                                            className="block w-full text-xs text-white file:bg-fuchsia-700 file:ring-1 file:ring-fuchsia-300/60 file:px-3 file:py-1.5 file:rounded-md file:text-white file:cursor-pointer hover:file:bg-fuchsia-600 transition"
                                         />
+                                    </label>
+
+                                    <small className="text-[11px] text-gray-400 mt-2 block text-center">
+                                        Opcional — sube una imagen distinta para mobile si lo necesitas.
+                                    </small>
+                                </div>
+
+                                {/* Acciones */}
+                                <div className="pt-3 flex items-center justify-center gap-2">
+                                    <button
+                                        onClick={() => moveCategory(index, -1)}
+                                        disabled={index === 0}
+                                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm bg-zinc-800 hover:bg-zinc-700 text-white ring-1 ring-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                                        title="Subir"
+                                    >
+                                        <FaArrowUp /> Subir
+                                    </button>
+                                    <button
+                                        onClick={() => moveCategory(index, 1)}
+                                        disabled={index === categories.length - 1}
+                                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm bg-zinc-800 hover:bg-zinc-700 text-white ring-1 ring-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                                        title="Bajar"
+                                    >
+                                        <FaArrowDown /> Bajar
+                                    </button>
+                                    <button
+                                        onClick={() => deleteCategory(cat._id)}
+                                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm bg-red-600 hover:bg-red-700 text-white transition"
+                                        title="Eliminar"
+                                    >
+                                        <FaTrash /> Eliminar
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
 
 
 
-
-
-                                        <small className="text-xs text-gray-400">Opcional – solo si necesitas una imagen distinta para mobile</small>
-                                    </td>
-
-                                    {/* Acciones */}
-                                    <td className="p-4 text-center">
-                                        <div className="flex justify-center gap-2">
-                                            <button
-                                                onClick={() => moveCategory(index, -1)}
-                                                className="bg-zinc-700 hover:bg-zinc-600 text-white px-2 py-1 rounded transition"
-                                                title="Subir"
-                                            >
-                                                ⬆
-                                            </button>
-                                            <button
-                                                onClick={() => moveCategory(index, 1)}
-                                                className="bg-zinc-700 hover:bg-zinc-600 text-white px-2 py-1 rounded transition"
-                                                title="Bajar"
-                                            >
-                                                ⬇
-                                            </button>
-                                            <button
-                                                onClick={() => deleteCategory(cat._id)}
-                                                className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded transition"
-                                                title="Eliminar"
-                                            >
-                                                🗑
-                                            </button>
-                                        </div>
-                                    </td>
+                    {/* Desktop table (sm+) */}
+                    <div className="hidden sm:block overflow-x-auto">
+                        <table className="min-w-full border-separate border-spacing-y-2">
+                            <thead className="sticky top-0 z-10">
+                                <tr className="text-left text-[12px] tracking-wider text-gray-300 uppercase bg-zinc-900/80 backdrop-blur supports-[backdrop-filter]:bg-zinc-900/60">
+                                    <th className="p-3 rounded-l-xl">Imagen</th>
+                                    <th className="p-3">Nombre</th>
+                                    <th className="p-3">Cambiar Imagen</th>
+                                    <th className="p-3 text-center rounded-r-xl">Acciones</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody>
+                                {categories.map((cat, index) => (
+                                    <tr key={cat._id} className="bg-zinc-800/60 hover:bg-zinc-800 transition rounded-xl">
+                                        {/* Imagen preview */}
+                                        <td className="p-4">
+                                            <div className="flex items-center gap-4">
+                                                {/* Desktop img */}
+                                                <div className="relative">
+                                                    <img
+                                                        src={cat.imageUrl || "https://res.cloudinary.com/dkx4n6r0v/image/upload/v1710000000/milvnne-products/default.png"}
+                                                        alt={`${cat.name} desktop`}
+                                                        className="w-16 h-16 object-cover rounded-lg ring-1 ring-white/10"
+                                                    />
+                                                    <span
+                                                        className={`absolute -bottom-2 left-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] ring-1
+                    ${cat.imageUrl ? "bg-emerald-500/10 text-emerald-300 ring-emerald-500/30" : "bg-zinc-700/40 text-zinc-300 ring-white/10"}`}
+                                                    >
+                                                        <FaDesktop /> {cat.imageUrl ? "Desktop" : "Sin desktop"}
+                                                    </span>
+                                                </div>
 
-                {/* Añadir nueva categoría */}
-                <div className="mt-14 bg-zinc-800 border border-zinc-700 p-6 rounded-2xl shadow-xl space-y-6">
-                    <h3 className="text-2xl font-bold text-fuchsia-300 text-center">Agregar Nueva Categoría</h3>
+                                                {/* Mobile img */}
+                                                <div className="relative">
+                                                    <img
+                                                        src={cat.imageMobile || cat.imageUrl || "https://res.cloudinary.com/dkx4n6r0v/image/upload/v1710000000/milvnne-products/default.png"}
+                                                        alt={`${cat.name} mobile`}
+                                                        className={`w-16 h-16 object-cover rounded-lg ring-1 ${cat.imageMobile ? "ring-fuchsia-500/30" : "ring-white/10"}`}
+                                                    />
+                                                    <span
+                                                        className={`absolute -bottom-2 left-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] ring-1
+                    ${cat.imageMobile ? "bg-fuchsia-500/10 text-fuchsia-300 ring-fuchsia-500/30" : "bg-zinc-700/40 text-zinc-300 ring-white/10"}`}
+                                                    >
+                                                        <FaMobileAlt /> {cat.imageMobile ? "Mobile" : "Sin mobile"}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </td>
 
-                    <div className="flex flex-col lg:flex-row gap-6">
-                        <input
-                            type="text"
-                            placeholder="Nombre nueva categoría"
-                            value={newCategory}
-                            onChange={(e) => setNewCategory(e.target.value)}
-                            className="w-full lg:w-1/3 bg-zinc-700 border border-zinc-600 p-3 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
-                        />
+                                        {/* Nombre editable */}
+                                        <td className="p-4 align-top">
+                                            <input
+                                                type="text"
+                                                value={cat.name}
+                                                onChange={(e) => renameCategory(cat._id, e.target.value)}
+                                                className="bg-zinc-900/60 ring-1 ring-white/10 focus:ring-fuchsia-500/40 outline-none text-sm text-white px-3 py-2 rounded-lg w-full"
+                                            />
+                                        </td>
 
+                                        {/* Inputs de imagen */}
+                                        <td className="p-4 align-top">
+                                            <div className="grid grid-cols-2 gap-3 items-start">
+                                                <label className="block">
+                                                    <span className="text-[11px] text-gray-400 mb-1 inline-flex items-center gap-1">
+                                                        <FaDesktop className="opacity-70" /> Desktop
+                                                    </span>
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={async (e) => {
+                                                            const file = e.target.files?.[0];
+                                                            if (!file) return;
+                                                            const safe = await ensureJpeg(file);
+                                                            if (!safe) return;
+                                                            updateCategoryImage(cat._id, safe);
+                                                        }}
+                                                        className="block w-full text-xs text-gray-300 file:bg-zinc-800 file:ring-1 file:ring-white/10 file:px-3 file:py-1.5 file:rounded-md file:text-white file:cursor-pointer hover:file:bg-zinc-700 transition"
+                                                    />
+                                                </label>
 
+                                                <label className="block">
+                                                    <span className="text-[11px] text-gray-400 mb-1 inline-flex items-center gap-1">
+                                                        <FaMobileAlt className="opacity-70" /> Mobile
+                                                    </span>
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={async (e) => {
+                                                            const file = e.target.files?.[0];
+                                                            if (!file) return;
+                                                            const safe = await ensureJpeg(file);
+                                                            if (!safe) return;
+                                                            await updateCategoryMobileImage(cat._id, safe);
+                                                        }}
+                                                        className="block w-full text-xs text-gray-300 file:bg-zinc-800 file:ring-1 file:ring-white/10 file:px-3 file:py-1.5 file:rounded-md file:text-white file:cursor-pointer hover:file:bg-zinc-700 transition"
+                                                    />
+                                                </label>
+                                            </div>
+                                            <small className="text-[11px] text-gray-500 mt-2 inline-block">
+                                                Sube una imagen distinta para mobile si lo necesitas.
+                                            </small>
+                                        </td>
 
-
-                        <input
-                            type="file"
-                            accept="image/*"
-                            onChange={async (e) => {
-                                const file = e.target.files?.[0];
-                                if (!file) return;
-                                const safe = await ensureJpeg(file);   // ← te faltaba el await
-                                if (!safe) return;
-                                setNewCategoryImage(safe);
-                            }}
-                            className="w-full lg:w-1/3 text-sm file:bg-purple-600 file:border-none file:px-4 file:py-2 file:rounded-lg file:text-white file:cursor-pointer"
-                        />
-
-
-
-
-                        <button
-                            onClick={createCategory}
-                            className="px-6 py-3 bg-fuchsia-500 hover:bg-fuchsia-600 text-white font-semibold rounded-lg transition w-full lg:w-auto"
-                        >
-                            Agregar
-                        </button>
+                                        {/* Acciones */}
+                                        <td className="p-4 text-center align-top">
+                                            <div className="flex justify-center gap-2">
+                                                <button
+                                                    onClick={() => moveCategory(index, -1)}
+                                                    disabled={index === 0}
+                                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm bg-zinc-800 hover:bg-zinc-700 text-white ring-1 ring-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                                                    title="Subir"
+                                                >
+                                                    <FaArrowUp /> Subir
+                                                </button>
+                                                <button
+                                                    onClick={() => moveCategory(index, 1)}
+                                                    disabled={index === categories.length - 1}
+                                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm bg-zinc-800 hover:bg-zinc-700 text-white ring-1 ring-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                                                    title="Bajar"
+                                                >
+                                                    <FaArrowDown /> Bajar
+                                                </button>
+                                                <button
+                                                    onClick={() => deleteCategory(cat._id)}
+                                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm bg-red-600 hover:bg-red-700 text-white transition"
+                                                    title="Eliminar"
+                                                >
+                                                    <FaTrash /> Eliminar
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
+
+
+                {/* Añadir nueva categoría */}
+                <div className="mt-14 bg-zinc-900/80 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden">
+                    {/* Header */}
+                    <div className="px-6 sm:px-8 py-5 border-b border-zinc-800 bg-zinc-950/60 flex items-center justify-between">
+                        <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight">
+                            <span className="text-white">Agregar nueva</span>{" "}
+                            <span className="text-fuchsia-300">categoría</span>
+                        </h3>
+                        <span className="text-[11px] text-gray-400 hidden sm:inline">
+                            Recomendado: 1600×900 (JPG/PNG/WebP)
+                        </span>
+                    </div>
+
+                    {/* Body */}
+                    <div className="p-6 sm:p-8 space-y-6 text-white">
+                        {/* Campos */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                            {/* Nombre */}
+                            <div className="bg-zinc-950/50 border border-zinc-800 rounded-2xl p-4">
+                                <label className="block text-sm text-gray-300 mb-2">Nombre de la categoría</label>
+                                <input
+                                    type="text"
+                                    placeholder="Ej. 'Accesorios'"
+                                    value={newCategory}
+                                    onChange={(e) => setNewCategory(e.target.value)}
+                                    className="w-full bg-zinc-900 border border-zinc-700 p-3 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-fuchsia-500/40"
+                                    maxLength={40}
+                                />
+                                <div className="mt-2 flex items-center justify-between text-xs">
+                                    <span className={`font-medium ${newCategory?.length ? "text-gray-400" : "text-gray-500 italic"}`}>
+                                        {newCategory?.length ? "Se verá en la tienda" : "Escribe un nombre descriptivo"}
+                                    </span>
+                                    <span className="text-gray-500">{(newCategory?.length || 0)}/40</span>
+                                </div>
+                            </div>
+
+                            {/* Imagen (drop/select) */}
+                            <div className="bg-zinc-950/50 border border-zinc-800 rounded-2xl p-4">
+                                <label className="block text-sm text-gray-300 mb-2">Imagen (desktop / principal)</label>
+
+                                <label className="block border border-dashed border-zinc-700 rounded-xl p-4 text-center cursor-pointer hover:border-fuchsia-500/40 transition">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={async (e) => {
+                                            const file = e.target.files?.[0];
+                                            if (!file) return;
+                                            const safe = await ensureJpeg(file);
+                                            if (!safe) return;
+                                            setNewCategoryImage(safe);
+                                        }}
+                                    />
+                                    <div className="text-sm text-gray-300">
+                                        <span className="underline">Click</span> para seleccionar (o arrastra tu imagen)
+                                    </div>
+                                    <div className="mt-1 text-[11px] text-gray-500">Peso sugerido &lt; 1.5MB</div>
+                                </label>
+
+                                {/* Preview */}
+                                {newCategoryImage && (
+                                    <div className="mt-3 flex items-center gap-3">
+                                        <div className="relative">
+                                            <img
+                                                src={URL.createObjectURL(newCategoryImage)}
+                                                alt="Preview"
+                                                className="w-20 h-20 object-cover rounded-lg border border-fuchsia-600/40 shadow"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setNewCategoryImage(null)}
+                                                className="absolute -top-2 -right-2 bg-red-600 text-white text-[11px] px-1.5 py-0.5 rounded-full"
+                                                title="Quitar imagen"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                        <div className="text-xs text-gray-400">
+                                            <div className="font-semibold text-white/90">Preview</div>
+                                            <div className="opacity-80">Se recortará al mostrarla en tarjetas</div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Acciones */}
+                            <div className="bg-zinc-950/50 border border-zinc-800 rounded-2xl p-4 flex flex-col justify-between">
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex items-center gap-2">
+                                        <span className={`h-2 w-2 rounded-full ${newCategory ? "bg-green-500" : "bg-zinc-600"}`} />
+                                        <span className={`${newCategory ? "text-gray-300" : "text-gray-500"}`}>Nombre</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className={`h-2 w-2 rounded-full ${newCategoryImage ? "bg-green-500" : "bg-zinc-600"}`} />
+                                        <span className={`${newCategoryImage ? "text-gray-300" : "text-gray-500"}`}>Imagen</span>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={createCategory}
+                                    disabled={!newCategory || !newCategoryImage}
+                                    className="mt-4 px-6 py-3 rounded-lg font-semibold transition
+                     bg-fuchsia-600 hover:bg-fuchsia-700 disabled:bg-zinc-700 disabled:text-zinc-400 disabled:cursor-not-allowed"
+                                >
+                                    Agregar categoría
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Tips */}
+                        <div className="text-[12px] text-gray-500 flex items-center gap-3">
+                            <span className="inline-flex items-center gap-2">
+                                <span className="h-1.5 w-1.5 bg-fuchsia-500 rounded-full" /> Usa imágenes nítidas, centradas y con buen contraste.
+                            </span>
+                            <span className="hidden sm:inline">•</span>
+                            <span className="inline-flex items-center gap-2">
+                                <span className="h-1.5 w-1.5 bg-fuchsia-500 rounded-full" /> El nombre debe ser corto (1–3 palabras).
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
             </motion.div>
 
 
