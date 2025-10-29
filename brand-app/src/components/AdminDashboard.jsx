@@ -1684,45 +1684,127 @@ const AdminDashboard = () => {
 
 
                 {/* Añadir nueva categoría */}
-                <div className="mt-14 bg-zinc-800 border border-zinc-700 p-6 rounded-2xl shadow-xl space-y-6">
-                    <h3 className="text-2xl font-bold text-fuchsia-300 text-center">Agregar Nueva Categoría</h3>
+                <div className="mt-14 bg-zinc-900/80 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden">
+                    {/* Header */}
+                    <div className="px-6 sm:px-8 py-5 border-b border-zinc-800 bg-zinc-950/60 flex items-center justify-between">
+                        <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight">
+                            <span className="text-white">Agregar nueva</span>{" "}
+                            <span className="text-fuchsia-300">categoría</span>
+                        </h3>
+                        <span className="text-[11px] text-gray-400 hidden sm:inline">
+                            Recomendado: 1600×900 (JPG/PNG/WebP)
+                        </span>
+                    </div>
 
-                    <div className="flex flex-col lg:flex-row gap-6">
-                        <input
-                            type="text"
-                            placeholder="Nombre nueva categoría"
-                            value={newCategory}
-                            onChange={(e) => setNewCategory(e.target.value)}
-                            className="w-full lg:w-1/3 bg-zinc-700 border border-zinc-600 p-3 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
-                        />
+                    {/* Body */}
+                    <div className="p-6 sm:p-8 space-y-6 text-white">
+                        {/* Campos */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                            {/* Nombre */}
+                            <div className="bg-zinc-950/50 border border-zinc-800 rounded-2xl p-4">
+                                <label className="block text-sm text-gray-300 mb-2">Nombre de la categoría</label>
+                                <input
+                                    type="text"
+                                    placeholder="Ej. 'Accesorios'"
+                                    value={newCategory}
+                                    onChange={(e) => setNewCategory(e.target.value)}
+                                    className="w-full bg-zinc-900 border border-zinc-700 p-3 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-fuchsia-500/40"
+                                    maxLength={40}
+                                />
+                                <div className="mt-2 flex items-center justify-between text-xs">
+                                    <span className={`font-medium ${newCategory?.length ? "text-gray-400" : "text-gray-500 italic"}`}>
+                                        {newCategory?.length ? "Se verá en la tienda" : "Escribe un nombre descriptivo"}
+                                    </span>
+                                    <span className="text-gray-500">{(newCategory?.length || 0)}/40</span>
+                                </div>
+                            </div>
 
+                            {/* Imagen (drop/select) */}
+                            <div className="bg-zinc-950/50 border border-zinc-800 rounded-2xl p-4">
+                                <label className="block text-sm text-gray-300 mb-2">Imagen (desktop / principal)</label>
 
+                                <label className="block border border-dashed border-zinc-700 rounded-xl p-4 text-center cursor-pointer hover:border-fuchsia-500/40 transition">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={async (e) => {
+                                            const file = e.target.files?.[0];
+                                            if (!file) return;
+                                            const safe = await ensureJpeg(file);
+                                            if (!safe) return;
+                                            setNewCategoryImage(safe);
+                                        }}
+                                    />
+                                    <div className="text-sm text-gray-300">
+                                        <span className="underline">Click</span> para seleccionar (o arrastra tu imagen)
+                                    </div>
+                                    <div className="mt-1 text-[11px] text-gray-500">Peso sugerido &lt; 1.5MB</div>
+                                </label>
 
+                                {/* Preview */}
+                                {newCategoryImage && (
+                                    <div className="mt-3 flex items-center gap-3">
+                                        <div className="relative">
+                                            <img
+                                                src={URL.createObjectURL(newCategoryImage)}
+                                                alt="Preview"
+                                                className="w-20 h-20 object-cover rounded-lg border border-fuchsia-600/40 shadow"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setNewCategoryImage(null)}
+                                                className="absolute -top-2 -right-2 bg-red-600 text-white text-[11px] px-1.5 py-0.5 rounded-full"
+                                                title="Quitar imagen"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                        <div className="text-xs text-gray-400">
+                                            <div className="font-semibold text-white/90">Preview</div>
+                                            <div className="opacity-80">Se recortará al mostrarla en tarjetas</div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
 
-                        <input
-                            type="file"
-                            accept="image/*"
-                            onChange={async (e) => {
-                                const file = e.target.files?.[0];
-                                if (!file) return;
-                                const safe = await ensureJpeg(file);   // ← te faltaba el await
-                                if (!safe) return;
-                                setNewCategoryImage(safe);
-                            }}
-                            className="w-full lg:w-1/3 text-sm file:bg-purple-600 file:border-none file:px-4 file:py-2 file:rounded-lg file:text-white file:cursor-pointer"
-                        />
+                            {/* Acciones */}
+                            <div className="bg-zinc-950/50 border border-zinc-800 rounded-2xl p-4 flex flex-col justify-between">
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex items-center gap-2">
+                                        <span className={`h-2 w-2 rounded-full ${newCategory ? "bg-green-500" : "bg-zinc-600"}`} />
+                                        <span className={`${newCategory ? "text-gray-300" : "text-gray-500"}`}>Nombre</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className={`h-2 w-2 rounded-full ${newCategoryImage ? "bg-green-500" : "bg-zinc-600"}`} />
+                                        <span className={`${newCategoryImage ? "text-gray-300" : "text-gray-500"}`}>Imagen</span>
+                                    </div>
+                                </div>
 
+                                <button
+                                    onClick={createCategory}
+                                    disabled={!newCategory || !newCategoryImage}
+                                    className="mt-4 px-6 py-3 rounded-lg font-semibold transition
+                     bg-fuchsia-600 hover:bg-fuchsia-700 disabled:bg-zinc-700 disabled:text-zinc-400 disabled:cursor-not-allowed"
+                                >
+                                    Agregar categoría
+                                </button>
+                            </div>
+                        </div>
 
-
-
-                        <button
-                            onClick={createCategory}
-                            className="px-6 py-3 bg-fuchsia-500 hover:bg-fuchsia-600 text-white font-semibold rounded-lg transition w-full lg:w-auto"
-                        >
-                            Agregar
-                        </button>
+                        {/* Tips */}
+                        <div className="text-[12px] text-gray-500 flex items-center gap-3">
+                            <span className="inline-flex items-center gap-2">
+                                <span className="h-1.5 w-1.5 bg-fuchsia-500 rounded-full" /> Usa imágenes nítidas, centradas y con buen contraste.
+                            </span>
+                            <span className="hidden sm:inline">•</span>
+                            <span className="inline-flex items-center gap-2">
+                                <span className="h-1.5 w-1.5 bg-fuchsia-500 rounded-full" /> El nombre debe ser corto (1–3 palabras).
+                            </span>
+                        </div>
                     </div>
                 </div>
+
             </motion.div>
 
 
