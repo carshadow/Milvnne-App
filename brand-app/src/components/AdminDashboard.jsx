@@ -1308,7 +1308,7 @@ const AdminDashboard = () => {
                     </div>
 
                     {/* Mobile cards (sm-) */}
-                    {/* Mobile cards (sm-) — BLOQUE COMPLETO AJUSTADO */}
+                    {/* Mobile cards (sm-) — versión con imágenes pequeñas apiladas */}
                     <div className="sm:hidden divide-y divide-white/5">
                         {categories.map((cat, index) => (
                             <div key={cat._id} className="p-4 space-y-5">
@@ -1321,45 +1321,36 @@ const AdminDashboard = () => {
                                     placeholder="Nombre de categoría"
                                 />
 
-                                {/* Imagen Desktop (arriba) */}
-                                <div>
+                                {/* Imagen Desktop (cuadro pequeño arriba) */}
+                                <div className="flex flex-col items-center">
                                     <div className="text-[11px] text-gray-300 mb-2 inline-flex items-center gap-1">
-                                        {/* FaDesktop */}
-                                        <span className="inline-flex items-center gap-1 opacity-80">
-                                            <svg width="12" height="12" viewBox="0 0 24 24" className="opacity-70"><path fill="currentColor" d="M21 3H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7v2H7v2h10v-2h-3v-2h7a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2" /></svg>
-                                            Desktop
-                                        </span>
+                                        <FaDesktop className="opacity-70" /> Desktop
+                                    </div>
+                                    <div className="w-32 h-32 rounded-xl overflow-hidden ring-1 ring-white/10">
+                                        <img
+                                            src={
+                                                cat.imageUrl ||
+                                                "https://res.cloudinary.com/dkx4n6r0v/image/upload/v1710000000/milvnne-products/default.png"
+                                            }
+                                            alt={`${cat.name} desktop`}
+                                            className="w-full h-full object-cover"
+                                        />
                                     </div>
 
-                                    <img
-                                        src={
-                                            cat.imageUrl ||
-                                            "https://res.cloudinary.com/dkx4n6r0v/image/upload/v1710000000/milvnne-products/default.png"
-                                        }
-                                        alt={`${cat.name} desktop`}
-                                        className="w-full h-40 rounded-xl object-cover ring-1 ring-white/10"
-                                    />
-
-                                    {/* Chip estado Desktop */}
-                                    <div className="mt-2">
-                                        <span
-                                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] ring-1
-            ${cat.imageUrl
-                                                    ? "bg-emerald-600/20 text-emerald-200 ring-emerald-400/40"
-                                                    : "bg-zinc-800/80 text-zinc-300 ring-white/10"}`}
-                                        >
-                                            {/* FaDesktop */}
-                                            <svg width="12" height="12" viewBox="0 0 24 24"><path fill="currentColor" d="M21 3H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7v2H7v2h10v-2h-3v-2h7a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2" /></svg>
-                                            {cat.imageUrl ? "Con imagen" : "Sin imagen"}
-                                        </span>
-                                    </div>
+                                    {/* Chip Desktop */}
+                                    <span
+                                        className={`mt-2 inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] ring-1
+          ${cat.imageUrl
+                                                ? "bg-emerald-600/20 text-emerald-200 ring-emerald-400/40"
+                                                : "bg-zinc-800/80 text-zinc-300 ring-white/10"}`}
+                                    >
+                                        <FaDesktop /> {cat.imageUrl ? "Con imagen" : "Sin imagen"}
+                                    </span>
 
                                     {/* Uploader Desktop */}
-                                    <label className="block mt-3">
+                                    <label className="block mt-3 w-full">
                                         <span className="text-[11px] text-gray-300 mb-1 inline-flex items-center gap-1">
-                                            {/* FaImage */}
-                                            <svg width="12" height="12" viewBox="0 0 24 24" className="opacity-70"><path fill="currentColor" d="M21 19V5H3v14zm0-16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM8.5 13.5l2.5 3l3.5-4.5l4.5 6H5zM8 8a2 2 0 1 1 0 4a2 2 0 0 1 0-4" /></svg>
-                                            Cambiar imagen (Desktop)
+                                            <FaImage className="opacity-70" /> Cambiar imagen (Desktop)
                                         </span>
                                         <input
                                             type="file"
@@ -1376,44 +1367,37 @@ const AdminDashboard = () => {
                                     </label>
                                 </div>
 
-                                {/* Imagen Mobile (abajo) */}
-                                <div>
+                                {/* Imagen Mobile (cuadro pequeño abajo) */}
+                                <div className="flex flex-col items-center">
                                     <div className="text-[11px] text-white mb-2 inline-flex items-center gap-1">
-                                        {/* FaMobileAlt */}
-                                        <svg width="12" height="12" viewBox="0 0 24 24" className="opacity-90"><path fill="currentColor" d="M17 1H7a2 2 0 0 0-2 2v18a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2m0 18H7V5h10z" /></svg>
-                                        Mobile
+                                        <FaMobileAlt className="opacity-90" /> Mobile
+                                    </div>
+                                    <div className="w-32 h-32 rounded-xl overflow-hidden ring-1 ring-fuchsia-400/40">
+                                        <img
+                                            src={
+                                                cat.imageMobile ||
+                                                cat.imageUrl ||
+                                                "https://res.cloudinary.com/dkx4n6r0v/image/upload/v1710000000/milvnne-products/default.png"
+                                            }
+                                            alt={`${cat.name} mobile`}
+                                            className="w-full h-full object-cover"
+                                        />
                                     </div>
 
-                                    <img
-                                        src={
-                                            cat.imageMobile ||
-                                            cat.imageUrl || // fallback a desktop si no hay mobile
-                                            "https://res.cloudinary.com/dkx4n6r0v/image/upload/v1710000000/milvnne-products/default.png"
-                                        }
-                                        alt={`${cat.name} mobile`}
-                                        className={`w-full h-40 rounded-xl object-cover ring-1 ${cat.imageMobile ? "ring-fuchsia-400/40" : "ring-white/10"}`}
-                                    />
-
-                                    {/* Chip con MÁS contraste para Mobile */}
-                                    <div className="mt-2">
-                                        <span
-                                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] ring-1
-            ${cat.imageMobile
-                                                    ? "bg-fuchsia-600 text-white ring-fuchsia-400/60"
-                                                    : "bg-zinc-800/80 text-zinc-300 ring-white/10"}`}
-                                        >
-                                            {/* FaMobileAlt */}
-                                            <svg width="12" height="12" viewBox="0 0 24 24"><path fill="currentColor" d="M17 1H7a2 2 0 0 0-2 2v18a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2m0 18H7V5h10z" /></svg>
-                                            {cat.imageMobile ? "Con imagen (Mobile)" : "Sin imagen (Mobile)"}
-                                        </span>
-                                    </div>
+                                    {/* Chip Mobile (más contraste) */}
+                                    <span
+                                        className={`mt-2 inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] ring-1
+          ${cat.imageMobile
+                                                ? "bg-fuchsia-600 text-white ring-fuchsia-400/60"
+                                                : "bg-zinc-800/80 text-zinc-300 ring-white/10"}`}
+                                    >
+                                        <FaMobileAlt /> {cat.imageMobile ? "Con imagen (Mobile)" : "Sin imagen (Mobile)"}
+                                    </span>
 
                                     {/* Uploader Mobile */}
-                                    <label className="block mt-3">
+                                    <label className="block mt-3 w-full">
                                         <span className="text-[11px] text-white mb-1 inline-flex items-center gap-1">
-                                            {/* FaImage */}
-                                            <svg width="12" height="12" viewBox="0 0 24 24" className="opacity-90"><path fill="currentColor" d="M21 19V5H3v14zm0-16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM8.5 13.5l2.5 3l3.5-4.5l4.5 6H5zM8 8a2 2 0 1 1 0 4a2 2 0 0 1 0-4" /></svg>
-                                            Cambiar imagen (Mobile)
+                                            <FaImage className="opacity-90" /> Cambiar imagen (Mobile)
                                         </span>
                                         <input
                                             type="file"
@@ -1429,22 +1413,20 @@ const AdminDashboard = () => {
                                         />
                                     </label>
 
-                                    <small className="text-[11px] text-gray-400 mt-2 block">
+                                    <small className="text-[11px] text-gray-400 mt-2 block text-center">
                                         Opcional — sube una imagen distinta para mobile si lo necesitas.
                                     </small>
                                 </div>
 
                                 {/* Acciones */}
-                                <div className="pt-2 flex items-center justify-end gap-2">
+                                <div className="pt-3 flex items-center justify-center gap-2">
                                     <button
                                         onClick={() => moveCategory(index, -1)}
                                         disabled={index === 0}
                                         className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm bg-zinc-800 hover:bg-zinc-700 text-white ring-1 ring-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition"
                                         title="Subir"
                                     >
-                                        {/* FaArrowUp */}
-                                        <svg width="12" height="12" viewBox="0 0 24 24"><path fill="currentColor" d="M7 14l5-5l5 5z" /></svg>
-                                        Subir
+                                        <FaArrowUp /> Subir
                                     </button>
                                     <button
                                         onClick={() => moveCategory(index, 1)}
@@ -1452,23 +1434,20 @@ const AdminDashboard = () => {
                                         className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm bg-zinc-800 hover:bg-zinc-700 text-white ring-1 ring-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition"
                                         title="Bajar"
                                     >
-                                        {/* FaArrowDown */}
-                                        <svg width="12" height="12" viewBox="0 0 24 24"><path fill="currentColor" d="M7 10l5 5l5-5z" /></svg>
-                                        Bajar
+                                        <FaArrowDown /> Bajar
                                     </button>
                                     <button
                                         onClick={() => deleteCategory(cat._id)}
                                         className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm bg-red-600 hover:bg-red-700 text-white transition"
                                         title="Eliminar"
                                     >
-                                        {/* FaTrash */}
-                                        <svg width="12" height="12" viewBox="0 0 24 24"><path fill="currentColor" d="M9 3h6l1 2h4v2H3V5h4l1-2m2 6v8h2V9h-2Z" /></svg>
-                                        Eliminar
+                                        <FaTrash /> Eliminar
                                     </button>
                                 </div>
                             </div>
                         ))}
                     </div>
+
 
 
                     {/* Desktop table (sm+) */}
