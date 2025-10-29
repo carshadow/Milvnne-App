@@ -1312,7 +1312,7 @@ const AdminDashboard = () => {
                         {categories.map((cat, index) => (
                             <div key={cat._id} className="p-4">
                                 {/* Top row */}
-                                <div className="flex items-start gap-3">
+                                <div className="text-[11px] text-white mb-2 inline-flex items-center gap-1">
                                     <div className="relative">
                                         <img
                                             src={cat.imageUrl || cat.imageMobile || "https://res.cloudinary.com/dkx4n6r0v/image/upload/v1710000000/milvnne-products/default.png"}
