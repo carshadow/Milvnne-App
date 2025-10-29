@@ -937,203 +937,357 @@ const AdminDashboard = () => {
 
 
             {/* PRODUCT TABLE */}
-            <div className="overflow-hidden bg-zinc-900/70 border border-zinc-800 rounded-3xl shadow-2xl">
-                {/* Desktop / Tablet (≥ sm) */}
-                <div className="hidden sm:block overflow-auto max-h-[70vh]">
-                    <table className="min-w-full text-sm">
-                        <thead className="sticky top-0 z-10 bg-zinc-800/95 backdrop-blur supports-[backdrop-filter]:backdrop-blur text-fuchsia-400 uppercase text-[11px] tracking-widest border-b border-zinc-800">
-                            <tr>
-                                <th className="px-6 py-4 text-left">Imagen</th>
-                                <th className="px-6 py-4 text-left">Nombre</th>
-                                <th className="px-6 py-4 text-left">Precio</th>
-                                <th className="px-6 py-4 text-left">Inventario</th>
-                                <th className="px-6 py-4 text-center">Acciones</th>
-                            </tr>
-                        </thead>
-
-                        <tbody className="divide-y divide-zinc-800">
-                            {products.length === 0 ? (
-                                <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
-                                        No hay productos todavía.
-                                    </td>
-                                </tr>
-                            ) : (
-                                products.map((product) => (
-                                    <tr
-                                        key={product._id}
-                                        className="group transition-colors hover:bg-zinc-800/60"
-                                    >
-                                        {/* Imagen */}
-                                        <td className="px-6 py-4">
-                                            <div className="w-16 h-16 rounded-xl overflow-hidden border border-zinc-700 shadow-md ring-1 ring-white/5 group-hover:ring-fuchsia-500/30 transition">
-                                                <img
-                                                    src={product.coverImage}
-                                                    alt={product.name}
-                                                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
-                                                />
-                                            </div>
-                                        </td>
-
-                                        {/* Nombre */}
-                                        <td className="px-6 py-4">
-                                            <div className="font-semibold text-white truncate max-w-[260px]">
-                                                {product.name}
-                                            </div>
-                                            {product.description && (
-                                                <div className="text-xs text-gray-400 line-clamp-1 max-w-[260px]">
-                                                    {product.description}
-                                                </div>
-                                            )}
-                                        </td>
-
-                                        {/* Precio */}
-                                        <td className="px-6 py-4">
-                                            {Number(product.discount) > 0 ? (
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs line-through text-gray-400">
-                                                        ${Number(product.originalPrice ?? product.price).toFixed(2)}
-                                                    </span>
-                                                    <span className="text-fuchsia-400 font-bold">
-                                                        ${Number(product.price).toFixed(2)}
-                                                    </span>
-                                                    <span className="text-[10px] bg-red-600/20 text-red-300 px-2 py-0.5 rounded-full">
-                                                        -{Number(product.discount)}%
-                                                    </span>
-                                                </div>
-                                            ) : (
-                                                <span className="text-fuchsia-300 font-semibold">
-                                                    ${Number(product.price).toFixed(2)}
-                                                </span>
-                                            )}
-                                        </td>
-
-                                        {/* Inventario */}
-                                        <td className="px-6 py-4">
-                                            <span
-                                                className={[
-                                                    "inline-block px-2 py-1 text-xs rounded-full font-medium ring-1",
-                                                    getAvailabilityStatus(product) === "Not Available"
-                                                        ? "bg-red-500/15 text-red-300 ring-red-400/30"
-                                                        : "bg-emerald-500/15 text-emerald-300 ring-emerald-400/30",
-                                                ].join(" ")}
-                                            >
-                                                {getAvailabilityStatus(product)}
-                                            </span>
-                                        </td>
-
-                                        {/* Acciones */}
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center justify-center gap-2">
-                                                <button
-                                                    onClick={() => {
-                                                        setEditingProduct(product);
-                                                        setShowEditModal(true);
-                                                    }}
-                                                    className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-md text-xs font-medium shadow ring-1 ring-white/10 transition"
-                                                    title="Editar"
-                                                >
-                                                    Editar
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(product._id)}
-                                                    className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-md text-xs font-medium shadow transition"
-                                                    title="Eliminar"
-                                                >
-                                                    Eliminar
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-
-                {/* Mobile (< sm) – Cards en vez de tabla */}
-                <div className="sm:hidden divide-y divide-zinc-800">
-                    {products.length === 0 ? (
-                        <div className="px-5 py-10 text-center text-gray-400">No hay productos todavía.</div>
+            <div className="p-6 max-w-7xl mx-auto pt-20 text-white">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
+                >
+                    {loading ? (
+                        <p className="text-center text-gray-400">Cargando productos...</p>
+                    ) : error ? (
+                        <p className="text-red-500 text-center">Error: {error}</p>
                     ) : (
-                        products.map((product) => (
-                            <div key={product._id} className="p-4">
-                                <div className="flex gap-3">
-                                    {/* Imagen */}
-                                    <div className="w-16 h-16 rounded-xl overflow-hidden border border-zinc-700 shadow-md ring-1 ring-white/5">
-                                        <img
-                                            src={product.coverImage}
-                                            alt={product.name}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    </div>
+                        <div className="overflow-x-auto bg-zinc-900 border border-zinc-800 rounded-3xl shadow-2xl">
+                            <table className="min-w-full divide-y divide-zinc-800 text-sm">
+                                <thead className="bg-zinc-800 text-fuchsia-400 uppercase text-[11px] tracking-widest">
+                                    <tr>
+                                        <th className="px-6 py-4 text-left">Imagen</th>
+                                        <th className="px-6 py-4 text-left">Nombre</th>
+                                        <th className="px-6 py-4 text-left">Precio</th>
+                                        <th className="px-6 py-4 text-left">Inventario</th>
+                                        <th className="px-6 py-4 text-center">Acciones</th>
+                                    </tr>
+                                </thead>
 
-                                    {/* Info */}
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-start justify-between gap-3">
-                                            <h4 className="text-white font-semibold truncate">
-                                                {product.name}
-                                            </h4>
-                                            <span className="text-fuchsia-300 text-sm shrink-0">
-                                                {Number(product.discount) > 0 ? (
-                                                    <>
-                                                        <span className="line-through text-gray-400 mr-1 text-xs">
-                                                            ${Number(product.originalPrice ?? product.price).toFixed(2)}
-                                                        </span>
-                                                        <span className="font-bold">
-                                                            ${Number(product.price).toFixed(2)}
-                                                        </span>
-                                                    </>
-                                                ) : (
-                                                    <>${Number(product.price).toFixed(2)}</>
-                                                )}
-                                            </span>
-                                        </div>
+                                <tbody className="divide-y divide-zinc-800">
+                                    {products.map((product) => (
+                                        <tr key={product._id} className="group hover:bg-zinc-800 transition">
+                                            {/* Imagen */}
+                                            <td className="px-6 py-5">
+                                                <div className="w-16 h-16 rounded-xl overflow-hidden border border-zinc-700 shadow-md">
+                                                    <img
+                                                        src={product.coverImage}
+                                                        alt={product.name}
+                                                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                    />
+                                                </div>
+                                            </td>
 
-                                        {product.description && (
-                                            <p className="text-xs text-gray-400 mt-1 line-clamp-2">
-                                                {product.description}
-                                            </p>
-                                        )}
+                                            {/* Nombre */}
+                                            <td className="px-6 py-5 font-semibold text-white">{product.name}</td>
 
-                                        <div className="mt-2 flex items-center justify-between">
-                                            <span
-                                                className={[
-                                                    "inline-block px-2 py-0.5 text-[11px] rounded-full font-medium ring-1",
-                                                    getAvailabilityStatus(product) === "Not Available"
-                                                        ? "bg-red-500/15 text-red-300 ring-red-400/30"
-                                                        : "bg-emerald-500/15 text-emerald-300 ring-emerald-400/30",
-                                                ].join(" ")}
+                                            {/* Precio */}
+                                            <td className="px-6 py-5 text-fuchsia-400 font-bold">${product.price}</td>
+
+                                            {/* Inventario */}
+                                            <td className="px-6 py-5 text-gray-300">
+                                                <span
+                                                    className={`inline-block px-2 py-1 text-xs rounded-full font-medium ${getAvailabilityStatus(product) === 'Not Available'
+                                                        ? 'bg-red-500/20 text-red-400'
+                                                        : 'bg-green-500/20 text-green-400'
+                                                        }`}
+                                                >
+                                                    {getAvailabilityStatus(product)}
+                                                </span>
+                                            </td>
+
+                                            {/* Acciones */}
+                                            <td className="px-6 py-5 text-center">
+                                                <div className="flex items-center justify-center gap-3">
+                                                    <button
+                                                        onClick={() => {
+                                                            setEditingProduct(product);
+                                                            setShowEditModal(true);
+                                                        }}
+                                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-medium shadow transition"
+                                                    >
+                                                        Editar
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(product._id)}
+                                                        className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-xs font-medium shadow transition"
+                                                    >
+                                                        Eliminar
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </motion.div>
+
+
+
+                {/* MODAL DE EDICIÓN */}
+                {showEditModal && editingProduct && (
+                    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center px-4 sm:px-6">
+                        <div className="w-full max-w-3xl bg-zinc-900 border border-zinc-700 text-white p-8 sm:p-10 rounded-3xl shadow-2xl overflow-y-auto max-h-[95vh] space-y-6">
+                            <h2 className="text-3xl font-bold text-fuchsia-400 text-center mb-4">Editar Producto</h2>
+
+                            {/* Imagen principal */}
+                            <div className="space-y-1">
+                                <label className="text-sm text-gray-300">Imagen Principal (Cover)</label>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
+                                    onChange={async (e) => {
+                                        const file = e.target.files?.[0];
+                                        if (!file) return;
+                                        const safe = await ensureJpeg(file);
+                                        if (!safe) return;
+                                        setEditingProduct(prev => ({ ...prev, newCoverImage: safe }));
+                                    }}
+                                />
+
+                                {editingProduct.coverImage && (
+                                    <img
+                                        src={editingProduct.coverImage}
+                                        alt="Cover actual"
+                                        className="w-24 h-24 object-cover rounded-lg mt-2 border border-zinc-600"
+                                    />
+                                )}
+
+                            </div>
+
+                            {/* Hover image */}
+                            <div className="space-y-1">
+                                <label className="text-sm text-gray-300">Imagen Hover</label>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
+                                    onChange={async (e) => {
+                                        const file = e.target.files?.[0];
+                                        if (!file) return;
+                                        const safe = await ensureJpeg(file);
+                                        if (!safe) return;
+                                        setEditingProduct(prev => ({ ...prev, newHoverImage: safe }));
+                                    }}
+                                />
+
+                                {editingProduct.hoverImage && (
+                                    <img
+                                        src={editingProduct.hoverImage}
+                                        alt="Hover actual"
+                                        className="w-24 h-24 object-cover rounded-lg mt-2 border border-zinc-600"
+                                    />
+                                )}
+
+
+                            </div>
+
+                            {/* Imágenes adicionales */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-300">Imágenes Adicionales (máx. 4)</label>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600 w-full"
+                                    onChange={async (e) => {
+                                        const selected = Array.from(e.target.files || []);
+                                        if (!selected.length) return;
+
+                                        const converted = [];
+                                        for (const f of selected) {
+                                            const safe = await ensureJpeg(f);
+                                            if (safe) converted.push(safe);
+                                        }
+
+                                        const totalExisting = editingProduct.images?.length || 0;
+                                        const totalNew = (editingProduct.newImages?.length || 0) + converted.length;
+                                        if (totalExisting + totalNew > 4) {
+                                            toast.warning("🚫 Máximo 4 imágenes adicionales permitidas en total.");
+                                            return;
+                                        }
+
+                                        setEditingProduct(prev => ({
+                                            ...prev,
+                                            newImages: [...(prev.newImages || []), ...converted],
+                                        }));
+                                    }}
+                                />
+
+
+                                {/* Vista previa */}
+                                <div className="flex flex-wrap gap-4 mt-3">
+                                    {/* Imágenes actuales */}
+                                    {editingProduct.images?.map((img, index) => (
+                                        <div key={`old-${index}`} className="relative group">
+                                            <img
+                                                src={img}
+                                                alt={`Actual ${index + 1}`}
+                                                className="w-24 h-24 object-cover rounded border border-zinc-600 shadow-md"
+                                            />
+                                            <button
+                                                onClick={() => {
+                                                    const updated = [...editingProduct.images];
+                                                    updated.splice(index, 1);
+                                                    setEditingProduct({ ...editingProduct, images: updated });
+                                                }}
+                                                className="absolute top-1 right-1 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full"
+                                                title="Eliminar"
                                             >
-                                                {getAvailabilityStatus(product)}
-                                            </span>
-
-                                            <div className="flex items-center gap-2">
-                                                <button
-                                                    onClick={() => {
-                                                        setEditingProduct(product);
-                                                        setShowEditModal(true);
-                                                    }}
-                                                    className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-md text-xs font-medium shadow ring-1 ring-white/10 transition"
-                                                >
-                                                    Editar
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(product._id)}
-                                                    className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-md text-xs font-medium shadow transition"
-                                                >
-                                                    Eliminar
-                                                </button>
-                                            </div>
+                                                ✕
+                                            </button>
                                         </div>
-                                    </div>
+                                    ))}
+
+                                    {/* Imágenes nuevas */}
+                                    {editingProduct.newImages?.map((file, index) => (
+                                        <div key={`new-${index}`} className="relative group">
+                                            <img
+                                                src={URL.createObjectURL(file)}
+                                                alt={`Nueva ${index + 1}`}
+                                                className="w-24 h-24 object-cover rounded border border-purple-500 shadow-md"
+                                            />
+                                            <button
+                                                onClick={() => {
+                                                    const updated = [...editingProduct.newImages];
+                                                    updated.splice(index, 1);
+                                                    setEditingProduct({ ...editingProduct, newImages: updated });
+                                                }}
+                                                className="absolute top-1 right-1 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full"
+                                                title="Eliminar"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
-                        ))
-                    )}
-                </div>
-            </div>
 
+
+
+
+                            {/* Nombre */}
+                            <div>
+                                <label className="text-sm text-gray-300">Nombre</label>
+                                <input
+                                    className="w-full bg-zinc-800 border border-zinc-600 p-3 rounded mt-1"
+                                    type="text"
+                                    value={editingProduct.name}
+                                    onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                                />
+                                {editingErrors.name && (
+                                    <motion.div className="text-red-500">
+                                        {editingErrors.name}
+                                    </motion.div>
+                                )}
+                            </div>
+
+                            {/* Precio y Descuento */}
+                            <div className="grid sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-sm text-gray-300">Precio</label>
+                                    <input
+                                        className="w-full bg-zinc-800 border border-zinc-600 p-3 rounded mt-1"
+                                        type="number"
+                                        value={editingProduct.price}
+                                        onChange={(e) => setEditingProduct({ ...editingProduct, price: e.target.value })}
+                                    />
+
+                                </div>
+
+                                <div>
+                                    <label className="text-sm text-gray-300">Precio Original</label>
+                                    <input
+                                        className="w-full bg-zinc-800 border border-zinc-600 p-3 rounded mt-1"
+                                        type="number"
+                                        value={editingProduct.originalPrice || ""}
+                                        onChange={(e) => {
+                                            const original = parseFloat(e.target.value);
+                                            const discount = parseFloat(editingProduct.discount || 0);
+                                            const discounted = original * (1 - discount / 100);
+                                            setEditingProduct((prev) => ({
+                                                ...prev,
+                                                originalPrice: original,
+                                                price: discounted.toFixed(2),
+                                            }));
+                                        }}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Descuento */}
+                            <div>
+                                <label className="text-sm text-gray-300">Descuento (%)</label>
+                                <input
+                                    className="w-full bg-zinc-800 border border-zinc-600 p-3 rounded mt-1"
+                                    type="number"
+                                    value={editingProduct.discount || ""}
+                                    onChange={(e) => {
+                                        const discount = parseFloat(e.target.value);
+                                        const original = parseFloat(editingProduct.originalPrice || 0);
+                                        const discounted = original * (1 - (discount || 0) / 100);
+                                        setEditingProduct((prev) => ({
+                                            ...prev,
+                                            discount: discount || 0,
+                                            price: discounted.toFixed(2),
+                                        }));
+                                    }}
+                                />
+                            </div>
+
+                            {/* Descripción */}
+                            <div>
+                                <label className="text-sm text-gray-300">Descripción</label>
+                                <textarea
+                                    className="w-full bg-zinc-800 border border-zinc-600 p-3 rounded mt-1 resize-none"
+                                    rows="4"
+                                    value={editingProduct.description}
+                                    onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
+                                />
+                            </div>
+
+                            {/* Tallas */}
+                            <div>
+                                <label className="text-sm text-gray-300">Tallas</label>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-2">
+                                    {["S", "M", "L", "XL"].map((size) => (
+                                        <div key={size} className="flex flex-col">
+                                            <span className="text-xs text-gray-400 mb-1">{size}</span>
+                                            <input
+                                                type="number"
+                                                className="bg-zinc-800 border border-zinc-600 p-2 rounded"
+                                                value={editingProduct.sizes[size] || 0}
+                                                onChange={(e) =>
+                                                    setEditingProduct({
+                                                        ...editingProduct,
+                                                        sizes: { ...editingProduct.sizes, [size]: e.target.value },
+                                                    })
+                                                }
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Botones */}
+                            <div className="flex flex-col sm:flex-row justify-between gap-4 pt-6">
+                                <button
+                                    className="bg-green-600 w-full sm:w-auto px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition"
+                                    onClick={handleEditProduct}
+                                >
+                                    Guardar
+                                </button>
+                                <button
+                                    className="bg-gray-600 w-full sm:w-auto px-6 py-3 rounded-lg font-semibold hover:bg-gray-700 transition"
+                                    onClick={() => setShowEditModal(false)}
+                                >
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                )}
+            </div>
 
             <motion.div
                 initial={{ opacity: 0, y: 30 }}
