@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { FaTimes } from 'react-icons/fa';
+import { FaTimes, FaArrowUp, FaArrowDown, FaTrash, FaMobileAlt, FaDesktop, FaImage } from 'react-icons/fa';
 import { z } from "zod";
 import { useContext } from "react";
 import { AuthContext } from "../context/authContext";
@@ -1300,127 +1300,263 @@ const AdminDashboard = () => {
                 </h2>
 
                 {/* Tabla de categorías */}
-                <div className="overflow-x-auto rounded-xl shadow-lg border border-zinc-700">
-                    <table className="min-w-full bg-zinc-800 border-separate border-spacing-y-2">
-                        <thead>
-                            <tr className="text-left text-sm text-gray-300 uppercase bg-zinc-900">
-                                <th className="p-4">Imagen</th>
-                                <th className="p-4">Nombre</th>
-                                <th className="p-4">Cambiar Imagen</th>
-                                <th className="p-4 text-center">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {categories.map((cat, index) => (
-                                <tr key={cat._id} className="bg-zinc-700/50 backdrop-blur-xl hover:bg-zinc-700 transition rounded-lg">
-                                    {/* Imagen preview */}
-                                    {/* Imagen preview (desktop + mobile si existe) */}
-                                    <td className="p-4 space-y-2">
-                                        {cat.imageUrl ? (
-                                            <div>
-                                                <p className="text-xs text-gray-400 mb-1">Desktop</p>
-                                                <img
-                                                    src={cat.imageUrl}
-                                                    alt={`${cat.name} desktop`}
-                                                    className="w-16 h-16 object-cover rounded-lg border border-zinc-600 shadow-md"
-                                                />
-                                            </div>
-                                        ) : (
-                                            <span className="text-gray-400">Sin imagen desktop</span>
-                                        )}
+                <div className="rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-br from-zinc-900 via-black to-zinc-950">
+                    {/* Header */}
+                    <div className="px-5 py-4 flex items-center justify-between border-b border-white/10">
+                        <h3 className="text-lg font-semibold text-white tracking-tight">Categorías</h3>
+                        <span className="text-xs text-gray-400">{categories?.length ?? 0} items</span>
+                    </div>
 
-                                        {cat.imageMobile ? (
-                                            <div>
-                                                <p className="text-xs text-purple-400 mt-2">Mobile</p>
-                                                <img
-                                                    src={cat.imageMobile}
-                                                    alt={`${cat.name} mobile`}
-                                                    className="w-16 h-16 object-cover rounded-lg border border-purple-500 shadow-md"
-                                                />
-                                            </div>
-                                        ) : (
-                                            <p className="text-xs text-gray-500 mt-2 italic">Sin imagen mobile</p>
-                                        )}
-                                    </td>
+                    {/* Mobile cards (sm-) */}
+                    <div className="sm:hidden divide-y divide-white/5">
+                        {categories.map((cat, index) => (
+                            <div key={cat._id} className="p-4">
+                                {/* Top row */}
+                                <div className="flex items-start gap-3">
+                                    <div className="relative">
+                                        <img
+                                            src={cat.imageUrl || cat.imageMobile || "https://res.cloudinary.com/dkx4n6r0v/image/upload/v1710000000/milvnne-products/default.png"}
+                                            alt={cat.name}
+                                            className="w-16 h-16 rounded-xl object-cover ring-1 ring-white/10"
+                                        />
+                                        <div className="absolute -bottom-2 left-0 flex gap-1">
+                                            <span
+                                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] ring-1
+                ${cat.imageUrl ? "bg-emerald-500/10 text-emerald-300 ring-emerald-500/30" : "bg-zinc-700/40 text-zinc-300 ring-white/10"}`}
+                                                title="Desktop"
+                                            >
+                                                <FaDesktop /> {cat.imageUrl ? "Desktop" : "Sin desktop"}
+                                            </span>
+                                            <span
+                                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] ring-1
+                ${cat.imageMobile ? "bg-fuchsia-500/10 text-fuchsia-300 ring-fuchsia-500/30" : "bg-zinc-700/40 text-zinc-300 ring-white/10"}`}
+                                                title="Mobile"
+                                            >
+                                                <FaMobileAlt /> {cat.imageMobile ? "Mobile" : "Sin mobile"}
+                                            </span>
+                                        </div>
+                                    </div>
 
-
-                                    {/* Nombre editable */}
-                                    <td className="p-4">
+                                    <div className="flex-1">
                                         <input
                                             type="text"
                                             value={cat.name}
                                             onChange={(e) => renameCategory(cat._id, e.target.value)}
-                                            className="bg-zinc-800 border border-zinc-600 p-2 rounded w-full text-sm focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
-                                        />
-                                    </td>
-
-                                    {/* Input para cambiar imagen */}
-                                    <td className="p-4">
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={async (e) => {
-                                                const file = e.target.files?.[0];
-                                                if (!file) return;
-                                                const safe = await ensureJpeg(file);
-                                                if (!safe) return;
-                                                updateCategoryImage(cat._id, safe);
-                                            }}
-                                            className="w-full text-sm text-gray-300 file:bg-fuchsia-600 file:border-none file:px-3 file:py-1 file:rounded file:text-white file:cursor-pointer"
+                                            className="w-full bg-zinc-900/60 ring-1 ring-white/10 focus:ring-fuchsia-500/40 outline-none text-sm text-white px-3 py-2 rounded-lg placeholder:text-gray-500"
+                                            placeholder="Nombre de categoría"
                                         />
 
+                                        <div className="mt-3 grid grid-cols-1 gap-2">
+                                            {/* Desktop uploader */}
+                                            <label className="block">
+                                                <span className="text-[11px] text-gray-400 mb-1 inline-flex items-center gap-1">
+                                                    <FaDesktop className="opacity-70" /> Cambiar imagen (Desktop)
+                                                </span>
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={async (e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (!file) return;
+                                                        const safe = await ensureJpeg(file);
+                                                        if (!safe) return;
+                                                        updateCategoryImage(cat._id, safe);
+                                                    }}
+                                                    className="block w-full text-xs text-gray-300 file:bg-zinc-800 file:ring-1 file:ring-white/10 file:px-3 file:py-1.5 file:rounded-md file:text-white file:cursor-pointer hover:file:bg-zinc-700 transition"
+                                                />
+                                            </label>
 
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={async (e) => {
-                                                const file = e.target.files?.[0];
-                                                if (!file) return;
-                                                const safe = await ensureJpeg(file);
-                                                if (!safe) return;
-                                                await updateCategoryMobileImage(cat._id, safe);
-                                            }}
-                                            className="w-full text-sm text-gray-300 file:bg-purple-600 file:border-none file:px-3 file:py-1 file:rounded file:text-white file:cursor-pointer mt-2"
-                                        />
-
-
-
-
-
-                                        <small className="text-xs text-gray-400">Opcional – solo si necesitas una imagen distinta para mobile</small>
-                                    </td>
-
-                                    {/* Acciones */}
-                                    <td className="p-4 text-center">
-                                        <div className="flex justify-center gap-2">
-                                            <button
-                                                onClick={() => moveCategory(index, -1)}
-                                                className="bg-zinc-700 hover:bg-zinc-600 text-white px-2 py-1 rounded transition"
-                                                title="Subir"
-                                            >
-                                                ⬆
-                                            </button>
-                                            <button
-                                                onClick={() => moveCategory(index, 1)}
-                                                className="bg-zinc-700 hover:bg-zinc-600 text-white px-2 py-1 rounded transition"
-                                                title="Bajar"
-                                            >
-                                                ⬇
-                                            </button>
-                                            <button
-                                                onClick={() => deleteCategory(cat._id)}
-                                                className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded transition"
-                                                title="Eliminar"
-                                            >
-                                                🗑
-                                            </button>
+                                            {/* Mobile uploader */}
+                                            <label className="block">
+                                                <span className="text-[11px] text-gray-400 mb-1 inline-flex items-center gap-1">
+                                                    <FaMobileAlt className="opacity-70" /> Cambiar imagen (Mobile)
+                                                </span>
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={async (e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (!file) return;
+                                                        const safe = await ensureJpeg(file);
+                                                        if (!safe) return;
+                                                        await updateCategoryMobileImage(cat._id, safe);
+                                                    }}
+                                                    className="block w-full text-xs text-gray-300 file:bg-zinc-800 file:ring-1 file:ring-white/10 file:px-3 file:py-1.5 file:rounded-md file:text-white file:cursor-pointer hover:file:bg-zinc-700 transition"
+                                                />
+                                            </label>
+                                            <small className="text-[11px] text-gray-500">Opcional — sube una imagen distinta para mobile.</small>
                                         </div>
-                                    </td>
+                                    </div>
+                                </div>
+
+                                {/* Actions */}
+                                <div className="mt-4 flex items-center justify-end gap-2">
+                                    <button
+                                        onClick={() => moveCategory(index, -1)}
+                                        disabled={index === 0}
+                                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm bg-zinc-800 hover:bg-zinc-700 text-white ring-1 ring-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                                        title="Subir"
+                                    >
+                                        <FaArrowUp /> Subir
+                                    </button>
+                                    <button
+                                        onClick={() => moveCategory(index, 1)}
+                                        disabled={index === categories.length - 1}
+                                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm bg-zinc-800 hover:bg-zinc-700 text-white ring-1 ring-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                                        title="Bajar"
+                                    >
+                                        <FaArrowDown /> Bajar
+                                    </button>
+                                    <button
+                                        onClick={() => deleteCategory(cat._id)}
+                                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm bg-red-600 hover:bg-red-700 text-white transition"
+                                        title="Eliminar"
+                                    >
+                                        <FaTrash /> Eliminar
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Desktop table (sm+) */}
+                    <div className="hidden sm:block overflow-x-auto">
+                        <table className="min-w-full border-separate border-spacing-y-2">
+                            <thead className="sticky top-0 z-10">
+                                <tr className="text-left text-[12px] tracking-wider text-gray-300 uppercase bg-zinc-900/80 backdrop-blur supports-[backdrop-filter]:bg-zinc-900/60">
+                                    <th className="p-3 rounded-l-xl">Imagen</th>
+                                    <th className="p-3">Nombre</th>
+                                    <th className="p-3">Cambiar Imagen</th>
+                                    <th className="p-3 text-center rounded-r-xl">Acciones</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {categories.map((cat, index) => (
+                                    <tr key={cat._id} className="bg-zinc-800/60 hover:bg-zinc-800 transition rounded-xl">
+                                        {/* Imagen preview */}
+                                        <td className="p-4">
+                                            <div className="flex items-center gap-4">
+                                                {/* Desktop img */}
+                                                <div className="relative">
+                                                    <img
+                                                        src={cat.imageUrl || "https://res.cloudinary.com/dkx4n6r0v/image/upload/v1710000000/milvnne-products/default.png"}
+                                                        alt={`${cat.name} desktop`}
+                                                        className="w-16 h-16 object-cover rounded-lg ring-1 ring-white/10"
+                                                    />
+                                                    <span
+                                                        className={`absolute -bottom-2 left-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] ring-1
+                    ${cat.imageUrl ? "bg-emerald-500/10 text-emerald-300 ring-emerald-500/30" : "bg-zinc-700/40 text-zinc-300 ring-white/10"}`}
+                                                    >
+                                                        <FaDesktop /> {cat.imageUrl ? "Desktop" : "Sin desktop"}
+                                                    </span>
+                                                </div>
+
+                                                {/* Mobile img */}
+                                                <div className="relative">
+                                                    <img
+                                                        src={cat.imageMobile || cat.imageUrl || "https://res.cloudinary.com/dkx4n6r0v/image/upload/v1710000000/milvnne-products/default.png"}
+                                                        alt={`${cat.name} mobile`}
+                                                        className={`w-16 h-16 object-cover rounded-lg ring-1 ${cat.imageMobile ? "ring-fuchsia-500/30" : "ring-white/10"}`}
+                                                    />
+                                                    <span
+                                                        className={`absolute -bottom-2 left-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] ring-1
+                    ${cat.imageMobile ? "bg-fuchsia-500/10 text-fuchsia-300 ring-fuchsia-500/30" : "bg-zinc-700/40 text-zinc-300 ring-white/10"}`}
+                                                    >
+                                                        <FaMobileAlt /> {cat.imageMobile ? "Mobile" : "Sin mobile"}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </td>
+
+                                        {/* Nombre editable */}
+                                        <td className="p-4 align-top">
+                                            <input
+                                                type="text"
+                                                value={cat.name}
+                                                onChange={(e) => renameCategory(cat._id, e.target.value)}
+                                                className="bg-zinc-900/60 ring-1 ring-white/10 focus:ring-fuchsia-500/40 outline-none text-sm text-white px-3 py-2 rounded-lg w-full"
+                                            />
+                                        </td>
+
+                                        {/* Inputs de imagen */}
+                                        <td className="p-4 align-top">
+                                            <div className="grid grid-cols-2 gap-3 items-start">
+                                                <label className="block">
+                                                    <span className="text-[11px] text-gray-400 mb-1 inline-flex items-center gap-1">
+                                                        <FaDesktop className="opacity-70" /> Desktop
+                                                    </span>
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={async (e) => {
+                                                            const file = e.target.files?.[0];
+                                                            if (!file) return;
+                                                            const safe = await ensureJpeg(file);
+                                                            if (!safe) return;
+                                                            updateCategoryImage(cat._id, safe);
+                                                        }}
+                                                        className="block w-full text-xs text-gray-300 file:bg-zinc-800 file:ring-1 file:ring-white/10 file:px-3 file:py-1.5 file:rounded-md file:text-white file:cursor-pointer hover:file:bg-zinc-700 transition"
+                                                    />
+                                                </label>
+
+                                                <label className="block">
+                                                    <span className="text-[11px] text-gray-400 mb-1 inline-flex items-center gap-1">
+                                                        <FaMobileAlt className="opacity-70" /> Mobile
+                                                    </span>
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={async (e) => {
+                                                            const file = e.target.files?.[0];
+                                                            if (!file) return;
+                                                            const safe = await ensureJpeg(file);
+                                                            if (!safe) return;
+                                                            await updateCategoryMobileImage(cat._id, safe);
+                                                        }}
+                                                        className="block w-full text-xs text-gray-300 file:bg-zinc-800 file:ring-1 file:ring-white/10 file:px-3 file:py-1.5 file:rounded-md file:text-white file:cursor-pointer hover:file:bg-zinc-700 transition"
+                                                    />
+                                                </label>
+                                            </div>
+                                            <small className="text-[11px] text-gray-500 mt-2 inline-block">
+                                                Sube una imagen distinta para mobile si lo necesitas.
+                                            </small>
+                                        </td>
+
+                                        {/* Acciones */}
+                                        <td className="p-4 text-center align-top">
+                                            <div className="flex justify-center gap-2">
+                                                <button
+                                                    onClick={() => moveCategory(index, -1)}
+                                                    disabled={index === 0}
+                                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm bg-zinc-800 hover:bg-zinc-700 text-white ring-1 ring-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                                                    title="Subir"
+                                                >
+                                                    <FaArrowUp /> Subir
+                                                </button>
+                                                <button
+                                                    onClick={() => moveCategory(index, 1)}
+                                                    disabled={index === categories.length - 1}
+                                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm bg-zinc-800 hover:bg-zinc-700 text-white ring-1 ring-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                                                    title="Bajar"
+                                                >
+                                                    <FaArrowDown /> Bajar
+                                                </button>
+                                                <button
+                                                    onClick={() => deleteCategory(cat._id)}
+                                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm bg-red-600 hover:bg-red-700 text-white transition"
+                                                    title="Eliminar"
+                                                >
+                                                    <FaTrash /> Eliminar
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
+
 
                 {/* Añadir nueva categoría */}
                 <div className="mt-14 bg-zinc-800 border border-zinc-700 p-6 rounded-2xl shadow-xl space-y-6">
