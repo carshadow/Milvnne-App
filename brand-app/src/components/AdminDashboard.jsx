@@ -269,26 +269,52 @@ const AdminDashboard = () => {
 
 
 
+    // Sincroniza el estado local cuando cambie la lista de categorías
+    useEffect(() => {
+        const map = {};
+        categories.forEach(c => { map[c._id] = c.name || ""; });
+        setCategoryNames(map);
+    }, [categories]);
 
+    // Guardar (PUT) solo cuando el usuario termine (onBlur o botón)
+    const saveCategoryName = async (id) => {
+        const newName = (categoryNames[id] ?? "").trim();
+        if (!newName) return;                       // evita vacíos
+        const original = categories.find(c => c._id === id)?.name || "";
+        if (newName === original) return;           // no llames si no cambió
 
-    const renameCategory = async (id, newName) => {
         try {
-
-
             await fetch(`https://clothing-backend.fly.dev/api/categories/${id}`, {
                 method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-
-                },
+                headers: { "Content-Type": "application/json" },
                 credentials: "include",
                 body: JSON.stringify({ name: newName }),
             });
-            fetchCategories();
+            // refresca la lista para ver el nombre confirmado desde backend
+            fetchCategories?.();
         } catch (err) {
             console.error("Rename failed", err);
         }
     };
+
+    // const renameCategory = async (id, newName) => {
+    //     try {
+
+
+    //         await fetch(`https://clothing-backend.fly.dev/api/categories/${id}`, {
+    //             method: "PUT",
+    //             headers: {
+    //                 "Content-Type": "application/json",
+
+    //             },
+    //             credentials: "include",
+    //             body: JSON.stringify({ name: newName }),
+    //         });
+    //         fetchCategories();
+    //     } catch (err) {
+    //         console.error("Rename failed", err);
+    //     }
+    // };
 
 
     const deleteCategory = async (id) => {
@@ -1276,6 +1302,23 @@ const AdminDashboard = () => {
                                         )}
                                     </div>
 
+                                    <div className="space-y-2 md:col-span-2">
+                                        <label className="text-sm text-zinc-400">Categoría</label>
+                                        <div className="flex items-center gap-2">
+                                            <select
+                                                className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2 text-white outline-none focus:ring-2 focus:ring-fuchsia-500"
+                                                value={form.categoryId || ""}
+                                                onChange={(e) => handleChange("categoryId", e.target.value)}
+                                                disabled={disabled}
+                                            >
+                                                <option value="" disabled>Selecciona una categoría…</option>
+                                                {categories.map(c => (
+                                                    <option key={c._id} value={c._id}>{c.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+
                                     {/* Precio / Original / Descuento */}
                                     <div className="grid sm:grid-cols-3 gap-4">
                                         <div>
@@ -1409,8 +1452,22 @@ const AdminDashboard = () => {
                                 {/* Nombre */}
                                 <input
                                     type="text"
-                                    value={cat.name}
-                                    onChange={(e) => renameCategory(cat._id, e.target.value)}
+                                    value={categoryNames[cat._id] ?? ""}
+                                    onChange={(e) =>
+                                        setCategoryNames(prev => ({ ...prev, [cat._id]: e.target.value }))
+                                    }
+                                    onBlur={() => saveCategoryName(cat._id)}          // guarda al salir del input
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                            e.currentTarget.blur();                      // dispara onBlur → guarda
+                                        }
+                                        if (e.key === "Escape") {
+                                            // restaura el valor original si cancela
+                                            const original = categories.find(c => c._id === cat._id)?.name || "";
+                                            setCategoryNames(prev => ({ ...prev, [cat._id]: original }));
+                                            e.currentTarget.blur();
+                                        }
+                                    }}
                                     className="w-full bg-zinc-900/60 ring-1 ring-white/10 focus:ring-fuchsia-500/40 outline-none text-sm text-white px-3 py-2 rounded-lg placeholder:text-gray-500"
                                     placeholder="Nombre de categoría"
                                 />
@@ -1597,9 +1654,24 @@ const AdminDashboard = () => {
                                         <td className="p-4 align-top">
                                             <input
                                                 type="text"
-                                                value={cat.name}
-                                                onChange={(e) => renameCategory(cat._id, e.target.value)}
-                                                className="bg-zinc-900/60 ring-1 ring-white/10 focus:ring-fuchsia-500/40 outline-none text-sm text-white px-3 py-2 rounded-lg w-full"
+                                                value={categoryNames[cat._id] ?? ""}
+                                                onChange={(e) =>
+                                                    setCategoryNames(prev => ({ ...prev, [cat._id]: e.target.value }))
+                                                }
+                                                onBlur={() => saveCategoryName(cat._id)}          // guarda al salir del input
+                                                onKeyDown={(e) => {
+                                                    if (e.key === "Enter") {
+                                                        e.currentTarget.blur();                      // dispara onBlur → guarda
+                                                    }
+                                                    if (e.key === "Escape") {
+                                                        // restaura el valor original si cancela
+                                                        const original = categories.find(c => c._id === cat._id)?.name || "";
+                                                        setCategoryNames(prev => ({ ...prev, [cat._id]: original }));
+                                                        e.currentTarget.blur();
+                                                    }
+                                                }}
+                                                className="w-full bg-zinc-900/60 ring-1 ring-white/10 focus:ring-fuchsia-500/40 outline-none text-sm text-white px-3 py-2 rounded-lg placeholder:text-gray-500"
+                                                placeholder="Nombre de categoría"
                                             />
                                         </td>
 
