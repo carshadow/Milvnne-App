@@ -1303,22 +1303,7 @@ const AdminDashboard = () => {
                                         )}
                                     </div>
 
-                                    <div className="space-y-2 md:col-span-2">
-                                        <label className="text-sm text-zinc-400">Categoría</label>
-                                        <div className="flex items-center gap-2">
-                                            <select
-                                                className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2 text-white outline-none focus:ring-2 focus:ring-fuchsia-500"
-                                                value={form.categoryId || ""}
-                                                onChange={(e) => handleChange("categoryId", e.target.value)}
-                                                disabled={disabled}
-                                            >
-                                                <option value="" disabled>Selecciona una categoría…</option>
-                                                {categories.map(c => (
-                                                    <option key={c._id} value={c._id}>{c.name}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    </div>
+
 
                                     {/* Precio / Original / Descuento */}
                                     <div className="grid sm:grid-cols-3 gap-4">
