@@ -52,53 +52,67 @@ router.post(
     ]),
     async (req, res) => {
         try {
-            const { name, price, category, description, sizes, stock, hasSizes } = req.body;
+            // --- Parseo y casteo seguro ---
+            const raw = req.body;
+            const hasSizes =
+                typeof raw.hasSizes === "boolean"
+                    ? raw.hasSizes
+                    : raw.hasSizes === "true";
 
-            const parsed = productSchema.safeParse({
-                name,
-                price,
-                category,
-                description,
+            const sizesParsed = raw.sizes
+                ? (typeof raw.sizes === "string" ? JSON.parse(raw.sizes) : raw.sizes)
+                : undefined;
+
+            const parsed = {
+                name: (raw.name || "").trim(),
+                price: Number(raw.price || 0),
+                category: (raw.category || "").trim(),
+                description: raw.description || "",
                 hasSizes,
-                stock,
-                sizes: sizes ? (typeof sizes === "string" ? JSON.parse(sizes) : sizes) : undefined,
-            });
+            };
 
-            if (!parsed.success) {
-                return res.status(400).json({
-                    success: false,
-                    errors: parsed.error.errors.map(err => ({
-                        path: err.path,
-                        message: err.message,
-                    })),
-                });
+            // Validación básica previa (si usas zod puedes mantenerlo pero con estos valores ya casteados)
+            if (!parsed.name) return res.status(400).json({ message: "Nombre requerido" });
+            if (!parsed.category) return res.status(400).json({ message: "Categoría requerida" });
+            if (!parsed.price) return res.status(400).json({ message: "Precio requerido" });
+
+            // --- Inventario: o tallas o stock (nunca ambos) ---
+            if (hasSizes) {
+                parsed.sizes = {
+                    S: Number(sizesParsed?.S || 0),
+                    M: Number(sizesParsed?.M || 0),
+                    L: Number(sizesParsed?.L || 0),
+                    XL: Number(sizesParsed?.XL || 0),
+                };
+                parsed.stock = 0;
+            } else {
+                parsed.stock = Number(raw.stock || 0);
+                parsed.sizes = undefined; // 👈 CLAVE: no guardes sizes
             }
 
+            // --- Imágenes desde Cloudinary/multer ---
             const coverImage = req.files["coverImage"]?.[0]?.path || "";
             const hoverImage = req.files["hoverImage"]?.[0]?.path || "";
-            const images = req.files["images"]?.map((img) => img.path) || [];
+            const images = req.files["images"]?.map(f => f.path) || [];
 
-            const newProduct = new Product({
-                name: parsed.data.name,
-                price: parsed.data.price,
-                category: parsed.data.category,
-                description: parsed.data.description,
-                hasSizes: parsed.data.hasSizes,
-                stock: parsed.data.hasSizes ? 0 : parsed.data.stock,
-                sizes: parsed.data.hasSizes ? parsed.data.sizes || { S: 0, M: 0, L: 0, XL: 0 } : { S: 0, M: 0, L: 0, XL: 0 },
+            const doc = await Product.create({
+                ...parsed,
                 coverImage,
                 hoverImage,
                 images,
             });
 
-            await newProduct.save();
-            res.status(201).json({ message: "✅ Producto creado", product: newProduct });
-        } catch (error) {
-            console.error("❌ Error al crear producto:", error);
-            res.status(500).json({ message: error.message || "Error interno del servidor" });
+            // Normaliza la salida (opcional)
+            const out = doc.toObject();
+            if (!out.hasSizes) delete out.sizes; // evita confusión en el front
+            return res.status(201).json(out);
+        } catch (err) {
+            console.error("❌ Error creando producto:", err);
+            return res.status(500).json({ message: "Error interno del servidor" });
         }
     }
 );
+
 
 // ✅ Editar producto (protegido)
 router.put(
@@ -112,72 +126,59 @@ router.put(
     ]),
     async (req, res) => {
         try {
-            const {
-                name,
-                price,
-                category,
-                description,
-                sizes,
-                stock,
-                hasSizes,
-                discount,
-                originalPrice,
-                existingImages = [], // 👈 importante
-            } = req.body;
+            const raw = req.body;
+            const hasSizes =
+                typeof raw.hasSizes === "boolean"
+                    ? raw.hasSizes
+                    : raw.hasSizes === "true";
 
-            const parsed = productSchema.safeParse({
-                name,
-                price,
-                category,
-                description,
-                hasSizes,
-                stock,
-                sizes: sizes ? (typeof sizes === "string" ? JSON.parse(sizes) : sizes) : undefined,
-            });
-
-            if (!parsed.success) {
-                return res.status(400).json({
-                    success: false,
-                    errors: parsed.error.errors.map((err) => ({
-                        path: err.path,
-                        message: err.message,
-                    })),
-                });
-            }
-
-            const coverImage = req.files["coverImage"]?.[0]?.path;
-            const hoverImage = req.files["hoverImage"]?.[0]?.path;
-            const newImages = req.files["images"]?.map((img) => img.path) || [];
-
-            // 🔥 combinas las que ya existen + las nuevas
-            const combinedImages = [...(Array.isArray(existingImages) ? existingImages : [existingImages]), ...newImages];
+            const sizesParsed = raw.sizes
+                ? (typeof raw.sizes === "string" ? JSON.parse(raw.sizes) : raw.sizes)
+                : undefined;
 
             const product = await Product.findById(req.params.id);
             if (!product) return res.status(404).json({ message: "Producto no encontrado" });
 
-            const updatedFields = {
-                name: parsed.data.name,
-                price: parsed.data.price,
-                category: parsed.data.category,
-                description: parsed.data.description,
-                hasSizes: parsed.data.hasSizes,
-                sizes: parsed.data.hasSizes ? parsed.data.sizes : { S: 0, M: 0, L: 0, XL: 0 },
-                stock: parsed.data.hasSizes ? 0 : parsed.data.stock,
-                discount: discount ?? 0,
-                originalPrice: originalPrice ?? parsed.data.price,
-                coverImage: coverImage || product.coverImage,
-                hoverImage: hoverImage || product.hoverImage,
-                images: combinedImages,
+            const updates = {
+                name: (raw.name ?? product.name).trim(),
+                price: Number(raw.price ?? product.price),
+                category: (raw.category ?? product.category).trim(),
+                description: raw.description ?? product.description,
+                hasSizes,
             };
 
-            const updatedProduct = await Product.findByIdAndUpdate(req.params.id, updatedFields, {
-                new: true,
-            });
+            if (hasSizes) {
+                updates.sizes = {
+                    S: Number(sizesParsed?.S || 0),
+                    M: Number(sizesParsed?.M || 0),
+                    L: Number(sizesParsed?.L || 0),
+                    XL: Number(sizesParsed?.XL || 0),
+                };
+                updates.stock = 0;
+            } else {
+                updates.stock = Number(raw.stock ?? product.stock ?? 0);
+                updates.sizes = undefined; // 👈 CLAVE
+            }
 
-            res.json({ message: "✅ Producto actualizado", product: updatedProduct });
-        } catch (error) {
-            console.error("❌ Error al actualizar producto:", error);
-            res.status(500).json({ message: "Error interno del servidor" });
+            // imágenes
+            const coverImage = req.files["coverImage"]?.[0]?.path;
+            const hoverImage = req.files["hoverImage"]?.[0]?.path;
+            const newImages = req.files["images"]?.map(f => f.path) || [];
+            const existingImages = Array.isArray(raw.existingImages)
+                ? raw.existingImages
+                : (raw.existingImages ? [raw.existingImages] : []);
+
+            updates.coverImage = coverImage || product.coverImage;
+            updates.hoverImage = hoverImage || product.hoverImage;
+            updates.images = [...existingImages, ...newImages];
+
+            const updated = await Product.findByIdAndUpdate(req.params.id, updates, { new: true });
+            const out = updated.toObject();
+            if (!out.hasSizes) delete out.sizes;
+            return res.json(out);
+        } catch (err) {
+            console.error("❌ Error actualizando producto:", err);
+            return res.status(500).json({ message: "Error interno del servidor" });
         }
     }
 );
