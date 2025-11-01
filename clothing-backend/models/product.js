@@ -10,14 +10,23 @@ const productSchema = new mongoose.Schema({
     images: [String],
     category: { type: String, required: true },
     description: { type: String, required: true },
-    hasSizes: { type: Boolean, default: true },
-    sizes: {
-        S: { type: Number, default: 0 },
-        M: { type: Number, default: 0 },
-        L: { type: Number, default: 0 },
-        XL: { type: Number, default: 0 }
+    hasSizes: {
+        type: Boolean,
+        default: false,
     },
-    stock: { type: Number, default: 0 }
+
+    // ✅ Reemplaza tu versión anterior de "sizes" por esto
+    sizes: {
+        type: Map,
+        of: Number,
+        default: undefined, // ⚡ evita que cree {S:0,M:0,L:0,XL:0} cuando no hay tallas
+    },
+
+    // ✅ Stock general
+    stock: {
+        type: Number,
+        default: 0,
+    },
 }, { timestamps: true });
 
 
