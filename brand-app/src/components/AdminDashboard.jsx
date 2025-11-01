@@ -26,11 +26,10 @@ const AdminDashboard = () => {
         coverImage: null,
         hoverImage: null,
         images: [],
-        sizes: { S: 0, M: 0, L: 0, XL: 0 },
+        hasSizes: false, // 👈 stock por defecto
+        sizes: {},       // 👈 vacío
         stock: 0,
-        hasSizes: true
     });
-
     const [editingProduct, setEditingProduct] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
 
@@ -394,42 +393,42 @@ const AdminDashboard = () => {
     const handleCreateProduct = async () => {
         setProductErrors({}); // Limpiar errores antes de intentar
 
-        const formData = new FormData();
-        formData.append("name", newProduct.name);
-        formData.append("price", newProduct.price);
-        formData.append("category", newProduct.category);
-        formData.append("description", newProduct.description);
-        formData.append("hasSizes", newProduct.hasSizes ? "true" : "false");
+        const fd = new FormData();
+        fd.append("name", newProduct.name);
+        fd.append("price", String(newProduct.price));
+        fd.append("category", newProduct.category);
+        fd.append("description", newProduct.description);
+        fd.append("hasSizes", newProduct.hasSizes ? "true" : "false");
 
         if (newProduct.hasSizes) {
-            formData.append("sizes", JSON.stringify(newProduct.sizes));
+            // Solo si tiene tallas
+            fd.append("sizes", JSON.stringify(newProduct.sizes || {}));
         } else {
-            formData.append("stock", newProduct.stock);
+            // Solo si es stock general
+            fd.append("stock", String(newProduct.stock || 0));
         }
 
-        formData.append("coverImage", newProduct.coverImage);
-        formData.append("hoverImage", newProduct.hoverImage);
-        newProduct.images.forEach((img) => {
-            formData.append("images", img);
-        });
+        if (newProduct.coverImage) fd.append("coverImage", newProduct.coverImage);
+        if (newProduct.hoverImage) fd.append("hoverImage", newProduct.hoverImage);
+        (newProduct.images || []).forEach((img) => fd.append("images", img));
+
+        // 🔍 DEBUG: verifica lo que realmente envías
+        for (const [k, v] of fd.entries()) console.log("FD:", k, v);
 
         try {
             const res = await fetch("https://clothing-backend.fly.dev/api/products", {
                 method: "POST",
                 credentials: "include",
-                body: formData,
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
+                headers: { Authorization: `Bearer ${token}` },
+                body: fd,
             });
 
             const data = await res.json();
 
             if (!res.ok) {
-                if (data.errors) {
-                    // ⚡ Mapeamos los errores en un objeto { field: message }
+                if (data?.errors) {
                     const fieldErrors = {};
-                    data.errors.forEach(err => {
+                    data.errors.forEach((err) => {
                         fieldErrors[err.path[0]] = err.message;
                     });
                     setProductErrors(fieldErrors);
@@ -440,24 +439,28 @@ const AdminDashboard = () => {
             }
 
             alert("✅ Producto creado exitosamente!");
+
+            // 🔄 Reset: volver a STOCK GENERAL por defecto
             setNewProduct({
                 name: "",
                 price: "",
                 category: "",
                 description: "",
-                hasSizes: true,
-                sizes: { S: 0, M: 0, L: 0, XL: 0 },
+                hasSizes: false,       // 👈 importante
+                sizes: {},             // 👈 sin tallas por defecto
                 stock: 0,
                 coverImage: null,
                 hoverImage: null,
-                images: []
+                images: [],
             });
+
             fetchProducts();
         } catch (err) {
             console.error("❌ Error creando producto:", err);
             setProductErrors({ general: "Error de red o servidor" });
         }
     };
+
 
     const editProductSchema = z.object({
         name: z.string().min(1, "El nombre es requerido"),
@@ -808,10 +811,18 @@ const AdminDashboard = () => {
                         <label className="text-xs uppercase tracking-wide text-zinc-300 font-semibold mb-2">
                             Opciones de Inventario
                         </label>
+
                         <div className="flex items-center gap-3">
                             <button
                                 type="button"
-                                onClick={() => setNewProduct({ ...newProduct, hasSizes: true })}
+                                onClick={() =>
+                                    setNewProduct((p) => ({
+                                        ...p,
+                                        hasSizes: true,
+                                        sizes: { S: 0, M: 0, L: 0, XL: 0 }, // ⚡ Reinicia tallas
+                                        stock: 0, // ⚡ Limpia el stock
+                                    }))
+                                }
                                 className={`px-3 py-2 rounded-lg text-sm border transition ${newProduct.hasSizes
                                         ? "bg-fuchsia-600/20 border-fuchsia-600 text-fuchsia-300"
                                         : "bg-zinc-900 border-zinc-700 text-zinc-300 hover:border-zinc-600"
@@ -819,9 +830,17 @@ const AdminDashboard = () => {
                             >
                                 Con tallas (S/M/L/XL)
                             </button>
+
                             <button
                                 type="button"
-                                onClick={() => setNewProduct({ ...newProduct, hasSizes: false })}
+                                onClick={() =>
+                                    setNewProduct((p) => ({
+                                        ...p,
+                                        hasSizes: false,
+                                        sizes: {}, // ⚡ Limpia las tallas
+                                        stock: p.stock || 0, // ⚡ Mantiene o inicia el stock
+                                    }))
+                                }
                                 className={`px-3 py-2 rounded-lg text-sm border transition ${!newProduct.hasSizes
                                         ? "bg-fuchsia-600/20 border-fuchsia-600 text-fuchsia-300"
                                         : "bg-zinc-900 border-zinc-700 text-zinc-300 hover:border-zinc-600"
