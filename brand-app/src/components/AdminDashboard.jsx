@@ -35,6 +35,7 @@ const AdminDashboard = () => {
     const [showEditModal, setShowEditModal] = useState(false);
 
     const [categories, setCategories] = useState([]);
+    const [categoryNames, setCategoryNames] = useState({});
     const [newCategory, setNewCategory] = useState("");
     const [newCategoryImage, setNewCategoryImage] = useState(null);
     const [newCategoryMobileImage, setNewCategoryMobileImage] = useState(null);
