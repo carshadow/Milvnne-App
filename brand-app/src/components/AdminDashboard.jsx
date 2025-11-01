@@ -732,51 +732,63 @@ const AdminDashboard = () => {
 
             {/* Add New Product Form */}
             <motion.div
-                className="mb-12 p-8 rounded-2xl shadow-2xl bg-zinc-900 border border-zinc-700 text-white"
+                className="relative mb-12 rounded-2xl border border-zinc-800 bg-gradient-to-b from-zinc-900 to-zinc-950 p-6 md:p-8 shadow-2xl text-white overflow-hidden"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8 }}
+                transition={{ duration: 0.6 }}
             >
-                <h2 className="text-3xl font-bold mb-6 text-center text-fuchsia-500 uppercase tracking-wider">
-                    Añadir Productos Nuevos
-                </h2>
+                {/* Glow decorativo */}
+                <div className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full blur-3xl opacity-20 bg-fuchsia-600" />
 
-                <div className="flex flex-wrap gap-6">
+                <div className="flex items-center justify-center gap-3 mb-8">
+                    <h2 className="text-2xl md:text-3xl font-extrabold tracking-wider uppercase bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 via-fuchsia-300 to-fuchsia-500">
+                        Añadir Productos Nuevos
+                    </h2>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Nombre */}
-                    <div className="flex flex-col w-full md:w-[48%]">
-                        <label className="text-sm mb-1 text-gray-300 font-medium">Nombre del Producto</label>
+                    <div className="flex flex-col">
+                        <label className="text-xs uppercase tracking-wide text-zinc-300 font-semibold mb-2">
+                            Nombre del Producto
+                        </label>
                         <input
-                            className="bg-zinc-800 border border-zinc-600 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
+                            className="rounded-xl bg-zinc-800/60 border border-zinc-700 px-4 py-3 placeholder-zinc-400 focus:outline-none focus:ring-4 focus:ring-fuchsia-500/30 focus:border-fuchsia-500 transition"
                             type="text"
                             placeholder="Ej: Camisa Oversize"
                             value={newProduct.name}
                             onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
                         />
                         {productErrors.name && (
-                            <p className="text-red-400 text-xs mt-1">{productErrors.name}</p>
+                            <p className="text-red-400 text-xs mt-2">{productErrors.name}</p>
                         )}
                     </div>
 
                     {/* Precio */}
-                    <div className="flex flex-col w-full md:w-[48%]">
-                        <label className="text-sm mb-1 text-gray-300 font-medium">Precio ($)</label>
+                    <div className="flex flex-col">
+                        <label className="text-xs uppercase tracking-wide text-zinc-300 font-semibold mb-2">
+                            Precio ($)
+                        </label>
                         <input
-                            className="bg-zinc-800 border border-zinc-600 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
+                            className="rounded-xl bg-zinc-800/60 border border-zinc-700 px-4 py-3 placeholder-zinc-400 focus:outline-none focus:ring-4 focus:ring-fuchsia-500/30 focus:border-fuchsia-500 transition"
                             type="number"
+                            step="0.01"
                             placeholder="Ej: 29.99"
                             value={newProduct.price}
                             onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
                         />
                         {productErrors.price && (
-                            <p className="text-red-400 text-xs mt-1">{productErrors.price}</p>
+                            <p className="text-red-400 text-xs mt-2">{productErrors.price}</p>
                         )}
                     </div>
 
                     {/* Categoría */}
-                    <div className="flex flex-col w-full md:w-[48%]">
-                        <label className="text-sm mb-1 text-gray-300 font-medium">Categoría</label>
+                    <div className="flex flex-col">
+                        <label className="text-xs uppercase tracking-wide text-zinc-300 font-semibold mb-2">
+                            Categoría
+                        </label>
                         <select
-                            className="bg-zinc-800 border border-zinc-600 p-3 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
+                            className="rounded-xl bg-zinc-800/60 border border-zinc-700 px-4 py-3 text-white focus:outline-none focus:ring-4 focus:ring-fuchsia-500/30 focus:border-fuchsia-500 transition"
                             value={newProduct.category}
                             onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
                         >
@@ -787,159 +799,222 @@ const AdminDashboard = () => {
                             ))}
                         </select>
                         {productErrors.category && (
-                            <p className="text-red-400 text-xs mt-1">{productErrors.category}</p>
+                            <p className="text-red-400 text-xs mt-2">{productErrors.category}</p>
                         )}
                     </div>
 
+                    {/* Toggle inventario */}
+                    <div className="flex flex-col">
+                        <label className="text-xs uppercase tracking-wide text-zinc-300 font-semibold mb-2">
+                            Opciones de Inventario
+                        </label>
+                        <div className="flex items-center gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setNewProduct({ ...newProduct, hasSizes: true })}
+                                className={`px-3 py-2 rounded-lg text-sm border transition ${newProduct.hasSizes
+                                        ? "bg-fuchsia-600/20 border-fuchsia-600 text-fuchsia-300"
+                                        : "bg-zinc-900 border-zinc-700 text-zinc-300 hover:border-zinc-600"
+                                    }`}
+                            >
+                                Con tallas (S/M/L/XL)
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setNewProduct({ ...newProduct, hasSizes: false })}
+                                className={`px-3 py-2 rounded-lg text-sm border transition ${!newProduct.hasSizes
+                                        ? "bg-fuchsia-600/20 border-fuchsia-600 text-fuchsia-300"
+                                        : "bg-zinc-900 border-zinc-700 text-zinc-300 hover:border-zinc-600"
+                                    }`}
+                            >
+                                Stock general
+                            </button>
+                        </div>
+                    </div>
+
                     {/* Descripción */}
-                    <div className="flex flex-col w-full">
-                        <label className="text-sm mb-1 text-gray-300 font-medium">Descripción</label>
+                    <div className="md:col-span-2 flex flex-col">
+                        <label className="text-xs uppercase tracking-wide text-zinc-300 font-semibold mb-2">
+                            Descripción
+                        </label>
                         <textarea
-                            className="bg-zinc-800 border border-zinc-600 p-3 rounded-lg min-h-[100px] focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
+                            className="rounded-xl bg-zinc-800/60 border border-zinc-700 px-4 py-3 min-h-[110px] placeholder-zinc-400 focus:outline-none focus:ring-4 focus:ring-fuchsia-500/30 focus:border-fuchsia-500 transition"
                             placeholder="Escribe una breve descripción del producto..."
                             value={newProduct.description}
                             onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
                         />
                         {productErrors.description && (
-                            <p className="text-red-400 text-xs mt-1">{productErrors.description}</p>
+                            <p className="text-red-400 text-xs mt-2">{productErrors.description}</p>
                         )}
                     </div>
 
-                    {/* Tallas */}
-
-                    <div className="flex items-center gap-2 mt-4">
-                        <input
-                            type="checkbox"
-                            checked={newProduct.hasSizes}
-                            onChange={(e) =>
-                                setNewProduct({ ...newProduct, hasSizes: e.target.checked })
-                            }
-                            className="w-4 h-4"
-                        />
-                        <label className="text-gray-300 text-sm">Este producto tiene tallas</label>
-                    </div>
-
+                    {/* Tallas o Stock */}
                     {newProduct.hasSizes ? (
-                        <div className="w-full flex flex-wrap gap-4 mt-2">
-                            {["S", "M", "L", "XL"].map((size) => (
-                                <div key={size} className="flex flex-col w-[48%] md:w-[23%]">
-                                    <label className="text-sm text-gray-300 mb-1">{size}</label>
-                                    <input
-                                        inputMode="numeric"
-                                        pattern="[0-9]*"
-                                        className="bg-zinc-800 border border-zinc-600 p-2 rounded-lg"
-                                        value={newProduct.sizes[size] || ""}
-                                        onChange={(e) =>
-                                            setNewProduct({
-                                                ...newProduct,
-                                                sizes: { ...newProduct.sizes, [size]: e.target.value }
-                                            })
-                                        }
-                                    />
-                                </div>
-                            ))}
+                        <div className="md:col-span-2">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {["S", "M", "L", "XL"].map((size) => (
+                                    <div key={size} className="bg-zinc-900/60 border border-zinc-700 rounded-xl p-3">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="text-sm text-zinc-300 font-medium">{size}</span>
+                                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300">
+                                                Stock
+                                            </span>
+                                        </div>
+                                        <input
+                                            inputMode="numeric"
+                                            pattern="[0-9]*"
+                                            className="w-full rounded-lg bg-zinc-800/60 border border-zinc-700 px-3 py-2 focus:outline-none focus:ring-4 focus:ring-fuchsia-500/30 focus:border-fuchsia-500 transition"
+                                            value={newProduct.sizes[size] || ""}
+                                            onChange={(e) =>
+                                                setNewProduct({
+                                                    ...newProduct,
+                                                    sizes: { ...newProduct.sizes, [size]: e.target.value },
+                                                })
+                                            }
+                                        />
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     ) : (
-                        <div className="flex flex-col w-full md:w-[48%] mt-4">
-                            <label className="text-sm mb-1 text-gray-300 font-medium">Stock</label>
+                        <div className="flex flex-col">
+                            <label className="text-xs uppercase tracking-wide text-zinc-300 font-semibold mb-2">
+                                Stock
+                            </label>
                             <input
                                 type="number"
                                 placeholder="Ej: 50"
-                                className="bg-zinc-800 border border-zinc-600 p-3 rounded-lg"
+                                className="rounded-xl bg-zinc-800/60 border border-zinc-700 px-4 py-3 placeholder-zinc-400 focus:outline-none focus:ring-4 focus:ring-fuchsia-500/30 focus:border-fuchsia-500 transition"
                                 value={newProduct.stock}
                                 onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })}
                             />
                         </div>
                     )}
 
-
-                    {/* Imágenes */}
-                    <div className="flex flex-col w-full md:w-[48%] mt-4">
-                        <label className="text-sm mb-1 text-gray-300 font-medium">Cover Image</label>
-                        <input
-                            type="file"
-                            accept="image/*"
-                            className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
-                            onChange={async (e) => {
-                                const file = e.target.files?.[0];
-                                if (!file) return;
-                                const safe = await ensureJpeg(file);
-                                if (!safe) return; // conversión fallida
-                                setNewProduct(prev => ({ ...prev, coverImage: safe }));
-                            }}
-                        />
-
+                    {/* Cover Image */}
+                    <div className="flex flex-col">
+                        <label className="text-xs uppercase tracking-wide text-zinc-300 font-semibold mb-2">
+                            Cover Image
+                        </label>
+                        <label className="relative flex flex-col items-center justify-center gap-2 h-32 rounded-xl border border-dashed border-zinc-700 bg-zinc-900/60 hover:border-fuchsia-600 hover:bg-zinc-900/80 transition cursor-pointer">
+                            <span className="text-xs text-zinc-400">Clic para seleccionar archivo</span>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    const safe = await ensureJpeg(file);
+                                    if (!safe) return;
+                                    setNewProduct((prev) => ({ ...prev, coverImage: safe }));
+                                }}
+                            />
+                        </label>
+                        {newProduct.coverImage && (
+                            <div className="mt-3">
+                                <img
+                                    src={URL.createObjectURL(newProduct.coverImage)}
+                                    alt="Cover preview"
+                                    className="h-24 w-24 rounded-lg object-cover border border-zinc-700"
+                                />
+                            </div>
+                        )}
                     </div>
 
-                    <div className="flex flex-col w-full md:w-[48%] mt-4">
-                        <label className="text-sm mb-1 text-gray-300 font-medium">Hover Image</label>
-                        <input
-                            type="file"
-                            accept="image/*"
-                            className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
-                            onChange={async (e) => {
-                                const file = e.target.files?.[0];
-                                if (!file) return;
-                                const safe = await ensureJpeg(file);
-                                if (!safe) return;
-                                setNewProduct(prev => ({ ...prev, hoverImage: safe }));
-                            }}
-                        />
-
-
+                    {/* Hover Image */}
+                    <div className="flex flex-col">
+                        <label className="text-xs uppercase tracking-wide text-zinc-300 font-semibold mb-2">
+                            Hover Image
+                        </label>
+                        <label className="relative flex flex-col items-center justify-center gap-2 h-32 rounded-xl border border-dashed border-zinc-700 bg-zinc-900/60 hover:border-fuchsia-600 hover:bg-zinc-900/80 transition cursor-pointer">
+                            <span className="text-xs text-zinc-400">Clic para seleccionar archivo</span>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    const safe = await ensureJpeg(file);
+                                    if (!safe) return;
+                                    setNewProduct((prev) => ({ ...prev, hoverImage: safe }));
+                                }}
+                            />
+                        </label>
+                        {newProduct.hoverImage && (
+                            <div className="mt-3">
+                                <img
+                                    src={URL.createObjectURL(newProduct.hoverImage)}
+                                    alt="Hover preview"
+                                    className="h-24 w-24 rounded-lg object-cover border border-zinc-700"
+                                />
+                            </div>
+                        )}
                     </div>
 
                     {/* Imágenes adicionales */}
-                    <div className="flex flex-col w-full mt-4">
-                        <label className="text-sm mb-1 text-gray-300 font-medium">
-                            Imágenes Adicionales (Máx. 4)
+                    <div className="md:col-span-2 flex flex-col">
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="text-xs uppercase tracking-wide text-zinc-300 font-semibold">
+                                Imágenes Adicionales (Máx. 4)
+                            </label>
+                            <span className="text-[11px] text-zinc-400">
+                                {(newProduct.images?.length || 0)}/4 seleccionadas
+                            </span>
+                        </div>
+
+                        <label className="relative flex flex-col items-center justify-center gap-2 h-32 rounded-xl border border-dashed border-zinc-700 bg-zinc-900/60 hover:border-fuchsia-600 hover:bg-zinc-900/80 transition cursor-pointer">
+                            <span className="text-xs text-zinc-400">Clic para seleccionar múltiples archivos</span>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                onChange={async (e) => {
+                                    const selected = Array.from(e.target.files || []);
+                                    if (!selected.length) return;
+
+                                    const converted = [];
+                                    for (const f of selected) {
+                                        const safe = await ensureJpeg(f);
+                                        if (safe) converted.push(safe);
+                                    }
+
+                                    const current = newProduct.images?.length || 0;
+                                    const total = current + converted.length;
+                                    if (total > 4) {
+                                        alert("Máximo 4 imágenes adicionales");
+                                        return;
+                                    }
+
+                                    setNewProduct((prev) => ({
+                                        ...prev,
+                                        images: [...(prev.images || []), ...converted],
+                                    }));
+                                }}
+                            />
                         </label>
-                        <input
-                            type="file"
-                            accept="image/*"
-                            className="bg-zinc-800 text-gray-300 p-3 rounded-lg border border-zinc-600"
-                            multiple
-                            onChange={async (e) => {
-                                const selected = Array.from(e.target.files || []);
-                                if (!selected.length) return;
-
-                                // convertir cada archivo si hace falta
-                                const converted = [];
-                                for (const f of selected) {
-                                    const safe = await ensureJpeg(f);
-                                    if (safe) converted.push(safe);
-                                }
-
-                                const total = newProduct.images.length + converted.length;
-                                if (total > 4) {
-                                    alert("Máximo 4 imágenes adicionales");
-                                    return;
-                                }
-
-                                setNewProduct(prev => ({ ...prev, images: [...prev.images, ...converted] }));
-                            }}
-                        />
-
-
 
                         {/* Vista previa */}
-                        {newProduct.images.length > 0 && (
-                            <div className="flex flex-wrap gap-4 mt-3">
+                        {newProduct.images?.length > 0 && (
+                            <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
                                 {newProduct.images.map((file, index) => (
-                                    <div key={index} className="relative group">
+                                    <div key={index} className="group relative">
                                         <img
                                             src={URL.createObjectURL(file)}
                                             alt={`Preview ${index + 1}`}
-                                            className="w-20 h-20 object-cover rounded border border-zinc-700"
+                                            className="h-24 w-full object-cover rounded-lg border border-zinc-700"
                                         />
                                         <button
+                                            type="button"
                                             onClick={() =>
                                                 setNewProduct({
                                                     ...newProduct,
                                                     images: newProduct.images.filter((_, i) => i !== index),
                                                 })
                                             }
-                                            className="absolute top-0 right-0 bg-red-600 text-white text-xs rounded-full px-1"
+                                            className="absolute top-1 right-1 text-[11px] px-2 py-1 rounded-md bg-red-600/90 hover:bg-red-600 text-white shadow-sm"
                                         >
                                             ✕
                                         </button>
@@ -951,15 +1026,16 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* Botón */}
-                <div className="flex justify-center mt-8">
+                <div className="mt-8 flex justify-center">
                     <button
-                        className="bg-fuchsia-600 text-white px-8 py-3 rounded-full hover:bg-fuchsia-700 transition duration-300 shadow-md"
+                        className="inline-flex items-center gap-2 rounded-full bg-fuchsia-600 px-8 py-3 text-white font-semibold shadow-lg hover:bg-fuchsia-700 active:scale-[0.99] transition focus:outline-none focus:ring-4 focus:ring-fuchsia-500/30"
                         onClick={handleCreateProduct}
                     >
                         Crear Producto
                     </button>
                 </div>
             </motion.div>
+
 
 
 

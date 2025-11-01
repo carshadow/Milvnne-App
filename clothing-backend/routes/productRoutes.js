@@ -85,7 +85,9 @@ router.post(
                 description: parsed.data.description,
                 hasSizes: parsed.data.hasSizes,
                 stock: parsed.data.hasSizes ? 0 : parsed.data.stock,
-                sizes: parsed.data.hasSizes ? parsed.data.sizes || { S: 0, M: 0, L: 0, XL: 0 } : { S: 0, M: 0, L: 0, XL: 0 },
+                sizes: parsed.data.hasSizes
+                    ? (parsed.data.sizes || { S: 0, M: 0, L: 0, XL: 0 })
+                    : undefined,
                 coverImage,
                 hoverImage,
                 images,
@@ -161,7 +163,7 @@ router.put(
                 category: parsed.data.category,
                 description: parsed.data.description,
                 hasSizes: parsed.data.hasSizes,
-                sizes: parsed.data.hasSizes ? parsed.data.sizes : { S: 0, M: 0, L: 0, XL: 0 },
+                sizes: parsed.data.hasSizes ? parsed.data.sizes : undefined, // 👈 no dejes objeto vacío
                 stock: parsed.data.hasSizes ? 0 : parsed.data.stock,
                 discount: discount ?? 0,
                 originalPrice: originalPrice ?? parsed.data.price,

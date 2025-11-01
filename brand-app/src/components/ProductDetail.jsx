@@ -16,13 +16,9 @@ const toastAddedToCart = ({ img, name, size, qty }) => {
             <div className="text-sm">
                 <p className="font-semibold text-white">Added to bag</p>
                 <p className="text-zinc-300">
-                    {name}{" "}
-                    {size && <span className="text-zinc-400">· {size}</span>} — x{qty}
+                    {name} {size && <span className="text-zinc-400">· {size}</span>} — x{qty}
                 </p>
-                <Link
-                    to="/cart"
-                    className="inline-block mt-1 text-fuchsia-400 hover:underline"
-                >
+                <Link to="/cart" className="inline-block mt-1 text-fuchsia-400 hover:underline">
                     View cart →
                 </Link>
             </div>
@@ -68,14 +64,43 @@ export default function ProductDetail() {
     const [loading, setLoading] = useState(true);
     const [sizeError, setSizeError] = useState("");
 
+    // 🔧 Normalizador para evitar "hasSizes" como string "false"
+    const normalizeProduct = (raw) => {
+        const hasSizesBool =
+            (typeof raw.hasSizes === "boolean"
+                ? raw.hasSizes
+                : raw.hasSizes === "true" || raw.hasSizes === true) &&
+            raw.sizes &&
+            Object.keys(raw.sizes).length > 0;
+
+        const normalizedSizes = Object.fromEntries(
+            Object.entries(raw.sizes || {}).map(([k, v]) => [k, Number(v || 0)])
+        );
+
+        return {
+            ...raw,
+            hasSizes: hasSizesBool,
+            sizes: normalizedSizes,
+            stock: Number(raw.stock || 0),
+            price: Number(raw.price || 0),
+            originalPrice:
+                raw.originalPrice != null ? Number(raw.originalPrice) : undefined,
+            discount: Number(raw.discount || 0),
+        };
+    };
+
     useEffect(() => {
         (async () => {
             try {
                 const res = await fetch(`https://clothing-backend.fly.dev/api/products/${id}`);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
-                setProduct(data);
-                setSelectedImage(data.coverImage);
+                const normalized = normalizeProduct(data);
+                setProduct(normalized);
+                setSelectedImage(normalized.coverImage);
+                setSelectedSize("");
+                setQuantity(1);
+                setSizeError("");
             } catch (e) {
                 toastErr("Error loading product");
             } finally {
@@ -84,25 +109,38 @@ export default function ProductDetail() {
         })();
     }, [id]);
 
+    // 🖼️ Galería
     const images = useMemo(() => {
         if (!product) return [];
         const list = [product.coverImage, product.hoverImage, ...(product.images || [])].filter(Boolean);
         return Array.from(new Set(list));
     }, [product]);
 
+    // ✅ Flag seguro para decidir si realmente hay tallas
+    const hasSizesSafe = useMemo(() => {
+        if (!product) return false;
+        if (!product.hasSizes) return false;
+        const keys = Object.keys(product.sizes || {});
+        return keys.length > 0; // hay estructura de tallas
+    }, [product]);
+
+    // 📦 Stock actual (por talla o general)
     const currentStock = useMemo(() => {
         if (!product) return 0;
-        if (product.hasSizes) return selectedSize ? Number(product.sizes?.[selectedSize] || 0) : 0;
+        if (hasSizesSafe) {
+            return selectedSize ? Number(product.sizes?.[selectedSize] || 0) : 0;
+        }
         return Number(product.stock || 0);
-    }, [product, selectedSize]);
+    }, [product, selectedSize, hasSizesSafe]);
 
-    const lowStockLabel = currentStock > 0 && currentStock <= 3 ? `Only ${currentStock} left` : "";
+    const lowStockLabel =
+        currentStock > 0 && currentStock <= 3 ? `Only ${currentStock} left` : "";
 
-    // 🚀 Nuevo handleAdd con toasts personalizados
+    // 🛒 Add to cart con validaciones
     const handleAdd = () => {
         if (!product) return;
 
-        if (product.hasSizes && !selectedSize) {
+        if (hasSizesSafe && !selectedSize) {
             setSizeError("Please select a size");
             toastInfo("Select a size to continue");
             return;
@@ -113,12 +151,12 @@ export default function ProductDetail() {
             return;
         }
 
-        addToCart(product._id, quantity, product.hasSizes ? selectedSize : "general");
+        addToCart(product._id, quantity, hasSizesSafe ? selectedSize : "general");
 
         toastAddedToCart({
             img: selectedImage || product.coverImage,
             name: product.name,
-            size: product.hasSizes ? selectedSize : null,
+            size: hasSizesSafe ? selectedSize : null,
             qty: quantity,
         });
     };
@@ -150,14 +188,20 @@ export default function ProductDetail() {
         <div className="flex items-baseline gap-3">
             {product.discount > 0 && product.originalPrice ? (
                 <>
-                    <span className="text-2xl font-bold text-white">${Number(product.price).toFixed(2)}</span>
-                    <span className="text-gray-400 line-through">${Number(product.originalPrice).toFixed(2)}</span>
+                    <span className="text-2xl font-bold text-white">
+                        ${Number(product.price).toFixed(2)}
+                    </span>
+                    <span className="text-gray-400 line-through">
+                        ${Number(product.originalPrice).toFixed(2)}
+                    </span>
                     <span className="ml-1 text-xs bg-fuchsia-600 text-white px-2 py-1 rounded-full">
                         -{product.discount}%
                     </span>
                 </>
             ) : (
-                <span className="text-2xl font-bold text-white">${Number(product.price).toFixed(2)}</span>
+                <span className="text-2xl font-bold text-white">
+                    ${Number(product.price).toFixed(2)}
+                </span>
             )}
         </div>
     );
@@ -244,7 +288,7 @@ export default function ProductDetail() {
                     </div>
 
                     {/* Size selector */}
-                    {product.hasSizes && (
+                    {hasSizesSafe && (
                         <div role="radiogroup" aria-label="Select size">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-sm font-semibold text-gray-200">Select Size</h3>
@@ -316,9 +360,7 @@ export default function ProductDetail() {
                             />
                             <button
                                 onClick={() =>
-                                    setQuantity((q) =>
-                                        currentStock ? Math.min(currentStock, q + 1) : q + 1
-                                    )
+                                    setQuantity((q) => (currentStock ? Math.min(currentStock, q + 1) : q + 1))
                                 }
                                 className="px-3 py-2 hover:bg-zinc-700"
                                 aria-label="Increase quantity"
@@ -336,9 +378,7 @@ export default function ProductDetail() {
                         whileTap={{ scale: 0.98 }}
                         whileHover={{ y: -1 }}
                         onClick={handleAdd}
-                        disabled={
-                            product.hasSizes ? !selectedSize || currentStock === 0 : currentStock === 0
-                        }
+                        disabled={hasSizesSafe ? !selectedSize || currentStock === 0 : currentStock === 0}
                         className="w-full md:w-auto px-6 py-3 rounded-xl font-bold bg-fuchsia-600 hover:bg-fuchsia-700 disabled:opacity-40 shadow-lg shadow-fuchsia-600/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-500"
                     >
                         Add to Bag
@@ -347,9 +387,7 @@ export default function ProductDetail() {
                     {/* Accordions */}
                     <div className="divide-y divide-zinc-800 rounded-xl border border-zinc-800 overflow-hidden">
                         <Accordion title="Details">
-                            <p className="text-gray-300 leading-relaxed">
-                                {product.description || "—"}
-                            </p>
+                            <p className="text-gray-300 leading-relaxed">{product.description || "—"}</p>
                         </Accordion>
                         <Accordion title="Shipping & Returns">
                             <ul className="list-disc list-inside text-gray-300 space-y-1">
