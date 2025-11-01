@@ -271,24 +271,52 @@ const AdminDashboard = () => {
 
 
 
-    const renameCategory = async (id, newName) => {
+    const API = "https://clothing-backend.fly.dev";
+
+    async function renameCategory(categoryId, newName) {
+        const trimmed = (newName || "").trim();
+        if (!trimmed) return;
+
+        // Update optimista: refleja el cambio en UI de una
+        setCategories(prev =>
+            prev.map(c => (c._id === categoryId ? { ...c, name: trimmed } : c))
+        );
+
         try {
-
-
-            await fetch(`https://clothing-backend.fly.dev/api/categories/${id}`, {
+            const res = await fetch(`${API}/api/categories/${categoryId}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
-
+                    Authorization: `Bearer ${token}`,   // 👈 IMPORTANTE
                 },
-                credentials: "include",
-                body: JSON.stringify({ name: newName }),
+                credentials: "include",               // 👈 si tu auth usa cookie httpOnly
+                body: JSON.stringify({ name: trimmed }),
             });
-            fetchCategories();
+
+            if (res.status === 401) {
+                toast.error("Sesión expirada o no autorizada. Inicia sesión.");
+                return;
+            }
+            if (!res.ok) {
+                const msg = await res.text();
+                throw new Error(msg || `Error HTTP ${res.status}`);
+            }
+
+            // opcional: si el backend retorna el doc actualizado:
+            // const updated = await res.json();
+            // setCategories(prev =>
+            //   prev.map(c => (c._id === categoryId ? { ...c, name: updated.name } : c))
+            // );
+
+            toast.success("Nombre de categoría actualizado");
         } catch (err) {
-            console.error("Rename failed", err);
+            console.error(err);
+            toast.error("No se pudo actualizar el nombre");
+            // revertir si falló (opcional)
+            fetchCategories();
         }
-    };
+    }
+
 
 
     const deleteCategory = async (id) => {
@@ -1275,6 +1303,22 @@ const AdminDashboard = () => {
                                             </motion.div>
                                         )}
                                     </div>
+                                    <div>
+                                        <label className="text-sm text-gray-300">Categoría</label>
+                                        <select
+                                            className="w-full bg-zinc-900 border border-zinc-700 p-3 rounded-lg mt-1 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/40"
+                                            value={editingProduct.category || ""}
+                                            onChange={(e) =>
+                                                setEditingProduct({ ...editingProduct, category: e.target.value })
+                                            }
+                                        >
+                                            {categories.map((cat) => (
+                                                <option key={cat._id} value={cat.name}>
+                                                    {cat.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
 
                                     {/* Precio / Original / Descuento */}
                                     <div className="grid sm:grid-cols-3 gap-4">
@@ -1410,7 +1454,11 @@ const AdminDashboard = () => {
                                 <input
                                     type="text"
                                     value={cat.name}
-                                    onChange={(e) => renameCategory(cat._id, e.target.value)}
+                                    onChange={(e) => {
+                                        const v = e.target.value;
+                                        setCategories(prev => prev.map(c => c._id === cat._id ? { ...c, name: v } : c));
+                                    }}
+                                    onBlur={(e) => renameCategory(cat._id, e.target.value)}
                                     className="w-full bg-zinc-900/60 ring-1 ring-white/10 focus:ring-fuchsia-500/40 outline-none text-sm text-white px-3 py-2 rounded-lg placeholder:text-gray-500"
                                     placeholder="Nombre de categoría"
                                 />
@@ -1594,14 +1642,16 @@ const AdminDashboard = () => {
                                         </td>
 
                                         {/* Nombre editable */}
-                                        <td className="p-4 align-top">
-                                            <input
-                                                type="text"
-                                                value={cat.name}
-                                                onChange={(e) => renameCategory(cat._id, e.target.value)}
-                                                className="bg-zinc-900/60 ring-1 ring-white/10 focus:ring-fuchsia-500/40 outline-none text-sm text-white px-3 py-2 rounded-lg w-full"
-                                            />
-                                        </td>
+                                        <input
+                                            type="text"
+                                            value={cat.name}
+                                            onChange={(e) => {
+                                                const v = e.target.value;
+                                                setCategories(prev => prev.map(c => c._id === cat._id ? { ...c, name: v } : c));
+                                            }}
+                                            onBlur={(e) => renameCategory(cat._id, e.target.value)}
+                                            className="bg-zinc-900/60 ring-1 ring-white/10 focus:ring-fuchsia-500/40 outline-none text-sm text-white px-3 py-2 rounded-lg w-full"
+                                        />
 
                                         {/* Inputs de imagen */}
                                         <td className="p-4 align-top">
@@ -1828,54 +1878,64 @@ const AdminDashboard = () => {
                 </div>
 
                 {/*  Tabla de órdenes */}
-                <div className="overflow-x-auto rounded-xl shadow-xl border border-zinc-700">
-                    <table className="min-w-full bg-zinc-900 text-sm text-left text-white rounded-xl">
-                        <thead className="bg-zinc-800 text-fuchsia-400 uppercase text-xs tracking-wider">
+                <div className="overflow-x-auto rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900 via-black to-zinc-950 shadow-2xl">
+                    <table className="min-w-full text-sm text-left text-gray-300">
+                        {/* HEADER */}
+                        <thead className="bg-zinc-900/80 text-fuchsia-400 uppercase text-xs tracking-wider border-b border-zinc-800">
                             <tr>
-                                <th className="px-6 py-4">Cliente</th>
-                                <th className="px-6 py-4">Total</th>
-                                <th className="px-6 py-4">Estado</th>
-                                <th className="px-6 py-4">Acción</th>
-                                <th className="px-6 py-4">Eliminar</th>
+                                <th className="px-6 py-4 font-semibold">Cliente</th>
+                                <th className="px-6 py-4 font-semibold">Total</th>
+                                <th className="px-6 py-4 font-semibold">Estado</th>
+                                <th className="px-6 py-4 font-semibold text-center">Acción</th>
+                                <th className="px-6 py-4 font-semibold text-center">Eliminar</th>
                             </tr>
                         </thead>
 
-                        <tbody className="divide-y divide-zinc-700">
+                        {/* BODY */}
+                        <tbody className="divide-y divide-zinc-800">
                             {allOrders.map((order) => (
-                                <tr
+                                <motion.tr
                                     key={order._id}
-                                    className="hover:bg-zinc-800/60 transition duration-200"
+                                    initial={{ opacity: 0, y: 5 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="hover:bg-zinc-800/70 transition-all cursor-pointer"
                                     onClick={() => {
                                         setSelectedOrder(order);
                                         setShowOrderModal(true);
                                     }}
                                 >
-                                    <td className="px-6 py-4 whitespace-nowrap font-medium">
-                                        {order.user?.name || (
-                                            <span className="italic text-gray-400">Invitado</span>
-                                        )}
+                                    {/* Cliente */}
+                                    <td className="px-6 py-4 whitespace-nowrap font-medium text-white">
+                                        {order.user?.name || <span className="italic text-gray-500">Invitado</span>}
                                     </td>
 
-                                    <td className="px-6 py-4 font-semibold text-fuchsia-300">
-                                        ${order.total.toFixed(2)}
-                                    </td>
+                                    {/* Total */}
+                                    <td className="px-6 py-4 font-semibold text-fuchsia-300">${order.total.toFixed(2)}</td>
 
+                                    {/* Estado */}
                                     <td className="px-6 py-4">
                                         <span
-                                            className={`px-3 py-1 text-xs font-bold rounded-full 
-                    ${order.status === "Paid" ? "bg-blue-600/20 text-blue-400" : ""}
-                    ${order.status === "En camino" ? "bg-yellow-600/20 text-yellow-400" : ""}
-                    ${order.status === "Entregada" ? "bg-green-600/20 text-green-400" : ""}`}
+                                            className={`px-3 py-1.5 text-xs font-semibold rounded-full shadow-md ${order.status === "Paid"
+                                                ? "bg-blue-600/20 text-blue-400 border border-blue-500/30"
+                                                : order.status === "En camino"
+                                                    ? "bg-yellow-600/20 text-yellow-400 border border-yellow-500/30"
+                                                    : order.status === "Entregada"
+                                                        ? "bg-green-600/20 text-green-400 border border-green-500/30"
+                                                        : "bg-zinc-700/40 text-gray-400 border border-zinc-600"
+                                                }`}
                                         >
                                             {order.status}
                                         </span>
                                     </td>
 
-                                    <td className="px-6 py-4">
+                                    {/* Cambiar estado */}
+                                    <td className="px-6 py-4 text-center">
                                         <select
                                             value={order.status}
                                             onChange={(e) => updateOrderStatus(order._id, e.target.value)}
-                                            className="bg-zinc-700 border border-zinc-600 text-white px-3 py-1 text-sm rounded focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
+                                            className="bg-zinc-800 border border-zinc-700 text-white px-3 py-2 text-xs rounded-lg focus:outline-none focus:ring-2 focus:ring-fuchsia-500/50 transition"
+                                            onClick={(e) => e.stopPropagation()} // para que no abra modal al hacer click
                                         >
                                             <option value="Paid">Pagado</option>
                                             <option value="En camino">En camino</option>
@@ -1883,119 +1943,141 @@ const AdminDashboard = () => {
                                         </select>
                                     </td>
 
-                                    <td className="px-6 py-4">
-                                        {order.status === "Entregada" && (
+                                    {/* Archivar */}
+                                    <td className="px-6 py-4 text-center">
+                                        {order.status === "Entregada" ? (
                                             <button
-                                                onClick={() => archiveOrder(order._id)}
-                                                className="bg-yellow-600 hover:bg-yellow-700 text-white text-xs px-4 py-1 rounded-full shadow-sm transition"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    archiveOrder(order._id);
+                                                }}
+                                                className="px-4 py-1.5 text-xs rounded-full bg-gradient-to-r from-yellow-600 to-amber-500 text-white font-semibold hover:brightness-110 transition shadow-md"
                                             >
                                                 Archivar
                                             </button>
+                                        ) : (
+                                            <span className="text-xs text-zinc-500 italic">—</span>
                                         )}
                                     </td>
-                                </tr>
+                                </motion.tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
 
+
                 {/*  Modal de Detalles */}
                 {showOrderModal && selectedOrder && (
-                    <div className="fixed inset-0 z-50 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center px-4">
-                        <div className="bg-gradient-to-br from-zinc-900 via-black to-zinc-950 text-white rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-2xl p-8 relative border border-white/10">
-
-                            {/* Cerrar */}
+                    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center px-4">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.3 }}
+                            className="bg-gradient-to-br from-zinc-900 via-black to-zinc-950 text-white rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto border border-white/10 shadow-2xl relative p-8"
+                        >
+                            {/* Close */}
                             <button
                                 onClick={() => setShowOrderModal(false)}
                                 className="absolute top-4 right-4 text-gray-400 hover:text-fuchsia-400 transition text-xl"
-                                aria-label="Cerrar modal"
                             >
                                 <FaTimes />
                             </button>
 
-                            {/* Título */}
+                            {/* Header */}
                             <h2 className="text-2xl font-bold mb-6 text-fuchsia-400 tracking-tight">
-                                Detalles de la Orden
+                                🧾 Detalles de la Orden
                             </h2>
 
-                            {/* Info del cliente */}
-                            <div className="mb-6 space-y-2 text-sm text-gray-300">
-                                <p>
-                                    👤 <span className="text-white font-medium">{selectedOrder.name || "Invitado"}</span>
-                                </p>
-                                <p>
-                                    📧 <span className="text-white font-medium">{selectedOrder.email || "No provisto"}</span>
-                                </p>
-                                <p>
-                                    📍 <span className="text-white font-medium">{selectedOrder.address || "No provista"}</span>
-                                </p>
+                            {/* Info cliente */}
+                            <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-300">
+                                <p>👤 <span className="font-medium text-white">{selectedOrder.name || "Invitado"}</span></p>
+                                <p>📧 <span className="font-medium text-white">{selectedOrder.email || "No provisto"}</span></p>
+                                <p>📍 <span className="font-medium text-white">{selectedOrder.address || "No provista"}</span></p>
+                                <p>💵 <span className="font-semibold text-fuchsia-300">${selectedOrder.total.toFixed(2)}</span></p>
                             </div>
 
-                            {/* Lista de productos */}
+                            {/* Productos */}
                             <div className="space-y-4">
                                 {selectedOrder.products.map((item, idx) => (
-                                    <div key={idx} className="bg-zinc-800 p-4 rounded-xl flex gap-4 shadow border border-white/10">
+                                    <div
+                                        key={idx}
+                                        className="bg-zinc-800/60 border border-white/10 rounded-xl p-4 flex items-center gap-4 hover:bg-zinc-800 transition"
+                                    >
                                         <img
                                             src={item.product?.coverImage || "/default.png"}
                                             alt={item.product?.name}
-                                            className="w-14 h-14 object-cover rounded border border-fuchsia-500"
+                                            className="w-16 h-16 rounded-xl border border-fuchsia-500/50 object-cover"
                                         />
                                         <div>
                                             <p className="font-semibold">{item.product?.name || "Producto eliminado"}</p>
                                             <p className="text-sm text-gray-400">Cantidad: {item.quantity}</p>
-                                            {item.size && <p className="text-sm text-gray-400">Talla: {item.size}</p>}
+                                            {item.size && (
+                                                <p className="text-sm text-gray-400">Talla: {item.size}</p>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
                             </div>
-                        </div>
+                        </motion.div>
                     </div>
                 )}
 
+
                 {/*  Modal de órdenes archivadas */}
                 {showArchivedModal && (
-                    <div className="fixed inset-0 z-50 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center px-4">
-                        <div className="bg-gradient-to-br from-zinc-900 via-black to-zinc-950 text-white rounded-2xl w-full max-w-4xl max-h-[85vh] overflow-y-auto shadow-2xl p-8 relative border border-white/10">
-
-                            {/* Cerrar */}
+                    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center px-4">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.3 }}
+                            className="bg-gradient-to-br from-zinc-900 via-black to-zinc-950 text-white rounded-2xl w-full max-w-4xl max-h-[85vh] overflow-y-auto shadow-2xl p-8 relative border border-white/10"
+                        >
+                            {/* Close */}
                             <button
                                 onClick={() => setShowArchivedModal(false)}
                                 className="absolute top-4 right-4 text-gray-400 hover:text-fuchsia-400 transition text-xl"
-                                aria-label="Cerrar historial"
                             >
                                 <FaTimes />
                             </button>
 
-                            {/* Título */}
-                            <h2 className="text-2xl font-bold mb-6 text-fuchsia-400 tracking-tight">
-                                Órdenes Archivadas
+                            <h2 className="text-2xl font-bold mb-6 text-fuchsia-400 tracking-tight flex items-center gap-2">
+                                📦 Órdenes Archivadas
                             </h2>
 
-                            {/* Contenido */}
                             {archivedOrders.length === 0 ? (
-                                <p className="text-gray-400 italic">No hay órdenes archivadas aún.</p>
+                                <p className="text-gray-400 italic text-center py-10">No hay órdenes archivadas aún.</p>
                             ) : (
-                                <div className="space-y-5 divide-y divide-white/10">
+                                <div className="space-y-6 divide-y divide-white/10">
                                     {archivedOrders.map((order) => (
-                                        <div key={order._id} className="pt-5 space-y-2">
-                                            <p className="text-sm font-semibold text-white">
-                                                Cliente: {order.user?.name || "Invitado"}
-                                            </p>
-                                            <p className="text-sm text-fuchsia-400">Estado: {order.status}</p>
-                                            <p className="text-sm text-gray-300">Total: ${order.total.toFixed(2)}</p>
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                                        <div key={order._id} className="pt-5">
+                                            <div className="flex justify-between items-center">
+                                                <h3 className="text-lg font-semibold text-white">
+                                                    {order.user?.name || "Invitado"}
+                                                </h3>
+                                                <span
+                                                    className={`px-3 py-1 rounded-full text-xs font-semibold ${order.status === "Entregada"
+                                                        ? "bg-green-600/20 text-green-400"
+                                                        : "bg-zinc-700/60 text-gray-400"
+                                                        }`}
+                                                >
+                                                    {order.status}
+                                                </span>
+                                            </div>
+                                            <p className="text-sm text-fuchsia-400 mt-1">Total: ${order.total.toFixed(2)}</p>
+
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                                                 {order.products.map((item, idx) => (
                                                     <div
                                                         key={idx}
-                                                        className="bg-zinc-800 p-4 rounded-xl flex items-center gap-4 border border-white/10 shadow"
+                                                        className="bg-zinc-800/70 border border-white/10 rounded-xl flex items-center gap-3 p-3 hover:bg-zinc-800 transition"
                                                     >
                                                         <img
                                                             src={item.product?.coverImage || "/default.png"}
                                                             alt={item.product?.name}
-                                                            className="w-14 h-14 object-cover rounded border border-fuchsia-500"
+                                                            className="w-14 h-14 rounded-lg border border-fuchsia-500/50 object-cover"
                                                         />
-                                                        <div>
-                                                            <p className="text-sm text-white">{item.product?.name}</p>
+                                                        <div className="text-sm">
+                                                            <p className="font-semibold text-white">{item.product?.name}</p>
                                                             {item.size && <p className="text-xs text-gray-400">Talla: {item.size}</p>}
                                                             <p className="text-xs text-gray-500">Cantidad: {item.quantity}</p>
                                                         </div>
@@ -2006,9 +2088,10 @@ const AdminDashboard = () => {
                                     ))}
                                 </div>
                             )}
-                        </div>
+                        </motion.div>
                     </div>
                 )}
+
 
             </div>
 
