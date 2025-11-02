@@ -1079,84 +1079,204 @@ const AdminDashboard = () => {
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6 }}
+                    transition={{ duration: 0.4 }}
                 >
                     {loading ? (
                         <p className="text-center text-gray-400">Cargando productos...</p>
                     ) : error ? (
                         <p className="text-red-500 text-center">Error: {error}</p>
+                    ) : products.length === 0 ? (
+                        <div className="bg-zinc-900/70 border border-zinc-800 rounded-3xl p-12 text-center">
+                            <div className="text-2xl font-semibold mb-2">Sin productos</div>
+                            <p className="text-gray-400">Crea tu primer producto desde el panel.</p>
+                        </div>
                     ) : (
-                        <div className="overflow-x-auto bg-zinc-900 border border-zinc-800 rounded-3xl shadow-2xl">
-                            <table className="min-w-full divide-y divide-zinc-800 text-sm">
-                                <thead className="bg-zinc-800 text-fuchsia-400 uppercase text-[11px] tracking-widest">
-                                    <tr>
-                                        <th className="px-6 py-4 text-left">Imagen</th>
-                                        <th className="px-6 py-4 text-left">Nombre</th>
-                                        <th className="px-6 py-4 text-left">Precio</th>
-                                        <th className="px-6 py-4 text-left">Inventario</th>
-                                        <th className="px-6 py-4 text-center">Acciones</th>
-                                    </tr>
-                                </thead>
-
-                                <tbody className="divide-y divide-zinc-800">
-                                    {products.map((product) => (
-                                        <tr key={product._id} className="group hover:bg-zinc-800 transition">
-                                            {/* Imagen */}
-                                            <td className="px-6 py-5">
-                                                <div className="w-16 h-16 rounded-xl overflow-hidden border border-zinc-700 shadow-md">
-                                                    <img
-                                                        src={product.coverImage}
-                                                        alt={product.name}
-                                                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                                    />
-                                                </div>
-                                            </td>
-
-                                            {/* Nombre */}
-                                            <td className="px-6 py-5 font-semibold text-white">{product.name}</td>
-
-                                            {/* Precio */}
-                                            <td className="px-6 py-5 text-fuchsia-400 font-bold">${product.price}</td>
-
-                                            {/* Inventario */}
-                                            <td className="px-6 py-5 text-gray-300">
-                                                <span
-                                                    className={`inline-block px-2 py-1 text-xs rounded-full font-medium ${getAvailabilityStatus(product) === 'Not Available'
-                                                        ? 'bg-red-500/20 text-red-400'
-                                                        : 'bg-green-500/20 text-green-400'
-                                                        }`}
-                                                >
-                                                    {getAvailabilityStatus(product)}
-                                                </span>
-                                            </td>
-
-                                            {/* Acciones */}
-                                            <td className="px-6 py-5 text-center">
-                                                <div className="flex items-center justify-center gap-3">
-                                                    <button
-                                                        onClick={() => {
-                                                            setEditingProduct(product);
-                                                            setShowEditModal(true);
-                                                        }}
-                                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-medium shadow transition"
-                                                    >
-                                                        Editar
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDelete(product._id)}
-                                                        className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-xs font-medium shadow transition"
-                                                    >
-                                                        Eliminar
-                                                    </button>
-                                                </div>
-                                            </td>
+                        <div className="bg-zinc-900/60 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden">
+                            {/* ====== TABLA (desktop) ====== */}
+                            <div className="hidden md:block overflow-x-auto">
+                                <table className="min-w-full text-sm">
+                                    <thead className="sticky top-0 z-10 backdrop-blur bg-zinc-900/80 border-b border-zinc-800">
+                                        <tr className="text-fuchsia-300/90 uppercase text-[11px] tracking-widest">
+                                            <th className="px-6 py-4 text-left font-medium">Producto</th>
+                                            <th className="px-6 py-4 text-left font-medium">Precio</th>
+                                            <th className="px-6 py-4 text-left font-medium">Inventario</th>
+                                            <th className="px-6 py-4 text-left font-medium">Categoría</th>
+                                            <th className="px-6 py-4 text-center font-medium">Acciones</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody className="divide-y divide-zinc-800">
+                                        {products.map((p) => {
+                                            const availability = getAvailabilityStatus(p);
+                                            const isOut = availability === "Not Available" || availability === "Out of Stock";
+                                            const showDiscount = Number(p?.originalPrice) > Number(p?.price);
+
+                                            return (
+                                                <tr
+                                                    key={p._id}
+                                                    className="group hover:bg-zinc-800/50 transition-colors"
+                                                >
+                                                    {/* Producto (imagen + nombre) */}
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="w-16 h-16 rounded-xl overflow-hidden border border-zinc-700 shadow-md shrink-0">
+                                                                <img
+                                                                    src={p.coverImage}
+                                                                    alt={p.name}
+                                                                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                                />
+                                                            </div>
+                                                            <div className="min-w-0">
+                                                                <div className="font-semibold line-clamp-1">{p.name}</div>
+                                                                <div className="text-xs text-zinc-400 line-clamp-1">
+                                                                    {p.description}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Precio */}
+                                                    <td className="px-6 py-4">
+                                                        {showDiscount ? (
+                                                            <div className="flex items-baseline gap-2">
+                                                                <span className="text-fuchsia-300 font-bold">${Number(p.price).toFixed(2)}</span>
+                                                                <span className="text-xs text-zinc-400 line-through">${Number(p.originalPrice).toFixed(2)}</span>
+                                                                {p.discount > 0 && (
+                                                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-fuchsia-600/15 border border-fuchsia-600/40 text-fuchsia-300">
+                                                                        -{Number(p.discount)}%
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-fuchsia-300 font-bold">${Number(p.price).toFixed(2)}</span>
+                                                        )}
+                                                    </td>
+
+                                                    {/* Inventario */}
+                                                    <td className="px-6 py-4">
+                                                        <span
+                                                            className={`inline-flex items-center gap-2 px-2.5 py-1 text-xs rounded-full border ${isOut
+                                                                    ? "bg-red-500/10 text-red-300 border-red-500/30"
+                                                                    : "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
+                                                                }`}
+                                                            title={p.hasSizes ? "Inventario por tallas" : "Inventario general"}
+                                                        >
+                                                            <span
+                                                                className={`h-1.5 w-1.5 rounded-full ${isOut ? "bg-red-400" : "bg-emerald-400"
+                                                                    }`}
+                                                            />
+                                                            {p.hasSizes
+                                                                ? (() => {
+                                                                    const total = Object.values(p.sizes || {}).reduce(
+                                                                        (acc, v) => acc + Number(v || 0),
+                                                                        0
+                                                                    );
+                                                                    return total > 0 ? `Disponible: ${total}` : "Not Available";
+                                                                })()
+                                                                : (p.stock > 0 ? `Stock: ${p.stock}` : "Out of Stock")}
+                                                        </span>
+                                                    </td>
+
+                                                    {/* Categoría */}
+                                                    <td className="px-6 py-4">
+                                                        <span className="inline-flex px-2.5 py-1 text-xs rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300">
+                                                            {p.category}
+                                                        </span>
+                                                    </td>
+
+                                                    {/* Acciones */}
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center justify-center gap-2">
+                                                            <button
+                                                                onClick={() => { setEditingProduct(p); setShowEditModal(true); }}
+                                                                className="px-3 py-2 rounded-lg text-xs font-medium border border-zinc-700 hover:border-fuchsia-600 hover:bg-fuchsia-600/10 text-zinc-200 hover:text-fuchsia-200 transition"
+                                                                aria-label="Editar"
+                                                            >
+                                                                Editar
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDelete(p._id)}
+                                                                className="px-3 py-2 rounded-lg text-xs font-medium border border-zinc-700 hover:border-red-600 hover:bg-red-600/10 text-zinc-200 hover:text-red-200 transition"
+                                                                aria-label="Eliminar"
+                                                            >
+                                                                Eliminar
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* ====== CARDS (móvil) ====== */}
+                            <div className="md:hidden divide-y divide-zinc-800">
+                                {products.map((p) => {
+                                    const availability = getAvailabilityStatus(p);
+                                    const isOut = availability === "Not Available" || availability === "Out of Stock";
+                                    const showDiscount = Number(p?.originalPrice) > Number(p?.price);
+
+                                    return (
+                                        <div key={p._id} className="p-4">
+                                            <div className="flex gap-4">
+                                                <div className="w-20 h-20 rounded-xl overflow-hidden border border-zinc-700">
+                                                    <img src={p.coverImage} alt={p.name} className="w-full h-full object-cover" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center justify-between gap-3">
+                                                        <h3 className="font-semibold line-clamp-1">{p.name}</h3>
+                                                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300">
+                                                            {p.category}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-xs text-zinc-400 line-clamp-2 mt-0.5">{p.description}</p>
+                                                    <div className="flex items-center justify-between mt-3">
+                                                        <div>
+                                                            {showDiscount ? (
+                                                                <div className="flex items-baseline gap-2">
+                                                                    <span className="text-fuchsia-300 font-bold">${Number(p.price).toFixed(2)}</span>
+                                                                    <span className="text-xs text-zinc-400 line-through">${Number(p.originalPrice).toFixed(2)}</span>
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-fuchsia-300 font-bold">${Number(p.price).toFixed(2)}</span>
+                                                            )}
+                                                        </div>
+                                                        <span
+                                                            className={`inline-flex items-center gap-2 px-2.5 py-1 text-xs rounded-full border ${isOut
+                                                                    ? "bg-red-500/10 text-red-300 border-red-500/30"
+                                                                    : "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
+                                                                }`}
+                                                        >
+                                                            <span className={`h-1.5 w-1.5 rounded-full ${isOut ? "bg-red-400" : "bg-emerald-400"}`} />
+                                                            {availability}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-2 mt-3">
+                                                        <button
+                                                            onClick={() => { setEditingProduct(p); setShowEditModal(true); }}
+                                                            className="flex-1 px-3 py-2 rounded-lg text-xs font-medium border border-zinc-700 hover:border-fuchsia-600 hover:bg-fuchsia-600/10 text-zinc-200 hover:text-fuchsia-200 transition"
+                                                        >
+                                                            Editar
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDelete(p._id)}
+                                                            className="flex-1 px-3 py-2 rounded-lg text-xs font-medium border border-zinc-700 hover:border-red-600 hover:bg-red-600/10 text-zinc-200 hover:text-red-200 transition"
+                                                        >
+                                                            Eliminar
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
                     )}
                 </motion.div>
+
+
 
 
 
