@@ -887,49 +887,48 @@ const AdminDashboard = () => {
                     </div>
 
                     {/* Tallas o Stock */}
-                    {/* Inventario (EDIT) */}
-                    <div className="bg-zinc-950/60 border border-zinc-800 rounded-2xl p-5 space-y-4">
-                        {editingProduct.hasSizes ? (
-                            <>
-                                <label className="text-sm text-gray-300">Tallas</label>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-2">
-                                    {["S", "M", "L", "XL"].map((size) => (
-                                        <div key={size} className="bg-zinc-900 border border-zinc-700 rounded-lg p-3">
-                                            <span className="text-xs text-gray-400">{size}</span>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                className="mt-1 w-full bg-zinc-950 border border-zinc-800 p-2 rounded focus:outline-none focus:ring-2 focus:ring-fuchsia-500/40"
-                                                value={editingProduct.sizes?.[size] || 0}
-                                                onChange={(e) =>
-                                                    setEditingProduct((prev) => ({
-                                                        ...prev,
-                                                        sizes: { ...(prev.sizes || {}), [size]: Number(e.target.value || 0) },
-                                                    }))
-                                                }
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            </>
-                        ) : (
-                            <>
-                                <label className="text-sm text-gray-300">Stock</label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    className="w-full bg-zinc-900 border border-zinc-700 p-3 rounded-lg mt-1 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/40"
-                                    value={editingProduct.stock ?? 0}
-                                    onChange={(e) =>
-                                        setEditingProduct((prev) => ({
-                                            ...prev,
-                                            stock: Number(e.target.value || 0),
-                                        }))
-                                    }
-                                />
-                                <p className="text-xs text-gray-400">Disponible solo si el producto no tiene tallas.</p>
-                            </>
-                        )}
+                    <div className="flex flex-col">
+                        <label className="text-xs uppercase tracking-wide text-zinc-300 font-semibold mb-2">
+                            Opciones de Inventario
+                        </label>
+
+                        <div className="flex items-center gap-3">
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setNewProduct((p) => ({
+                                        ...p,
+                                        hasSizes: true,
+                                        sizes: { S: 0, M: 0, L: 0, XL: 0 }, // ⚡ Reinicia tallas
+                                        stock: 0, // ⚡ Limpia el stock
+                                    }))
+                                }
+                                className={`px-3 py-2 rounded-lg text-sm border transition ${newProduct.hasSizes
+                                    ? "bg-fuchsia-600/20 border-fuchsia-600 text-fuchsia-300"
+                                    : "bg-zinc-900 border-zinc-700 text-zinc-300 hover:border-zinc-600"
+                                    }`}
+                            >
+                                Con tallas (S/M/L/XL)
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setNewProduct((p) => ({
+                                        ...p,
+                                        hasSizes: false,
+                                        sizes: {}, // ⚡ Limpia las tallas
+                                        stock: p.stock || 0, // ⚡ Mantiene o inicia el stock
+                                    }))
+                                }
+                                className={`px-3 py-2 rounded-lg text-sm border transition ${!newProduct.hasSizes
+                                    ? "bg-fuchsia-600/20 border-fuchsia-600 text-fuchsia-300"
+                                    : "bg-zinc-900 border-zinc-700 text-zinc-300 hover:border-zinc-600"
+                                    }`}
+                            >
+                                Stock general
+                            </button>
+                        </div>
                     </div>
 
                     {/* Cover Image */}
