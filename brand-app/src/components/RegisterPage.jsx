@@ -77,117 +77,192 @@ const RegisterPage = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-zinc-900 to-slate-800 px-4">
+        <div className="min-h-screen flex items-center justify-center bg-[#0a0a0b] bg-[radial-gradient(70%_90%_at_50%_10%,rgba(217,70,239,0.12),transparent_70%),radial-gradient(40%_60%_at_80%_0%,rgba(139,92,246,0.15),transparent_80%)] px-4">
             <motion.div
-                className="w-full max-w-md bg-zinc-900 text-white p-8 rounded-2xl shadow-2xl border border-zinc-700"
-                initial={{ opacity: 0, y: -30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
+                className="w-full max-w-md relative"
+                initial={{ opacity: 0, y: 14, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
             >
-                <h1 className="text-3xl font-extrabold text-center mb-4 text-fuchsia-400 tracking-wide">
-                    Create Account
-                </h1>
-                <p className="text-center text-zinc-400 mb-8">Join the MILVNNE movement</p>
+                {/* Glow border */}
+                <div className="absolute -inset-[1px] rounded-3xl bg-gradient-to-br from-fuchsia-500/60 via-violet-500/20 to-transparent blur-[8px] opacity-70" />
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Name */}
-                    <div className="relative">
-                        <FaUser className="absolute left-4 top-3.5 text-fuchsia-400" />
-                        <input
-                            type="text"
-                            placeholder="Name"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            className={`w-full bg-zinc-800 text-white border ${fieldErrors.name ? 'border-red-500' : 'border-zinc-700'} rounded-lg pl-12 py-3 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 placeholder-zinc-400`}
-                        />
-                        {fieldErrors.name && (
-                            <p className="text-red-400 text-xs mt-1 ml-1">{fieldErrors.name}</p>
-                        )}
-                    </div>
-
-                    {/* Email */}
-                    <div className="relative">
-                        <FaEnvelope className="absolute left-4 top-3.5 text-fuchsia-400" />
-                        <input
-                            type="email"
-                            placeholder="Email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className={`w-full bg-zinc-800 text-white border ${fieldErrors.email ? 'border-red-500' : 'border-zinc-700'} rounded-lg pl-12 py-3 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 placeholder-zinc-400`}
-                        />
-                        {fieldErrors.email && (
-                            <p className="text-red-400 text-xs mt-1 ml-1">{fieldErrors.email}</p>
-                        )}
-                    </div>
-
-                    {/* Password */}
-                    <div className="relative">
-                        <FaLock className="absolute left-4 top-3.5 text-fuchsia-400" />
-                        <input
-                            type={showPassword ? "text" : "password"}
-                            placeholder="Password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className={`w-full bg-zinc-800 text-white border ${fieldErrors.password ? 'border-red-500' : 'border-zinc-700'} rounded-lg pl-12 pr-10 py-3 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 placeholder-zinc-400`}
-                        />
-                        <div
-                            className="absolute right-4 top-3.5 cursor-pointer text-zinc-400 hover:text-fuchsia-500 transition"
-                            onClick={() => setShowPassword(!showPassword)}
-                        >
-                            {showPassword ? <FaEyeSlash /> : <FaEye />}
+                {/* Card */}
+                <div className="relative rounded-3xl border border-white/10 bg-zinc-900/80 backdrop-blur-xl shadow-[0_10px_50px_-15px_rgba(217,70,239,0.35)] p-6 sm:p-8 text-white">
+                    {/* Header */}
+                    <div className="flex flex-col items-center mb-6">
+                        <div className="h-12 w-12 rounded-xl bg-fuchsia-500/20 border border-fuchsia-500/40 grid place-items-center text-fuchsia-300 text-xl font-black mb-2">
+                            M
                         </div>
-                        {fieldErrors.password && (
-                            <p className="text-red-400 text-xs mt-1 ml-1">{fieldErrors.password}</p>
-                        )}
+                        <h1 className="text-2xl font-extrabold tracking-tight text-center">Create Account</h1>
+                        <p className="text-sm text-zinc-400 text-center">Join the <span className="text-fuchsia-400 font-semibold">MILVNNE</span> movement</p>
                     </div>
 
-                    {/* Confirm Password */}
-                    <div className="relative">
-                        <FaLock className="absolute left-4 top-3.5 text-fuchsia-400" />
-                        <input
-                            type={showPassword ? "text" : "password"}
-                            placeholder="Confirm Password"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            className={`w-full bg-zinc-800 text-white border ${fieldErrors.confirmPassword ? 'border-red-500' : 'border-zinc-700'} rounded-lg pl-12 pr-10 py-3 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 placeholder-zinc-400`}
-                        />
-                        <div
-                            className="absolute right-4 top-3.5 cursor-pointer text-zinc-400 hover:text-fuchsia-500 transition"
-                            onClick={() => setShowPassword(!showPassword)}
-                        >
-                            {showPassword ? <FaEyeSlash /> : <FaEye />}
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        {/* Name */}
+                        <div className="relative">
+                            <input
+                                type="text"
+                                id="name"
+                                placeholder=" "
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                className={`peer w-full rounded-xl bg-zinc-900/70 border ${fieldErrors?.name ? "border-red-500/70" : "border-zinc-700/70"} px-4 pt-5 pb-2 text-white placeholder-transparent outline-none focus:ring-4 focus:ring-fuchsia-500/20 focus:border-fuchsia-500/70 transition`}
+                            />
+                            <label
+                                htmlFor="name"
+                                className="pointer-events-none absolute left-4 top-3 text-zinc-400 text-sm transition-all
+              peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-placeholder-shown:text-zinc-500
+              peer-focus:top-2 peer-focus:text-xs peer-focus:text-fuchsia-300"
+                            >
+                                Name
+                            </label>
+                            <FaUser className="absolute right-4 top-3.5 text-zinc-500 peer-focus:text-fuchsia-400 transition" />
+                            {fieldErrors?.name && <p className="text-red-400 text-xs mt-1 ml-1">{fieldErrors.name}</p>}
                         </div>
-                        {fieldErrors.confirmPassword && (
-                            <p className="text-red-400 text-xs mt-1 ml-1">{fieldErrors.confirmPassword}</p>
-                        )}
+
+                        {/* Email */}
+                        <div className="relative">
+                            <input
+                                type="email"
+                                id="email"
+                                placeholder=" "
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className={`peer w-full rounded-xl bg-zinc-900/70 border ${fieldErrors?.email ? "border-red-500/70" : "border-zinc-700/70"} px-4 pt-5 pb-2 text-white placeholder-transparent outline-none focus:ring-4 focus:ring-fuchsia-500/20 focus:border-fuchsia-500/70 transition`}
+                            />
+                            <label
+                                htmlFor="email"
+                                className="pointer-events-none absolute left-4 top-3 text-zinc-400 text-sm transition-all
+              peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-placeholder-shown:text-zinc-500
+              peer-focus:top-2 peer-focus:text-xs peer-focus:text-fuchsia-300"
+                            >
+                                Email
+                            </label>
+                            <FaEnvelope className="absolute right-4 top-3.5 text-zinc-500 peer-focus:text-fuchsia-400 transition" />
+                            {fieldErrors?.email && <p className="text-red-400 text-xs mt-1 ml-1">{fieldErrors.email}</p>}
+                        </div>
+
+                        {/* Password */}
+                        <div className="relative">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                id="password"
+                                placeholder=" "
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className={`peer w-full rounded-xl bg-zinc-900/70 border ${fieldErrors?.password ? "border-red-500/70" : "border-zinc-700/70"} px-4 pr-12 pt-5 pb-2 text-white placeholder-transparent outline-none focus:ring-4 focus:ring-fuchsia-500/20 focus:border-fuchsia-500/70 transition`}
+                            />
+                            <label
+                                htmlFor="password"
+                                className="pointer-events-none absolute left-4 top-3 text-zinc-400 text-sm transition-all
+              peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-placeholder-shown:text-zinc-500
+              peer-focus:top-2 peer-focus:text-xs peer-focus:text-fuchsia-300"
+                            >
+                                Password
+                            </label>
+                            <FaLock className="absolute right-10 top-3.5 text-zinc-500 peer-focus:text-fuchsia-400 transition" />
+                            <button
+                                type="button"
+                                aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-2.5 h-8 w-8 grid place-items-center text-zinc-400 hover:text-fuchsia-400 transition"
+                            >
+                                {showPassword ? <FaEyeSlash /> : <FaEye />}
+                            </button>
+                            {fieldErrors?.password && <p className="text-red-400 text-xs mt-1 ml-1">{fieldErrors.password}</p>}
+
+                            {/* Indicador de fuerza (simple) */}
+                            <div className="mt-2">
+                                {password && (
+                                    <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
+                                        <div
+                                            className={`h-full transition-all ${(password.length >= 12 && /[A-Z]/.test(password) && /[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password))
+                                                    ? "w-full bg-green-500"
+                                                    : (password.length >= 8 ? "w-2/3 bg-yellow-500" : "w-1/3 bg-red-500")
+                                                }`}
+                                        />
+                                    </div>
+                                )}
+                                {password && (
+                                    <p className="text-[11px] mt-1 text-zinc-400">
+                                        {(password.length >= 12 && /[A-Z]/.test(password) && /[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password))
+                                            ? "Strong password"
+                                            : (password.length >= 8 ? "Medium password — add symbols & caps" : "Weak password — use 8+ chars")}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Confirm Password */}
+                        <div className="relative">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                id="confirmPassword"
+                                placeholder=" "
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                className={`peer w-full rounded-xl bg-zinc-900/70 border ${fieldErrors?.confirmPassword
+                                        ? "border-red-500/70"
+                                        : confirmPassword && confirmPassword === password
+                                            ? "border-emerald-500/60"
+                                            : "border-zinc-700/70"
+                                    } px-4 pr-12 pt-5 pb-2 text-white placeholder-transparent outline-none focus:ring-4 focus:ring-fuchsia-500/20 focus:border-fuchsia-500/70 transition`}
+                            />
+                            <label
+                                htmlFor="confirmPassword"
+                                className="pointer-events-none absolute left-4 top-3 text-zinc-400 text-sm transition-all
+              peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-placeholder-shown:text-zinc-500
+              peer-focus:top-2 peer-focus:text-xs peer-focus:text-fuchsia-300"
+                            >
+                                Confirm Password
+                            </label>
+                            <FaLock className="absolute right-10 top-3.5 text-zinc-500 peer-focus:text-fuchsia-400 transition" />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-2.5 h-8 w-8 grid place-items-center text-zinc-400 hover:text-fuchsia-400 transition"
+                            >
+                                {showPassword ? <FaEyeSlash /> : <FaEye />}
+                            </button>
+                            {fieldErrors?.confirmPassword && <p className="text-red-400 text-xs mt-1 ml-1">{fieldErrors.confirmPassword}</p>}
+                            {confirmPassword && confirmPassword === password && !fieldErrors?.confirmPassword && (
+                                <p className="text-emerald-400 text-xs mt-1 ml-1">Passwords match ✓</p>
+                            )}
+                        </div>
+
+                        {/* Submit */}
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full relative overflow-hidden rounded-xl px-5 py-3 font-semibold uppercase tracking-wide text-white bg-gradient-to-r from-fuchsia-600 to-violet-600 hover:from-fuchsia-500 hover:to-violet-500 disabled:opacity-60 disabled:cursor-not-allowed transition shadow-[0_10px_30px_-10px_rgba(217,70,239,0.45)]"
+                        >
+                            <span className="relative z-10">{loading ? "Creating..." : "Register"}</span>
+                            <span className="absolute inset-0 opacity-0 hover:opacity-20 transition bg-white" />
+                        </button>
+
+                        {/* Error general */}
+                        {errorMessage && <p className="text-center text-red-400 font-medium mt-1">{errorMessage}</p>}
+                    </form>
+
+                    {/* Divider */}
+                    <div className="flex items-center gap-3 text-xs text-zinc-500 mt-6">
+                        <div className="flex-1 h-px bg-zinc-800" />
+                        <span>or</span>
+                        <div className="flex-1 h-px bg-zinc-800" />
                     </div>
 
-                    {/* Submit */}
-                    <button
-                        type="submit"
-                        className="w-full bg-fuchsia-600 hover:bg-fuchsia-700 transition-all text-white font-bold py-3 rounded-lg shadow-lg tracking-wide uppercase"
+                    {/* Login link */}
+                    <Link
+                        to="/login"
+                        className="block w-full text-center mt-4 rounded-xl border border-zinc-700/70 bg-zinc-900/40 hover:bg-zinc-800/60 text-zinc-200 py-3 transition"
                     >
-                        {loading ? "Creating..." : "Register"}
-                    </button>
-
-                    {/* General register error */}
-                    {errorMessage && (
-                        <p className="text-center text-red-400 font-medium mt-2">
-                            {errorMessage}
-                        </p>
-                    )}
-                </form>
-
-                <div className="text-center mt-6">
-                    <p className="text-zinc-400">
-                        Already have an account?{" "}
-                        <Link to="/login" className="text-fuchsia-400 hover:underline font-semibold">
-                            Sign In
-                        </Link>
-                    </p>
+                        Already have an account? <span className="text-fuchsia-300 font-semibold">Sign In</span>
+                    </Link>
                 </div>
             </motion.div>
         </div>
+
     );
 };
 
